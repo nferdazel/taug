@@ -10,20 +10,26 @@ class MarketProvider {
   final isLoading = Signal<bool>(false);
   final error = Signal<String?>(null);
   final lastUpdated = Signal<DateTime?>(null);
+  bool _isLoadingMovers = false;
 
   Timer? _refreshTimer;
 
   MarketProvider({MarketRepository? repository})
-      : _repository = repository ?? MarketRepository();
+    : _repository = repository ?? MarketRepository();
 
   void dispose() => _refreshTimer?.cancel();
 
   void startAutoRefresh() {
     _refreshTimer?.cancel();
-    _refreshTimer = Timer.periodic(const Duration(seconds: 15), (_) => loadMovers());
+    _refreshTimer = Timer.periodic(
+      const Duration(seconds: 15),
+      (_) => loadMovers(),
+    );
   }
 
   Future<void> loadMovers() async {
+    if (_isLoadingMovers) return;
+    _isLoadingMovers = true;
     if (movers.value.isEmpty) isLoading.value = true;
     error.value = null;
 
@@ -37,5 +43,6 @@ class MarketProvider {
     }
 
     isLoading.value = false;
+    _isLoadingMovers = false;
   }
 }
