@@ -11,13 +11,15 @@ class WatchlistRepository {
   final SupabaseClient _client;
 
   WatchlistRepository({SupabaseClient? client})
-      : _client = client ?? Supabase.instance.client;
+    : _client = client ?? Supabase.instance.client;
 
   Future<Result<List<Watchlist>>> getWatchlists() async {
     try {
       final userId = _client.auth.currentUser?.id;
       if (userId == null) {
-        return const Result.failure(AuthFailure(message: 'User not authenticated'));
+        return const Result.failure(
+          AuthFailure(message: 'User not authenticated'),
+        );
       }
 
       final response = await _client
@@ -26,7 +28,9 @@ class WatchlistRepository {
           .eq('user_id', userId)
           .order('sort_order');
 
-      final watchlists = response.map((json) => Watchlist.fromJson(json)).toList();
+      final watchlists = response
+          .map((json) => Watchlist.fromJson(json))
+          .toList();
       return Result.success(watchlists);
     } catch (e) {
       debugPrint('[WatchlistRepo] getWatchlists: $e');
@@ -38,7 +42,9 @@ class WatchlistRepository {
     try {
       final userId = _client.auth.currentUser?.id;
       if (userId == null) {
-        return const Result.failure(AuthFailure(message: 'User not authenticated'));
+        return const Result.failure(
+          AuthFailure(message: 'User not authenticated'),
+        );
       }
 
       final response = await _client
@@ -56,10 +62,7 @@ class WatchlistRepository {
 
   Future<Result<void>> deleteWatchlist(String watchlistId) async {
     try {
-      await _client
-          .from(AppSchema.watchlists)
-          .delete()
-          .eq('id', watchlistId);
+      await _client.from(AppSchema.watchlists).delete().eq('id', watchlistId);
       return const Result.success(null);
     } catch (e) {
       debugPrint('[WatchlistRepo] deleteWatchlist: $e');
@@ -67,7 +70,9 @@ class WatchlistRepository {
     }
   }
 
-  Future<Result<List<WatchlistItem>>> getWatchlistItems(String watchlistId) async {
+  Future<Result<List<WatchlistItem>>> getWatchlistItems(
+    String watchlistId,
+  ) async {
     try {
       final response = await _client
           .from(AppSchema.watchlistItems)
@@ -102,7 +107,10 @@ class WatchlistRepository {
     }
   }
 
-  Future<Result<WatchlistItem>> addToWatchlist(String watchlistId, int symbolId) async {
+  Future<Result<WatchlistItem>> addToWatchlist(
+    String watchlistId,
+    int symbolId,
+  ) async {
     try {
       final response = await _client
           .from(AppSchema.watchlistItems)
@@ -118,10 +126,7 @@ class WatchlistRepository {
 
   Future<Result<void>> removeFromWatchlist(String itemId) async {
     try {
-      await _client
-          .from(AppSchema.watchlistItems)
-          .delete()
-          .eq('id', itemId);
+      await _client.from(AppSchema.watchlistItems).delete().eq('id', itemId);
       return const Result.success(null);
     } catch (e) {
       debugPrint('[WatchlistRepo] removeFromWatchlist: $e');
@@ -129,29 +134,26 @@ class WatchlistRepository {
     }
   }
 
-  Future<Result<Map<String, PriceData>>> getPricesForSymbols(List<String> tickers) async {
+  Future<Result<Map<String, PriceData>>> getPricesForSymbols(
+    List<String> tickers,
+  ) async {
     try {
-      final Map<String, PriceData> priceMap = {};
+      final response = await _client
+          .from(AppSchema.symbols)
+          .select('ticker, quote_snapshots(*)')
+          .inFilter('ticker', tickers);
 
-      final futures = tickers.map((ticker) async {
-        try {
-          final response = await _client.functions.invoke(
-            'get-price',
-            body: {'symbol': ticker},
-          );
-          if (response.data != null) {
-            return MapEntry(ticker, PriceData.fromJson(response.data as Map<String, dynamic>));
-          }
-        } catch (e) {
-          debugPrint('[WatchlistRepo] getPricesForSymbols[$ticker]: $e');
-        }
-        return null;
-      });
+      final Map<String, PriceData> priceMap = <String, PriceData>{};
+      for (final row in response) {
+        final Map<String, dynamic> symbolRow = Map<String, dynamic>.from(row);
+        final String? ticker = symbolRow['ticker'] as String?;
+        final Map<String, dynamic>? snapshot = _extractSnapshot(symbolRow);
 
-      final results = await Future.wait(futures);
-      for (final result in results) {
-        if (result != null) {
-          priceMap[result.key] = result.value;
+        if (ticker != null && snapshot != null) {
+          priceMap[ticker] = PriceData.fromJson({
+            'symbol': ticker,
+            ...snapshot,
+          });
         }
       }
 
@@ -160,5 +162,16 @@ class WatchlistRepository {
       debugPrint('[WatchlistRepo] getPricesForSymbols: $e');
       return Result.failure(ServerFailure(message: e.toString()));
     }
+  }
+
+  Map<String, dynamic>? _extractSnapshot(Map<String, dynamic> row) {
+    final Object? relation = row[AppSchema.quoteSnapshots];
+    if (relation is Map<String, dynamic>) {
+      return relation;
+    }
+    if (relation is List && relation.isNotEmpty && relation.first is Map) {
+      return Map<String, dynamic>.from(relation.first as Map);
+    }
+    return null;
   }
 }
