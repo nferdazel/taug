@@ -27,6 +27,12 @@ def main() -> int:
     default=0,
     help="Optional cap after parsing the input list.",
   )
+  sync_parser.add_argument(
+    "--max-filings-per-company",
+    type=int,
+    default=25,
+    help="Maximum number of recent filings to normalize per company in one run.",
+  )
   document_parser = subparsers.add_parser("fetch-sec-filing-documents")
   document_parser.add_argument(
     "--limit",
@@ -55,6 +61,7 @@ def main() -> int:
       ciks=ciks,
       sec_client=sec_client,
       supabase_client=supabase_client,
+      max_filings_per_company=args.max_filings_per_company,
     )
     print(
       json.dumps(

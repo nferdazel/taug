@@ -23,6 +23,7 @@ def run_sync_sec_submissions(
   ciks: Iterable[str],
   sec_client: SecClient,
   supabase_client: SupabaseRestClient,
+  max_filings_per_company: int,
 ) -> SyncSummary:
   normalized_ciks: list[str] = [cik.zfill(10) for cik in ciks if cik.strip()]
   if not normalized_ciks:
@@ -75,10 +76,12 @@ def run_sync_sec_submissions(
         )
         discovered_filings: int = _normalize_filing_discovery(
           payload=payload,
+          cik=cik,
           company_id=canonical_security.company_id,
           raw_source_id=source.id,
           raw_record_id=raw_record_id,
           supabase_client=supabase_client,
+          max_filings_per_company=max_filings_per_company,
         )
         supabase_client.insert_audit_event(
           event_type="raw_record_ingested",
@@ -177,10 +180,12 @@ def _extract_company_name(payload: dict[str, object], fallback_cik: str) -> str:
 def _normalize_filing_discovery(
   *,
   payload: dict[str, object],
+  cik: str,
   company_id: str,
   raw_source_id: int,
   raw_record_id: str,
   supabase_client: SupabaseRestClient,
+  max_filings_per_company: int,
 ) -> int:
   filings_section: object = payload.get("filings")
   if not isinstance(filings_section, dict):
@@ -203,6 +208,8 @@ def _normalize_filing_discovery(
     len(filing_dates),
     len(filing_types),
   )
+  if max_filings_per_company > 0:
+    filing_count = min(filing_count, max_filings_per_company)
   created_count: int = 0
 
   for index in range(filing_count):

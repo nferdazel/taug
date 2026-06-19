@@ -12,6 +12,11 @@ on:
         required: false
         default: "0"
         type: string
+      max_filings_per_company:
+        description: "Maximum number of recent filings to normalize per company"
+        required: false
+        default: "25"
+        type: string
   schedule:
     - cron: "15 2 * * *"
 
@@ -38,5 +43,6 @@ jobs:
           SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
           SEC_TARGET_CIKS: ${{ github.event.inputs.target_ciks != '' && github.event.inputs.target_ciks || vars.SEC_TARGET_CIKS }}
           MAX_COMPANIES: ${{ github.event.inputs.max_companies != '' && github.event.inputs.max_companies || '0' }}
+          MAX_FILINGS_PER_COMPANY: ${{ github.event.inputs.max_filings_per_company != '' && github.event.inputs.max_filings_per_company || '25' }}
         run: |
-          python -m workers.taug_worker.cli sync-sec-submissions --max-companies "$MAX_COMPANIES"
+          python -m workers.taug_worker.cli sync-sec-submissions --max-companies "$MAX_COMPANIES" --max-filings-per-company "$MAX_FILINGS_PER_COMPANY"

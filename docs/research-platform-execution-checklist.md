@@ -259,6 +259,7 @@ Exit criteria:
 - `[done]` implement SEC submissions ingestion path
 - `[done]` implement SEC document fetch workflow and storage path
 - `[done]` build filing and filing_version model
+- `[done]` validate narrow-universe SEC smoke test locally
 
 Exit criteria:
 

@@ -218,6 +218,7 @@ Exit criteria:
 - `[done]` create logical `filings`
 - `[done]` create first `filing_versions`
 - `[done]` preserve source accession keys
+- `[done]` cap per-run normalization volume for narrow-universe MVP execution
 
 Exit criteria:
 
@@ -241,6 +242,10 @@ Suggested initial document scope:
 Exit criteria:
 
 - at least one filing can be traced to its stored raw document
+
+Validation note:
+
+- local smoke test on `2026-06-19` succeeded with `1` target CIK, `3` normalized filings, and `1` stored primary filing document linked back to `raw_record` and `filing_version`
 
 ## D. Filing Versioning Checklist
 

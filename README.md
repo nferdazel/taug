@@ -151,6 +151,9 @@ The first research worker runs as a scheduled GitHub Actions job:
 - Entry point: `python -m workers.taug_worker.cli sync-sec-submissions`
 - Secondary workflow: `.github/workflows/sec-filing-documents-sync.yml`
 - Secondary entry point: `python -m workers.taug_worker.cli fetch-sec-filing-documents`
+- Current default submission normalization cap: `25` recent filings per company per run to keep GitHub Actions runs bounded during MVP
+- Local smoke test completed on `2026-06-19`:
+  `1` target CIK ingested with `3` normalized filings and `1` primary filing document stored end-to-end
 
 Required GitHub secrets:
 
@@ -161,6 +164,11 @@ Required GitHub secrets:
 Recommended `SEC_USER_AGENT` value:
 
 - `YOUR_NAME YOUR_EMAIL@example.com`
+
+Local shell note:
+
+- if you source `.env` directly in a shell, quote `SEC_USER_AGENT`, for example:
+  `SEC_USER_AGENT="YOUR_NAME YOUR_EMAIL@example.com"`
 
 Recommended GitHub variable:
 
