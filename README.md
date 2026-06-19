@@ -156,9 +156,17 @@ Required GitHub secrets:
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `SEC_USER_AGENT`
 
+Recommended `SEC_USER_AGENT` value:
+
+- `Fredianto private@example.com`
+
 Recommended GitHub variable:
 
 - `SEC_TARGET_CIKS`
+
+Recommended starter `SEC_TARGET_CIKS` value:
+
+- `0000320193,0000789019,0001018724,0001652044,0001326801,0001045810,0001067983`
 
 ### Environment Variables
 
