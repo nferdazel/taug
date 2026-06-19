@@ -140,6 +140,66 @@ FACT_CATALOG: dict[str, FactMapping] = {
     statement_type=STATEMENT_TYPE_EQUITY,
     unit_type="shares",
   ),
+  "OperatingExpenses": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "CostOfGoodsAndServicesSold": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "CostOfRevenue": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "ResearchAndDevelopmentExpense": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "SellingGeneralAndAdministrativeExpense": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "InterestIncomeExpenseNonoperatingNet": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "IncomeTaxExpenseBenefit": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "CostOfGoodsSold": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "OperatingLeaseRightOfUseAsset": FactMapping(
+    statement_type=STATEMENT_TYPE_BALANCE,
+    unit_type="monetary",
+  ),
+  "FinanceLeaseRightOfUseAsset": FactMapping(
+    statement_type=STATEMENT_TYPE_BALANCE,
+    unit_type="monetary",
+  ),
+  "LiabilitiesNoncurrent": FactMapping(
+    statement_type=STATEMENT_TYPE_BALANCE,
+    unit_type="monetary",
+  ),
+  "RetainedEarningsAccumulatedDeficit": FactMapping(
+    statement_type=STATEMENT_TYPE_EQUITY,
+    unit_type="monetary",
+  ),
+  "AccumulatedOtherComprehensiveIncomeLossNetOfTax": FactMapping(
+    statement_type=STATEMENT_TYPE_EQUITY,
+    unit_type="monetary",
+  ),
+  "OtherComprehensiveIncomeLossNetOfTax": FactMapping(
+    statement_type=STATEMENT_TYPE_EQUITY,
+    unit_type="monetary",
+  ),
+  "CommonStocksIncludingAdditionalPaidInCapital": FactMapping(
+    statement_type=STATEMENT_TYPE_EQUITY,
+    unit_type="monetary",
+  ),
 }
 
 
