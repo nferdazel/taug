@@ -1,0 +1,37 @@
+name: Sync Price Snapshots
+
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "Maximum number of securities to fetch (0 = all)"
+        required: false
+        default: "0"
+        type: string
+  schedule:
+    - cron: "0 14 * * 1-5"
+
+jobs:
+  sync-prices:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Sync price snapshots
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+          TWELVE_DATA_API_KEY: ${{ secrets.TWELVE_DATA_API_KEY }}
+        run: |
+          python -m workers.taug_worker.cli sync-price-snapshots --limit "${{ github.event.inputs.limit || '0' }}"

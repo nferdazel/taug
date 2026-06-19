@@ -227,6 +227,13 @@ Docs discipline for this repo:
 - `[done]` investment theses (CRUD with stance tracking, RLS protected)
 - `[done]` price data integration: `sync-price-snapshots` worker job (Twelve Data API, rate-limit aware)
 - `[done]` valuation snapshot page (per-company metric cards with category sections)
+- `[done]` GitHub Actions workflows:
+  - `deploy.yml` (Flutter Web → Vercel)
+  - `sec-submissions-sync.yml` (daily SEC filings)
+  - `sec-filing-documents-sync.yml` (daily SEC documents)
+  - `sec-companyfacts-sync-parse.yml` (daily companyfacts sync + parse)
+  - `recompute-metrics.yml` (manual metrics recompute)
+  - `sync-price-snapshots.yml` (weekday price sync)
 - `[todo]` price data backfill (wait for API credits reset)
 - `[todo]` recompute metrics after price data available
 

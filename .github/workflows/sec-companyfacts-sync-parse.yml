@@ -1,0 +1,52 @@
+name: SEC Companyfacts Sync and Parse
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_ciks:
+        description: "Optional comma-separated CIK list override"
+        required: false
+        type: string
+      max_companies:
+        description: "Optional cap on number of CIKs to process"
+        required: false
+        default: "0"
+        type: string
+  schedule:
+    - cron: "30 2 * * *"
+
+jobs:
+  sync-and-parse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Sync companyfacts
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+          SEC_TARGET_CIKS: ${{ github.event.inputs.target_ciks != '' && github.event.inputs.target_ciks || vars.SEC_TARGET_CIKS }}
+          MAX_COMPANIES: ${{ github.event.inputs.max_companies != '' && github.event.inputs.max_companies || '0' }}
+        run: |
+          python -m workers.taug_worker.cli sync-sec-companyfacts --max-companies "$MAX_COMPANIES"
+
+      - name: Parse companyfacts
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+          SEC_TARGET_CIKS: ${{ github.event.inputs.target_ciks != '' && github.event.inputs.target_ciks || vars.SEC_TARGET_CIKS }}
+          MAX_COMPANIES: ${{ github.event.inputs.max_companies != '' && github.event.inputs.max_companies || '0' }}
+        run: |
+          python -m workers.taug_worker.cli parse-sec-companyfacts --max-companies "$MAX_COMPANIES"
