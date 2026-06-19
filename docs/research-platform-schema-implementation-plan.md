@@ -458,8 +458,8 @@ Current status:
 - `company_statement_history_v` implemented
 - `company_statement_items_v` implemented
 - `company_metric_snapshot_v` implemented
+- `company_data_quality_v` implemented
 - screener read views still pending
-- freshness and quality views still pending
 
 Rule:
 
