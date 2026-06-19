@@ -99,9 +99,13 @@ These are preserved, not the current bottleneck.
 
 ### What still needs implementation
 
-- price data integration into `security_price_snapshots` (enables valuation metrics like PE, PB, PS)
+- company page: company selector (currently loads first company only)
+- price data integration into `security_price_snapshots` (enables valuation metrics)
 - screener filter execution in worker (apply user-defined filters on `screener_results_v`)
-- Flutter company research pages (deferred until serving views exist)
+- statement explorer page (drill into individual line items)
+- valuation snapshot page
+- screener page
+- Flutter research pages (notes, theses)
 
 ### Test coverage
 

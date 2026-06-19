@@ -218,15 +218,13 @@ Docs discipline for this repo:
   - `company_statement_items_v`
   - `company_metric_snapshot_v`
   - `company_data_quality_v`
-- `[todo]` company page
-- `[todo]` security master page
-- `[todo]` filings timeline page
-- `[todo]` statement explorer
-- `[todo]` ratio trend page
+  - `screener_results_v`
+- `[done]` company research page (summary, metrics, statement history, quality)
+- `[todo]` company page: company selector (currently loads first company)
+- `[todo]` statement explorer page
 - `[todo]` valuation snapshot page
 - `[todo]` screener page
 - `[todo]` research notes page
-- `[todo]` data quality and freshness surfaces
 
 ## L. Recommended Phase Order
 

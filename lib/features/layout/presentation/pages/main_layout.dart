@@ -18,6 +18,7 @@ class _MainLayoutState extends State<MainLayout> {
   static const _tabs = [
     '/brief',
     '/market',
+    '/company',
     '/watchlist',
     '/portfolio',
     '/chart',
@@ -30,6 +31,7 @@ class _MainLayoutState extends State<MainLayout> {
   static const _tabLabels = [
     'Brief',
     'Market',
+    'Company',
     'Watchlist',
     'Portfolio',
     'Chart',
@@ -42,6 +44,7 @@ class _MainLayoutState extends State<MainLayout> {
   static const _tabIcons = [
     Icons.dashboard_outlined,
     Icons.show_chart,
+    Icons.business_outlined,
     Icons.list_alt,
     Icons.account_balance_wallet_outlined,
     Icons.candlestick_chart_outlined,
