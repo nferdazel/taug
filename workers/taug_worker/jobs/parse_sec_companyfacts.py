@@ -292,13 +292,19 @@ def run_parse_sec_companyfacts(
             limit=max(len(company_filings) * 4, 1000),
           )
         }
+        relevant_filing_version_ids: list[str] = list(
+          {
+            filing_version_id
+            for filing_version in active_versions_by_filing_id.values()
+            for filing_version_id in (
+              filing_version.id,
+              filing_version.supersedes_filing_version_id,
+            )
+            if filing_version_id is not None
+          }
+        )
         existing_statements = supabase_client.list_financial_statements_for_filing_versions(
-          filing_version_ids=list(
-            {
-              filing_version.id
-              for filing_version in active_versions_by_filing_id.values()
-            }
-          ),
+          filing_version_ids=relevant_filing_version_ids,
           limit=10000,
         )
 
@@ -489,6 +495,7 @@ def _parse_companyfacts_record(
     "replayed_items": 0,
     "matched_filings": 0,
     "skipped_entries": 0,
+    "linked_restatement_statements": 0,
   }
   reporting_period_cache: dict[str, str] = {}
   statement_cache: dict[str, str] = {}
@@ -506,6 +513,8 @@ def _parse_companyfacts_record(
     reporting_period_cache[cache_key] = record.id
     preloaded_reporting_period_keys.add(cache_key)
   preloaded_statement_keys: set[str] = set()
+  statement_records_by_key: dict[str, FinancialStatementRecord] = {}
+  statement_records_by_id: dict[str, FinancialStatementRecord] = {}
   for record in existing_statements:
     if record.statement_version != 1:
       continue
@@ -516,6 +525,8 @@ def _parse_companyfacts_record(
     )
     statement_cache[cache_key] = record.id
     preloaded_statement_keys.add(cache_key)
+    statement_records_by_key[cache_key] = record
+    statement_records_by_id[record.id] = record
   counted_replayed_reporting_period_keys: set[str] = set()
   counted_replayed_statement_keys: set[str] = set()
 
@@ -665,6 +676,19 @@ def _parse_companyfacts_record(
             )
             financial_statement_id = statement_result.id
             statement_cache[statement_cache_key] = financial_statement_id
+            current_statement_record = FinancialStatementRecord(
+              id=financial_statement_id,
+              filing_version_id=active_version.id,
+              statement_type=mapping.statement_type,
+              period_end=parsed_entry["period_end"],
+              statement_version=1,
+              is_restated=filing_record.is_amendment,
+              supersedes_statement_id=None,
+              superseded_by_statement_id=None,
+              status="active",
+            )
+            statement_records_by_key[statement_cache_key] = current_statement_record
+            statement_records_by_id[financial_statement_id] = current_statement_record
             counts[
               "created_statements"
               if statement_result.created
@@ -676,6 +700,22 @@ def _parse_companyfacts_record(
           ):
             counted_replayed_statement_keys.add(statement_cache_key)
             counts["replayed_statements"] += 1
+          current_statement_record = statement_records_by_key.get(statement_cache_key)
+          if current_statement_record is None and financial_statement_id is not None:
+            current_statement_record = statement_records_by_id.get(financial_statement_id)
+          if current_statement_record is not None:
+            linked_statement_record = _maybe_link_statement_restatement(
+              filing_record=filing_record,
+              current_filing_version=active_version,
+              current_statement=current_statement_record,
+              statement_records_by_key=statement_records_by_key,
+              statement_records_by_id=statement_records_by_id,
+              supabase_client=supabase_client,
+            )
+            if linked_statement_record is not None:
+              statement_records_by_key[statement_cache_key] = linked_statement_record
+              statement_records_by_id[linked_statement_record.id] = linked_statement_record
+              counts["linked_restatement_statements"] += 1
 
           lineage_source_id: str = "|".join(
             (
@@ -794,6 +834,104 @@ def _flush_pending_statement_items(
 
   counts["created_items"] += created_items
   counts["replayed_items"] += replayed_items
+
+
+def _maybe_link_statement_restatement(
+  *,
+  filing_record: FilingRecord,
+  current_filing_version: FilingVersionRecord,
+  current_statement: FinancialStatementRecord,
+  statement_records_by_key: dict[str, FinancialStatementRecord],
+  statement_records_by_id: dict[str, FinancialStatementRecord],
+  supabase_client: SupabaseRestClient,
+) -> FinancialStatementRecord | None:
+  prior_filing_version_id: str | None = current_filing_version.supersedes_filing_version_id
+  if not filing_record.is_amendment or prior_filing_version_id is None:
+    return None
+  if current_statement.supersedes_statement_id is not None:
+    return None
+
+  prior_statement_key: str = _statement_cache_key(
+    filing_version_id=prior_filing_version_id,
+    statement_type=current_statement.statement_type,
+    period_end=current_statement.period_end,
+  )
+  prior_statement: FinancialStatementRecord | None = statement_records_by_key.get(
+    prior_statement_key
+  )
+  if prior_statement is None:
+    return None
+  if prior_statement.id == current_statement.id:
+    return None
+
+  supabase_client.update_financial_statement_supersession(
+    financial_statement_id=current_statement.id,
+    supersedes_statement_id=prior_statement.id,
+    is_restated=True,
+    status="active",
+  )
+  supabase_client.update_financial_statement_supersession(
+    financial_statement_id=prior_statement.id,
+    superseded_by_statement_id=current_statement.id,
+    status="superseded",
+  )
+  supabase_client.insert_restatement_event(
+    entity_type="financial_statement",
+    entity_id=current_statement.id,
+    prior_reference_id=prior_statement.id,
+    new_reference_id=current_statement.id,
+    detection_method="sec_amendment_statement_lineage",
+    status="validated",
+    payload={
+      "source": "sec_edgar",
+      "statement_type": current_statement.statement_type,
+      "period_end": current_statement.period_end,
+      "current_filing_version_id": current_filing_version.id,
+      "prior_filing_version_id": prior_filing_version_id,
+      "current_statement_id": current_statement.id,
+      "prior_statement_id": prior_statement.id,
+    },
+  )
+  supabase_client.insert_audit_event(
+    event_type="financial_statement_restatement_linked",
+    entity_type="financial_statement",
+    entity_id=current_statement.id,
+    severity="info",
+    payload={
+      "source": "sec_edgar",
+      "statement_type": current_statement.statement_type,
+      "period_end": current_statement.period_end,
+      "current_filing_version_id": current_filing_version.id,
+      "prior_filing_version_id": prior_filing_version_id,
+      "prior_statement_id": prior_statement.id,
+    },
+  )
+
+  updated_current = FinancialStatementRecord(
+    id=current_statement.id,
+    filing_version_id=current_statement.filing_version_id,
+    statement_type=current_statement.statement_type,
+    period_end=current_statement.period_end,
+    statement_version=current_statement.statement_version,
+    is_restated=True,
+    supersedes_statement_id=prior_statement.id,
+    superseded_by_statement_id=current_statement.superseded_by_statement_id,
+    status="active",
+  )
+  updated_prior = FinancialStatementRecord(
+    id=prior_statement.id,
+    filing_version_id=prior_statement.filing_version_id,
+    statement_type=prior_statement.statement_type,
+    period_end=prior_statement.period_end,
+    statement_version=prior_statement.statement_version,
+    is_restated=prior_statement.is_restated,
+    supersedes_statement_id=prior_statement.supersedes_statement_id,
+    superseded_by_statement_id=current_statement.id,
+    status="superseded",
+  )
+  statement_records_by_key[prior_statement_key] = updated_prior
+  statement_records_by_id[prior_statement.id] = updated_prior
+  return updated_current
 
 
 def _parse_fact_entry(entry: dict[str, Any]) -> dict[str, Any] | None:

@@ -292,6 +292,7 @@ Exit criteria:
 - `[partial]` parse and normalize company facts / statements:
   - SEC companyfacts parser MVP writes core statement rows for curated facts from `10-K` / `10-Q` filings
   - replay path is hardened with bulk active-version lookup, preloaded period/statement caches, and batched statement-item inserts
+  - statement-level amendment supersession logic exists for matched `10-K/A` / `10-Q/A` lineage, but current live narrow-universe data has not yet exercised that path
   - broad-scale backfill still needs more batching and possibly non-REST write paths before large-universe runs
 - `[todo]` support historical periods and statement versions
 - `[todo]` support restatements

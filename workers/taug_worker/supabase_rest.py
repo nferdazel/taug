@@ -69,6 +69,7 @@ class FilingVersionRecord:
   raw_record_id: str | None
   version_number: int
   status: str
+  supersedes_filing_version_id: str | None
 
 
 @dataclass(frozen=True)
@@ -104,6 +105,10 @@ class FinancialStatementRecord:
   statement_type: str
   period_end: str
   statement_version: int
+  is_restated: bool
+  supersedes_statement_id: str | None
+  superseded_by_statement_id: str | None
+  status: str
 
 
 class SupabaseRestClient:
@@ -623,7 +628,10 @@ class SupabaseRestClient:
       "GET",
       "filing_versions",
       query={
-        "select": "id,filing_id,raw_record_id,version_number,status",
+        "select": (
+          "id,filing_id,raw_record_id,version_number,status,"
+          "supersedes_filing_version_id"
+        ),
         "id": f"eq.{filing_version_id}",
         "limit": "1",
       },
@@ -639,6 +647,11 @@ class SupabaseRestClient:
       ),
       version_number=int(row["version_number"]),
       status=str(row["status"]),
+      supersedes_filing_version_id=(
+        str(row["supersedes_filing_version_id"])
+        if row.get("supersedes_filing_version_id") is not None
+        else None
+      ),
     )
 
   def get_active_filing_version_by_filing(
@@ -650,7 +663,10 @@ class SupabaseRestClient:
       "GET",
       "filing_versions",
       query={
-        "select": "id,filing_id,raw_record_id,version_number,status",
+        "select": (
+          "id,filing_id,raw_record_id,version_number,status,"
+          "supersedes_filing_version_id"
+        ),
         "filing_id": f"eq.{filing_id}",
         "status": "eq.active",
         "order": "version_number.desc",
@@ -668,6 +684,11 @@ class SupabaseRestClient:
       ),
       version_number=int(row["version_number"]),
       status=str(row["status"]),
+      supersedes_filing_version_id=(
+        str(row["supersedes_filing_version_id"])
+        if row.get("supersedes_filing_version_id") is not None
+        else None
+      ),
     )
 
   def list_active_filing_versions_for_filings(
@@ -683,7 +704,10 @@ class SupabaseRestClient:
       "GET",
       "filing_versions",
       query={
-        "select": "id,filing_id,raw_record_id,version_number,status",
+        "select": (
+          "id,filing_id,raw_record_id,version_number,status,"
+          "supersedes_filing_version_id"
+        ),
         "filing_id": f"in.({filing_id_filter})",
         "status": "eq.active",
         "order": "version_number.desc",
@@ -706,6 +730,11 @@ class SupabaseRestClient:
           ),
           version_number=int(row["version_number"]),
           status=str(row["status"]),
+          supersedes_filing_version_id=(
+            str(row["supersedes_filing_version_id"])
+            if row.get("supersedes_filing_version_id") is not None
+            else None
+          ),
         )
       )
     return records
@@ -1141,7 +1170,10 @@ class SupabaseRestClient:
       "GET",
       "financial_statements",
       query={
-        "select": "id,filing_version_id,statement_type,period_end,statement_version",
+        "select": (
+          "id,filing_version_id,statement_type,period_end,statement_version,"
+          "is_restated,supersedes_statement_id,superseded_by_statement_id,status"
+        ),
         "filing_version_id": f"in.({filing_version_filter})",
         "limit": str(limit),
       },
@@ -1153,9 +1185,49 @@ class SupabaseRestClient:
         statement_type=str(row["statement_type"]),
         period_end=str(row["period_end"]),
         statement_version=int(row["statement_version"]),
+        is_restated=bool(row["is_restated"]),
+        supersedes_statement_id=(
+          str(row["supersedes_statement_id"])
+          if row.get("supersedes_statement_id") is not None
+          else None
+        ),
+        superseded_by_statement_id=(
+          str(row["superseded_by_statement_id"])
+          if row.get("superseded_by_statement_id") is not None
+          else None
+        ),
+        status=str(row["status"]),
       )
       for row in rows
     ]
+
+  def update_financial_statement_supersession(
+    self,
+    *,
+    financial_statement_id: str,
+    supersedes_statement_id: str | None = None,
+    superseded_by_statement_id: str | None = None,
+    is_restated: bool | None = None,
+    status: str | None = None,
+  ) -> None:
+    payload: dict[str, object] = {}
+    if supersedes_statement_id is not None:
+      payload["supersedes_statement_id"] = supersedes_statement_id
+    if superseded_by_statement_id is not None:
+      payload["superseded_by_statement_id"] = superseded_by_statement_id
+    if is_restated is not None:
+      payload["is_restated"] = is_restated
+    if status is not None:
+      payload["status"] = status
+    if not payload:
+      return
+    self._request(
+      "PATCH",
+      "financial_statements",
+      query={"id": f"eq.{financial_statement_id}"},
+      headers={"Prefer": "return=minimal"},
+      payload=payload,
+    )
 
   def upsert_financial_statement_item(
     self,
