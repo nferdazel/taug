@@ -175,14 +175,14 @@ Use this file as the first source of truth before planning or implementing anyth
 
 ## I. ETL / Worker Architecture
 
-- `[todo]` choose worker runtime:
+- `[done]` choose worker runtime:
   - Python preferred for filings and financial parsing
   - scheduled execution platform
-- `[todo]` define ingestion scheduler
-- `[todo]` define raw payload retention rules
-- `[todo]` define parser versioning
-- `[todo]` define validation pipeline
-- `[todo]` define restatement detection process
+- `[done]` define ingestion scheduler
+- `[done]` define raw payload retention rules
+- `[done]` define parser versioning
+- `[done]` define validation pipeline
+- `[done]` define restatement detection process
 
 ## J. Screener Architecture
 
@@ -230,13 +230,14 @@ Exit criteria:
 
 ### Phase 2: Ingestion topology
 
-- `[todo]` choose worker runtime and deployment model
-- `[todo]` define raw document and payload storage layout
-- `[todo]` define validation and parser version conventions
+- `[done]` choose worker runtime and deployment model
+- `[done]` define raw document and payload storage layout
+- `[done]` define validation and parser version conventions
 
 Exit criteria:
 
 - ingestion architecture approved
+- ingestion topology document exists
 
 ### Phase 3: Filings foundation
 
