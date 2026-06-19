@@ -8,6 +8,10 @@ from typing import Iterable
 from ..__init__ import __version__
 from ..sec_client import SecClient
 from ..supabase_rest import RawSource, SupabaseRestClient, UpsertResult
+from ..validators.sec_submissions import (
+  ValidationFailure,
+  validate_sec_submissions_payload,
+)
 
 
 @dataclass(frozen=True)
@@ -106,6 +110,45 @@ def run_sync_sec_submissions(
           created_raw_records += 1
         else:
           replayed_raw_records += 1
+        payload_validation_failures: tuple[ValidationFailure, ...] = (
+          validate_sec_submissions_payload(payload)
+        )
+        if payload_validation_failures:
+          failure_payload: dict[str, object] = {
+            "source": source.code,
+            "worker_version": __version__,
+            "raw_record_id": raw_record.id,
+            "failure_codes": [failure.code for failure in payload_validation_failures],
+            "failures": [
+              {
+                "code": failure.code,
+                "message": failure.message,
+                "details": failure.details,
+              }
+              for failure in payload_validation_failures
+            ],
+          }
+          supabase_client.insert_validation_event(
+            entity_type="raw_record",
+            entity_id=raw_record.id,
+            validation_rule="sec_submissions_required_keys",
+            status="failed",
+            message=payload_validation_failures[0].message,
+            payload=failure_payload,
+          )
+          supabase_client.insert_audit_event(
+            event_type="raw_record_validation_failed",
+            entity_type="raw_record",
+            entity_id=raw_record.id,
+            severity="error",
+            reference_type="raw_fetch_run",
+            reference_id=fetch_run_id,
+            payload=failure_payload,
+          )
+          raise ValueError(
+            "SEC submissions payload validation failed: "
+            + ", ".join(failure.code for failure in payload_validation_failures)
+          )
         canonical_security = supabase_client.ensure_canonical_security(
           cik=cik,
           ticker=ticker,

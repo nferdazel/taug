@@ -264,6 +264,7 @@ Exit criteria:
 - `[done]` validate SEC rerun idempotency on repeated narrow-universe sync
 - `[done]` validate partial-failure audit trail on mixed-result SEC sync
 - `[done]` validate checkpoint advancement only after successful run
+- `[done]` validate required SEC submissions keys before normalization
 
 Exit criteria:
 

@@ -282,7 +282,7 @@ Exit criteria:
 ### E1. Raw validation
 
 - `[todo]` validate payload parse success
-- `[todo]` validate required SEC keys exist
+- `[done]` validate required SEC keys exist
 - `[todo]` validate fetched document hash and byte size
 - `[todo]` validate duplicate detection rules
 
@@ -308,6 +308,7 @@ Validation note:
 - local partial-failure validation on `2026-06-19` for `0000320193` plus bogus `0000000000` produced `raw_fetch_runs.status=partial`, `successful_cik_ids=["0000320193"]`, `failed_cik_ids=["0000000000"]`, and matching item-level + run-level audit events
 - local checkpoint validation on `2026-06-19` produced one `ingestion_checkpoints` row for successful single-CIK scope and no new checkpoint row for later partial mixed-CIK scope
 - local document-fetch checkpoint validation on `2026-06-19` produced a `document_fetch` checkpoint row after a successful `attempted_documents=1` run
+- local SEC-key validation on `2026-06-19` confirmed invalid synthetic payloads emit deterministic failure codes and valid live `0000320193` submissions still complete successfully
 
 ## F. Storage Convention Checklist
 
