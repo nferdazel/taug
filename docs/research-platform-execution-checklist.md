@@ -340,8 +340,11 @@ Exit criteria:
   - Tested end-to-end on Apple (AAPL) and Microsoft (MSFT)
   - Handles non-standard fiscal calendars (250-day threshold)
   - Handles superseded filing versions during replay
-- `[todo]` implement metric snapshot read model (serving view)
-- `[todo]` implement saved screener support
+- `[done]` implement metric snapshot serving view (`company_metric_snapshot_v`)
+- `[done]` implement data quality serving view (`company_data_quality_v`)
+- `[done]` implement saved screener schema (`saved_screeners` with RLS)
+- `[done]` implement screener results serving view (`screener_results_v`)
+- `[todo]` implement screener filter execution in worker
 
 Exit criteria:
 

@@ -95,12 +95,12 @@ These are preserved, not the current bottleneck.
 - `company_statement_items_v`
 - `company_metric_snapshot_v`
 - `company_data_quality_v`
+- `screener_results_v`
 
 ### What still needs implementation
 
-- metric snapshot serving view (reads from `security_metric_snapshots`)
-- price data integration into `security_price_snapshots` (enables valuation metrics)
-- quality and freshness read model
+- price data integration into `security_price_snapshots` (enables valuation metrics like PE, PB, PS)
+- screener filter execution in worker (apply user-defined filters on `screener_results_v`)
 - Flutter company research pages (deferred until serving views exist)
 
 ### Test coverage
