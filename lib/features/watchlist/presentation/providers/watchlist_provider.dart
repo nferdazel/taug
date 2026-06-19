@@ -16,6 +16,7 @@ class WatchlistProvider {
   final isLoading = Signal<bool>(false);
   final error = Signal<String?>(null);
   final lastUpdated = Signal<DateTime?>(null);
+  bool _isLoadingPrices = false;
 
   Timer? _refreshTimer;
 
@@ -74,15 +75,21 @@ class WatchlistProvider {
   }
 
   Future<void> loadPrices() async {
+    if (_isLoadingPrices) return;
     if (currentWatchlist.value == null) return;
     if (watchlistItems.value.isEmpty) return;
+
+    _isLoadingPrices = true;
 
     final tickers = watchlistItems.value
         .where((item) => item.ticker != null)
         .map((item) => item.ticker!)
         .toList();
 
-    if (tickers.isEmpty) return;
+    if (tickers.isEmpty) {
+      _isLoadingPrices = false;
+      return;
+    }
 
     final result = await _repository.getPricesForSymbols(tickers);
 
@@ -90,6 +97,8 @@ class WatchlistProvider {
       prices.value = result.data!;
       lastUpdated.value = DateTime.now();
     }
+
+    _isLoadingPrices = false;
   }
 
   Future<void> createWatchlist(String name) async {

@@ -122,19 +122,25 @@ class PortfolioRepository {
     try {
       final Map<String, PriceData> priceMap = {};
 
-      for (final ticker in tickers) {
+      final futures = tickers.map((ticker) async {
         try {
           final response = await _client.functions.invoke(
             'get-price',
             body: {'symbol': ticker},
           );
           if (response.data != null) {
-            priceMap[ticker] = PriceData.fromJson(
-              response.data as Map<String, dynamic>,
-            );
+            return MapEntry(ticker, PriceData.fromJson(response.data as Map<String, dynamic>));
           }
         } catch (e) {
           debugPrint('[PortfolioRepo] getPrices[$ticker]: $e');
+        }
+        return null;
+      });
+
+      final results = await Future.wait(futures);
+      for (final result in results) {
+        if (result != null) {
+          priceMap[result.key] = result.value;
         }
       }
 

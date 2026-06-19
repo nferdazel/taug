@@ -133,18 +133,25 @@ class WatchlistRepository {
     try {
       final Map<String, PriceData> priceMap = {};
 
-      for (final ticker in tickers) {
+      final futures = tickers.map((ticker) async {
         try {
           final response = await _client.functions.invoke(
             'get-price',
             body: {'symbol': ticker},
           );
           if (response.data != null) {
-            final price = PriceData.fromJson(response.data as Map<String, dynamic>);
-            priceMap[ticker] = price;
+            return MapEntry(ticker, PriceData.fromJson(response.data as Map<String, dynamic>));
           }
         } catch (e) {
           debugPrint('[WatchlistRepo] getPricesForSymbols[$ticker]: $e');
+        }
+        return null;
+      });
+
+      final results = await Future.wait(futures);
+      for (final result in results) {
+        if (result != null) {
+          priceMap[result.key] = result.value;
         }
       }
 

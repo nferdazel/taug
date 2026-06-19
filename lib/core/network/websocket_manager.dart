@@ -4,6 +4,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 class WebSocketManager {
   WebSocketChannel? _channel;
   final Map<String, StreamController<dynamic>> _controllers = {};
+  final Map<String, StreamSubscription<dynamic>> _subscriptions = {};
   Timer? _heartbeatTimer;
   Timer? _reconnectTimer;
   int _reconnectAttempts = 0;
@@ -36,10 +37,12 @@ class WebSocketManager {
     if (!_controllers.containsKey(channel)) {
       _controllers[channel] = StreamController<dynamic>.broadcast();
     }
-    _controllers[channel]!.stream.listen(onData);
+    _subscriptions[channel]?.cancel();
+    _subscriptions[channel] = _controllers[channel]!.stream.listen(onData);
   }
 
   void unsubscribe(String channel) {
+    _subscriptions.remove(channel)?.cancel();
     final controller = _controllers.remove(channel);
     controller?.close();
   }
@@ -51,6 +54,10 @@ class WebSocketManager {
   void disconnect() {
     _heartbeatTimer?.cancel();
     _reconnectTimer?.cancel();
+    for (final sub in _subscriptions.values) {
+      sub.cancel();
+    }
+    _subscriptions.clear();
     for (final controller in _controllers.values) {
       controller.close();
     }
@@ -68,11 +75,18 @@ class WebSocketManager {
 
   void _handleDisconnect(String url) {
     _heartbeatTimer?.cancel();
+    _channel = null;
+
     if (_reconnectAttempts < _maxReconnectAttempts) {
       _reconnectTimer?.cancel();
       _reconnectTimer = Timer(_reconnectDelay * (_reconnectAttempts + 1), () {
         _reconnectAttempts++;
         connect(url);
+
+        for (final channel in _controllers.keys) {
+          _subscriptions[channel]?.cancel();
+          _subscriptions.remove(channel);
+        }
       });
     }
   }

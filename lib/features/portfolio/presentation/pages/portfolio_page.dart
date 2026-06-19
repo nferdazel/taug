@@ -3,6 +3,7 @@ import 'package:signals/signals_flutter.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../watchlist/data/symbol_repository.dart';
 import '../providers/portfolio_provider.dart';
 
 class PortfolioPage extends StatefulWidget {
@@ -351,11 +352,17 @@ class _AddHoldingDialogState extends State<_AddHoldingDialog> {
           child: const Text(AppStrings.cancel),
         ),
         ElevatedButton(
-          onPressed: () {
+          onPressed: () async {
+            final symbol = _symbolController.text.trim().toUpperCase();
             final qty = double.tryParse(_quantityController.text) ?? 0;
             final price = double.tryParse(_priceController.text) ?? 0;
-            if (qty > 0 && price > 0) {
-              Navigator.pop(context);
+            if (symbol.isNotEmpty && qty > 0 && price > 0) {
+              final symbolRepo = SymbolRepository();
+              final symbolId = await symbolRepo.getSymbolId(symbol);
+              if (symbolId != null) {
+                await widget.provider.addHolding(symbolId, qty, price);
+              }
+              if (context.mounted) Navigator.pop(context);
             }
           },
           child: const Text(AppStrings.save),

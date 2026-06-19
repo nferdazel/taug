@@ -18,24 +18,25 @@ class MarketRepository {
         'JPM', 'V', 'WMT', 'BTC/USDT', 'ETH/USDT', 'XAU/USD',
       ];
 
-      final List<PriceData> results = [];
-
-      for (final symbol in symbols) {
+      final futures = symbols.map((symbol) async {
         try {
           final response = await _client.functions.invoke(
             'get-price',
             body: {'symbol': symbol},
           );
           if (response.data != null) {
-            results.add(PriceData.fromJson(response.data as Map<String, dynamic>));
+            return PriceData.fromJson(response.data as Map<String, dynamic>);
           }
         } catch (e) {
           debugPrint('[MarketRepo] getTopMovers[$symbol]: $e');
         }
-      }
+        return null;
+      });
 
-      results.sort((a, b) => b.changePercent.abs().compareTo(a.changePercent.abs()));
-      return Result.success(results.take(limit).toList());
+      final results = await Future.wait(futures);
+      final validResults = results.whereType<PriceData>().toList();
+      validResults.sort((a, b) => b.changePercent.abs().compareTo(a.changePercent.abs()));
+      return Result.success(validResults.take(limit).toList());
     } catch (e) {
       debugPrint('[MarketRepo] getTopMovers: $e');
       return Result.failure(ServerFailure(message: e.toString()));

@@ -85,12 +85,12 @@ final class CandleData extends Equatable {
 
   factory CandleData.fromJson(Map<String, dynamic> json) {
     return CandleData(
-      date: DateTime.parse(json['date'] as String),
-      open: double.parse(json['open'].toString()),
-      high: double.parse(json['high'].toString()),
-      low: double.parse(json['low'].toString()),
-      close: double.parse(json['close'].toString()),
-      volume: int.tryParse(json['volume']?.toString() ?? '0') ?? 0,
+      date: DateTime.tryParse(json['date']?.toString() ?? '') ?? DateTime.now(),
+      open: (json['open'] as num?)?.toDouble() ?? 0,
+      high: (json['high'] as num?)?.toDouble() ?? 0,
+      low: (json['low'] as num?)?.toDouble() ?? 0,
+      close: (json['close'] as num?)?.toDouble() ?? 0,
+      volume: (json['volume'] as num?)?.toInt() ?? 0,
     );
   }
 

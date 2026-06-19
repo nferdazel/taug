@@ -5,6 +5,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 class BinanceWebSocketService {
   WebSocketChannel? _channel;
   final Map<String, StreamController<Map<String, dynamic>>> _controllers = {};
+  final Map<String, StreamSubscription<dynamic>> _subscriptions = {};
   Timer? _reconnectTimer;
   int _reconnectAttempts = 0;
   static const int _maxReconnectAttempts = 5;
@@ -44,7 +45,8 @@ class BinanceWebSocketService {
       _controllers[streamName] = StreamController<Map<String, dynamic>>.broadcast();
     }
 
-    _controllers[streamName]!.stream.listen(onData);
+    _subscriptions[streamName]?.cancel();
+    _subscriptions[streamName] = _controllers[streamName]!.stream.listen(onData);
 
     _sendSubscription('SUBSCRIBE', [streamName]);
   }
@@ -65,7 +67,8 @@ class BinanceWebSocketService {
       _controllers[streamName] = StreamController<Map<String, dynamic>>.broadcast();
     }
 
-    _controllers[streamName]!.stream.listen(onData);
+    _subscriptions[streamName]?.cancel();
+    _subscriptions[streamName] = _controllers[streamName]!.stream.listen(onData);
 
     _sendSubscription('SUBSCRIBE', [streamName]);
   }
@@ -74,6 +77,7 @@ class BinanceWebSocketService {
     final streamName = '${symbol.toLowerCase()}@kline_$interval';
     _sendSubscription('UNSUBSCRIBE', [streamName]);
 
+    _subscriptions.remove(streamName)?.cancel();
     final controller = _controllers.remove(streamName);
     controller?.close();
   }
@@ -82,6 +86,7 @@ class BinanceWebSocketService {
     final streamName = '${symbol.toLowerCase()}@ticker';
     _sendSubscription('UNSUBSCRIBE', [streamName]);
 
+    _subscriptions.remove(streamName)?.cancel();
     final controller = _controllers.remove(streamName);
     controller?.close();
   }
@@ -113,6 +118,10 @@ class BinanceWebSocketService {
 
   void disconnect() {
     _reconnectTimer?.cancel();
+    for (final sub in _subscriptions.values) {
+      sub.cancel();
+    }
+    _subscriptions.clear();
     for (final controller in _controllers.values) {
       controller.close();
     }
