@@ -353,7 +353,7 @@ Exit criteria:
 - `[done]` implement data quality serving view (`company_data_quality_v`)
 - `[done]` implement saved screener schema (`saved_screeners` with RLS)
 - `[done]` implement screener results serving view (`screener_results_v`)
-- `[todo]` implement screener filter execution in worker
+- `[done]` implement screener filter execution in worker
 
 Exit criteria:
 

@@ -87,7 +87,7 @@ Not the target:
 - `company_data_quality_v`
 - `screener_results_v`
 
-### Worker jobs (6 total)
+### Worker jobs (7 total)
 
 - `sync-sec-submissions` — fetch SEC EDGAR submissions, normalize filings
 - `fetch-sec-filing-documents` — store immutable raw filing documents
@@ -95,6 +95,7 @@ Not the target:
 - `parse-sec-companyfacts` — parse into statements (35 facts)
 - `compute-company-metrics` — compute 19 metrics (tested on AAPL + MSFT)
 - `sync-price-snapshots` — fetch quotes from Twelve Data API
+- `execute-screener` — execute saved screener filters against metric snapshots
 
 ### CI/CD (6 workflows)
 
@@ -119,6 +120,11 @@ Not the target:
 - `sync-price-snapshots` will fail until API credits reset (next UTC midnight)
 - Price-dependent metrics (PE, PB, PS, EV/EBIT, EV/EBITDA, market_cap, enterprise_value) remain `missing_input` until price data is available
 
+### Migration fix applied
+
+- `20260620000100_grant_screener_access.sql` — adds `service_role` grant on `saved_screeners` (was missing from original migration)
+- `profiles` table also needed `GRANT SELECT ON taug.profiles TO service_role` (applied manually, not yet in migration)
+
 ## What Is Still Incomplete (Intentionally Deferred)
 
 ### Data/model work
@@ -132,7 +138,7 @@ Not the target:
 - `coverage_lists` table
 - `recalculation_runs` table
 - data quality scoring model
-- screener filter execution worker (next implementation task)
+- screener filter execution worker (done — tested on AAPL/MSFT with gross_margin + ROE filters)
 
 ### Operational
 
