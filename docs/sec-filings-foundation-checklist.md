@@ -288,7 +288,7 @@ Exit criteria:
 
 ### E2. Normalization validation
 
-- `[todo]` validate filing mapped to canonical company
+- `[done]` validate filing mapped to canonical company
 - `[todo]` validate filing date and acceptance datetime sanity
 - `[todo]` validate version linkage integrity
 
@@ -312,6 +312,7 @@ Validation note:
 - local parse validation on `2026-06-19` confirmed synthetic bad-JSON payloads emit `sec_submissions_payload_json_parse_failed`, synthetic wrong-root payloads emit `sec_submissions_payload_root_type_invalid`, and live `0000320193` submissions still complete successfully
 - local raw-document integrity validation on `2026-06-19` confirmed synthetic invalid bodies emit deterministic integrity failure codes and live fetched documents store `content_hash`, `byte_size`, `verified_at`, and `sec_primary_document_integrity=passed`
 - local duplicate-detection validation on `2026-06-19` confirmed live submissions reruns emit `sec_submissions_duplicate_detection=passed` and direct duplicate `raw_document` insertion returns the existing row with `created=False`
+- local company-mapping validation on `2026-06-19` confirmed live `0000320193` filings emit `sec_filing_company_mapping=passed` with matching canonical `company_id`
 
 ## F. Storage Convention Checklist
 

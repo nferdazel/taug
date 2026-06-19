@@ -486,6 +486,52 @@ def _normalize_filing_discovery(
         "cik": payload.get("cik", cik),
       },
     )
+    filing_record = supabase_client.get_filing_record(filing_id=filing_result.id)
+    if filing_record.company_id != company_id:
+      failure_payload: dict[str, object] = {
+        "source": "sec_edgar",
+        "cik": cik,
+        "filing_id": filing_result.id,
+        "filing_key": filing_record.filing_key,
+        "expected_company_id": company_id,
+        "actual_company_id": filing_record.company_id,
+        "raw_record_id": raw_record_id,
+      }
+      supabase_client.insert_validation_event(
+        entity_type="filing",
+        entity_id=filing_result.id,
+        validation_rule="sec_filing_company_mapping",
+        status="failed",
+        message="Resolved filing company_id does not match canonical company mapping.",
+        payload=failure_payload,
+      )
+      supabase_client.insert_audit_event(
+        event_type="filing_company_mapping_failed",
+        entity_type="filing",
+        entity_id=filing_result.id,
+        severity="error",
+        payload=failure_payload,
+      )
+      raise ValueError(
+        "SEC filing company mapping validation failed: "
+        f"filing_id={filing_result.id} expected_company_id={company_id} "
+        f"actual_company_id={filing_record.company_id}"
+      )
+    supabase_client.insert_validation_event(
+      entity_type="filing",
+      entity_id=filing_result.id,
+      validation_rule="sec_filing_company_mapping",
+      status="passed",
+      message="Resolved filing company_id matches canonical company mapping.",
+      payload={
+        "source": "sec_edgar",
+        "cik": cik,
+        "filing_id": filing_result.id,
+        "filing_key": filing_record.filing_key,
+        "company_id": company_id,
+        "raw_record_id": raw_record_id,
+      },
+    )
     if filing_result.created:
       created_filings += 1
     else:

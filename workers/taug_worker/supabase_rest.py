@@ -49,6 +49,13 @@ class IngestionCheckpoint:
   updated_at: str
 
 
+@dataclass(frozen=True)
+class FilingRecord:
+  id: str
+  company_id: str
+  filing_key: str
+
+
 class SupabaseRestClient:
   def __init__(
     self,
@@ -584,6 +591,29 @@ class SupabaseRestClient:
     if not rows:
       raise ValueError("Failed to insert raw document")
     return UpsertResult(id=str(rows[0]["id"]), created=True)
+
+  def get_filing_record(
+    self,
+    *,
+    filing_id: str,
+  ) -> FilingRecord:
+    rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "filings",
+      query={
+        "select": "id,company_id,filing_key",
+        "id": f"eq.{filing_id}",
+        "limit": "1",
+      },
+    )
+    if not rows:
+      raise ValueError(f"Failed to resolve filing row: {filing_id}")
+    row: dict[str, Any] = rows[0]
+    return FilingRecord(
+      id=str(row["id"]),
+      company_id=str(row["company_id"]),
+      filing_key=str(row["filing_key"]),
+    )
 
   def mark_raw_document_verified(
     self,
