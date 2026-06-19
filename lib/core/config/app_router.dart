@@ -9,6 +9,7 @@ import '../../features/chart/presentation/pages/chart_page.dart';
 import '../../features/layout/presentation/pages/main_layout.dart';
 import '../../features/market/presentation/pages/market_page.dart';
 import '../../features/news/presentation/pages/news_page.dart';
+import '../../features/policy/presentation/pages/policy_page.dart';
 import '../../features/portfolio/presentation/pages/portfolio_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/watchlist/presentation/pages/watchlist_page.dart';
@@ -67,6 +68,11 @@ final router = GoRouter(
           path: '/news',
           pageBuilder: (context, state) =>
               const NoTransitionPage(child: NewsPage()),
+        ),
+        GoRoute(
+          path: '/policy',
+          pageBuilder: (context, state) =>
+              const NoTransitionPage(child: PolicyPage()),
         ),
         GoRoute(
           path: '/calendar',

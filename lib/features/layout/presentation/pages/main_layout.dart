@@ -23,6 +23,7 @@ class _MainLayoutState extends State<MainLayout> {
     '/portfolio',
     '/chart',
     '/news',
+    '/policy',
     '/calendar',
     '/settings',
   ];
@@ -33,6 +34,7 @@ class _MainLayoutState extends State<MainLayout> {
     'Portfolio',
     'Chart',
     'News',
+    'Policy',
     'Calendar',
     'Settings',
   ];
@@ -43,6 +45,7 @@ class _MainLayoutState extends State<MainLayout> {
     Icons.account_balance_wallet_outlined,
     Icons.candlestick_chart_outlined,
     Icons.newspaper_outlined,
+    Icons.account_balance_outlined,
     Icons.calendar_today_outlined,
     Icons.settings_outlined,
   ];
@@ -101,7 +104,9 @@ class _MainLayoutState extends State<MainLayout> {
                       decoration: BoxDecoration(
                         border: Border(
                           bottom: BorderSide(
-                            color: isSelected ? AppThemeColors.accent : Colors.transparent,
+                            color: isSelected
+                                ? AppThemeColors.accent
+                                : Colors.transparent,
                             width: 2,
                           ),
                         ),
@@ -112,13 +117,17 @@ class _MainLayoutState extends State<MainLayout> {
                           Icon(
                             _tabIcons[index],
                             size: 13,
-                            color: isSelected ? AppThemeColors.textPrimary : AppThemeColors.textSecondary,
+                            color: isSelected
+                                ? AppThemeColors.textPrimary
+                                : AppThemeColors.textSecondary,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             _tabLabels[index],
                             style: AppTypography.caption.copyWith(
-                              color: isSelected ? AppThemeColors.textPrimary : AppThemeColors.textSecondary,
+                              color: isSelected
+                                  ? AppThemeColors.textPrimary
+                                  : AppThemeColors.textSecondary,
                             ),
                           ),
                         ],

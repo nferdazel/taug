@@ -9,6 +9,7 @@ abstract final class AppSchema {
   static const String instrumentSources = 'instrument_sources';
   static const String quoteSnapshots = 'quote_snapshots';
   static const String newsArticles = 'news_articles';
+  static const String policyEvents = 'policy_events';
   static const String econEvents = 'econ_events';
   static const String alerts = 'alerts';
   static const String userSettings = 'user_settings';
