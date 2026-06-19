@@ -8,6 +8,8 @@ import '../../../../shared/models/price_data.dart';
 import '../../../../shared/widgets/price_cell.dart';
 import '../../data/chart_repository.dart';
 
+enum ChartType { candle, line, area, ohlc }
+
 class ChartPage extends StatefulWidget {
   const ChartPage({super.key});
 
@@ -23,6 +25,7 @@ class _ChartPageState extends State<ChartPage> {
   final _error = Signal<String?>(null);
   final _selectedSymbol = Signal<String>('AAPL');
   final _selectedInterval = Signal<String>('1d');
+  final _selectedChartType = Signal<ChartType>(ChartType.candle);
 
   @override
   void initState() {
@@ -35,9 +38,7 @@ class _ChartPageState extends State<ChartPage> {
     _error.value = null;
 
     final priceResult = await _repository.getCurrentPrice(_selectedSymbol.value);
-    if (priceResult.isSuccess) {
-      _currentPrice.value = priceResult.data;
-    }
+    if (priceResult.isSuccess) _currentPrice.value = priceResult.data;
 
     final chartResult = await _repository.getChartData(
       symbol: _selectedSymbol.value,
@@ -74,7 +75,9 @@ class _ChartPageState extends State<ChartPage> {
       child: Row(
         children: [
           _buildSymbolSelector(),
-          const SizedBox(width: 12),
+          const SizedBox(width: 8),
+          _buildChartTypeSelector(),
+          const SizedBox(width: 8),
           _buildIntervalButtons(),
           const Spacer(),
           _buildPriceInfo(),
@@ -96,7 +99,7 @@ class _ChartPageState extends State<ChartPage> {
           value: _selectedSymbol.value,
           underline: const SizedBox(),
           dropdownColor: AppThemeColors.surface,
-          style: AppTypography.monoSmall,
+          style: AppTypography.monoLabel,
           isDense: true,
           items: const [
             DropdownMenuItem(value: 'AAPL', child: Text('AAPL')),
@@ -121,6 +124,48 @@ class _ChartPageState extends State<ChartPage> {
     });
   }
 
+  Widget _buildChartTypeSelector() {
+    return Watch((_) {
+      final current = _selectedChartType.value;
+      return Row(
+        children: [
+          _buildTypeButton(ChartType.candle, 'Candle', current),
+          const SizedBox(width: 2),
+          _buildTypeButton(ChartType.line, 'Line', current),
+          const SizedBox(width: 2),
+          _buildTypeButton(ChartType.area, 'Area', current),
+          const SizedBox(width: 2),
+          _buildTypeButton(ChartType.ohlc, 'OHLC', current),
+        ],
+      );
+    });
+  }
+
+  Widget _buildTypeButton(ChartType type, String label, ChartType current) {
+    final isSelected = current == type;
+    return GestureDetector(
+      onTap: () => _selectedChartType.value = type,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+        decoration: BoxDecoration(
+          color: isSelected ? AppThemeColors.accent : Colors.transparent,
+          border: Border.all(
+            color: isSelected ? AppThemeColors.accent : AppThemeColors.border,
+          ),
+          borderRadius: BorderRadius.circular(3),
+        ),
+        child: Text(
+          label,
+          style: AppTypography.monoMeta.copyWith(
+            color: isSelected
+                ? AppThemeColors.textPrimary
+                : AppThemeColors.textSecondary,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildIntervalButtons() {
     return Watch((_) {
       final intervals = ['1m', '5m', '15m', '1h', '1d', '1w', '1M'];
@@ -130,7 +175,7 @@ class _ChartPageState extends State<ChartPage> {
           return Padding(
             padding: const EdgeInsets.only(right: 2),
             child: SizedBox(
-              height: 24,
+              height: 22,
               child: TextButton(
                 onPressed: () {
                   _selectedInterval.value = interval;
@@ -139,13 +184,18 @@ class _ChartPageState extends State<ChartPage> {
                 style: TextButton.styleFrom(
                   backgroundColor: isSelected
                       ? AppThemeColors.accent
-                      : AppThemeColors.backgroundLight,
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                      : Colors.transparent,
+                  padding: const EdgeInsets.symmetric(horizontal: 5),
                   minimumSize: Size.zero,
+                  side: BorderSide(
+                    color: isSelected
+                        ? AppThemeColors.accent
+                        : AppThemeColors.border,
+                  ),
                 ),
                 child: Text(
                   interval,
-                  style: AppTypography.monoTiny.copyWith(
+                  style: AppTypography.monoMeta.copyWith(
                     color: isSelected
                         ? AppThemeColors.textPrimary
                         : AppThemeColors.textSecondary,
@@ -166,8 +216,8 @@ class _ChartPageState extends State<ChartPage> {
 
       return Row(
         children: [
-          Text(price.price.toStringAsFixed(2), style: AppTypography.monoLarge),
-          const SizedBox(width: 8),
+          Text(price.price.toStringAsFixed(2), style: AppTypography.monoPrice),
+          const SizedBox(width: 6),
           ChangeCell(value: price.changePercent),
         ],
       );
@@ -179,6 +229,7 @@ class _ChartPageState extends State<ChartPage> {
       final candles = _candles.value;
       final isLoading = _isLoading.value;
       final error = _error.value;
+      final chartType = _selectedChartType.value;
 
       if (isLoading) {
         return const Center(
@@ -195,11 +246,14 @@ class _ChartPageState extends State<ChartPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 32, color: AppThemeColors.bearish),
+              const Icon(Icons.error_outline, size: 24, color: AppThemeColors.bearish),
+              const SizedBox(height: 6),
+              Text(error, style: AppTypography.caption, textAlign: TextAlign.center),
               const SizedBox(height: 8),
-              Text(error, style: AppTypography.bodySmall, textAlign: TextAlign.center),
-              const SizedBox(height: 12),
-              ElevatedButton(onPressed: _loadData, child: const Text(AppStrings.retry)),
+              ElevatedButton(
+                onPressed: _loadData,
+                child: const Text(AppStrings.retry),
+              ),
             ],
           ),
         );
@@ -207,7 +261,7 @@ class _ChartPageState extends State<ChartPage> {
 
       if (candles.isEmpty) {
         return const Center(
-          child: Text(AppStrings.noData, style: AppTypography.bodySmall),
+          child: Text(AppStrings.noData, style: AppTypography.caption),
         );
       }
 
@@ -221,33 +275,84 @@ class _ChartPageState extends State<ChartPage> {
             lineWidth: 1,
             tooltipDisplayMode: TrackballDisplayMode.floatAllPoints,
           ),
-          zoomPanBehavior: ZoomPanBehavior(enablePanning: true, enablePinching: true),
-          series: <CandleSeries<CandleData, DateTime>>[
-            CandleSeries<CandleData, DateTime>(
-              dataSource: candles,
-              xValueMapper: (CandleData candle, _) => candle.date,
-              openValueMapper: (CandleData candle, _) => candle.open,
-              highValueMapper: (CandleData candle, _) => candle.high,
-              lowValueMapper: (CandleData candle, _) => candle.low,
-              closeValueMapper: (CandleData candle, _) => candle.close,
-              bullColor: AppThemeColors.bullish,
-              bearColor: AppThemeColors.bearish,
-              borderWidth: 1,
-            ),
-          ],
+          zoomPanBehavior: ZoomPanBehavior(
+            enablePanning: true,
+            enablePinching: true,
+          ),
+          series: _buildSeries(candles, chartType),
           primaryXAxis: const DateTimeAxis(
             majorGridLines: MajorGridLines(width: 0),
             axisLine: AxisLine(width: 1, color: AppThemeColors.border),
-            labelStyle: AppTypography.monoTiny,
+            labelStyle: AppTypography.monoMeta,
           ),
           primaryYAxis: const NumericAxis(
             majorGridLines: MajorGridLines(width: 0.5, color: AppThemeColors.border),
             axisLine: AxisLine(width: 0),
-            labelStyle: AppTypography.monoTiny,
+            labelStyle: AppTypography.monoMeta,
           ),
         ),
       );
     });
+  }
+
+  List<CartesianSeries<CandleData, DateTime>> _buildSeries(
+    List<CandleData> candles,
+    ChartType type,
+  ) {
+    switch (type) {
+      case ChartType.candle:
+        return [
+          CandleSeries<CandleData, DateTime>(
+            dataSource: candles,
+            xValueMapper: (CandleData c, _) => c.date,
+            openValueMapper: (CandleData c, _) => c.open,
+            highValueMapper: (CandleData c, _) => c.high,
+            lowValueMapper: (CandleData c, _) => c.low,
+            closeValueMapper: (CandleData c, _) => c.close,
+            bullColor: AppThemeColors.bullish,
+            bearColor: AppThemeColors.bearish,
+            borderWidth: 1,
+          ),
+        ];
+
+      case ChartType.line:
+        return [
+          LineSeries<CandleData, DateTime>(
+            dataSource: candles,
+            xValueMapper: (CandleData c, _) => c.date,
+            yValueMapper: (CandleData c, _) => c.close,
+            color: AppThemeColors.accent,
+            width: 1.5,
+          ),
+        ];
+
+      case ChartType.area:
+        return [
+          AreaSeries<CandleData, DateTime>(
+            dataSource: candles,
+            xValueMapper: (CandleData c, _) => c.date,
+            yValueMapper: (CandleData c, _) => c.close,
+            color: AppThemeColors.accent.withValues(alpha: 0.15),
+            borderColor: AppThemeColors.accent,
+            borderWidth: 1.5,
+          ),
+        ];
+
+      case ChartType.ohlc:
+        return [
+          HiloOpenCloseSeries<CandleData, DateTime>(
+            dataSource: candles,
+            xValueMapper: (CandleData c, _) => c.date,
+            openValueMapper: (CandleData c, _) => c.open,
+            highValueMapper: (CandleData c, _) => c.high,
+            lowValueMapper: (CandleData c, _) => c.low,
+            closeValueMapper: (CandleData c, _) => c.close,
+            bullColor: AppThemeColors.bullish,
+            bearColor: AppThemeColors.bearish,
+            borderWidth: 1,
+          ),
+        ];
+    }
   }
 
   Widget _buildInfoPanel() {
@@ -256,8 +361,8 @@ class _ChartPageState extends State<ChartPage> {
       if (price == null) return const SizedBox();
 
       return Container(
-        height: 80,
-        padding: const EdgeInsets.all(8),
+        height: 60,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
         decoration: const BoxDecoration(
           border: Border(top: BorderSide(color: AppThemeColors.border)),
         ),
@@ -268,7 +373,6 @@ class _ChartPageState extends State<ChartPage> {
             _buildInfoItem('Low', price.low?.toStringAsFixed(2) ?? '-'),
             _buildInfoItem('Close', price.close?.toStringAsFixed(2) ?? '-'),
             _buildInfoItem('Volume', _formatVolume(price.volume)),
-            _buildInfoItem('Turnover', price.turnover?.toStringAsFixed(0) ?? '-'),
           ],
         ),
       );
@@ -280,9 +384,9 @@ class _ChartPageState extends State<ChartPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(label, style: AppTypography.monoTiny),
-          const SizedBox(height: 2),
-          Text(value, style: AppTypography.monoSmall),
+          Text(label, style: AppTypography.monoMeta),
+          const SizedBox(height: 1),
+          Text(value, style: AppTypography.monoLabel),
         ],
       ),
     );
