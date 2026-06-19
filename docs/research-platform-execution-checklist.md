@@ -109,8 +109,8 @@ Docs discipline for this repo:
 
 ### Raw immutable layer
 
-- `[todo]` `raw_sources`
-- `[todo]` `raw_documents`
+- `[done]` `raw_sources`
+- `[done]` `raw_documents`
 - `[todo]` `raw_filings`
 - `[todo]` `raw_financials`
 - `[todo]` `raw_macro`
@@ -141,10 +141,10 @@ Docs discipline for this repo:
 
 ### Audit and quality layer
 
-- `[todo]` `audit_events`
-- `[todo]` `validation_events`
+- `[done]` `audit_events`
+- `[done]` `validation_events`
 - `[todo]` `recalculation_runs`
-- `[todo]` `restatement_events`
+- `[done]` `restatement_events`
 - `[todo]` data quality scoring model
 
 ## G. User Preference Gaps
@@ -252,6 +252,7 @@ Exit criteria:
 
 - `[done]` document source strategy and priority order
 - `[done]` define SEC filings foundation implementation checklist
+- `[done]` create raw spine and audit spine migration
 - `[todo]` ingest SEC submissions
 - `[todo]` store raw documents immutably
 - `[todo]` build filing and filing_version model

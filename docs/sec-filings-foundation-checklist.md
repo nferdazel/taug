@@ -72,11 +72,11 @@ There are four workstreams:
 
 ### A1. Raw ingestion tables
 
-- `[todo]` create `raw_sources`
-- `[todo]` create `raw_fetch_runs`
-- `[todo]` create `raw_documents`
-- `[todo]` create `raw_records`
-- `[todo]` create `raw_document_links`
+- `[done]` create `raw_sources`
+- `[done]` create `raw_fetch_runs`
+- `[done]` create `raw_documents`
+- `[done]` create `raw_records`
+- `[done]` create `raw_document_links`
 
 Required notes:
 
@@ -89,9 +89,9 @@ Exit criteria:
 
 ### A2. Audit and validation tables
 
-- `[todo]` create `audit_events`
-- `[todo]` create `validation_events`
-- `[todo]` create `restatement_events` or document its deferred status explicitly
+- `[done]` create `audit_events`
+- `[done]` create `validation_events`
+- `[done]` create `restatement_events`
 
 Exit criteria:
 
