@@ -293,7 +293,7 @@ class _PolicyPageState extends State<PolicyPage> {
         onRefresh: _refreshEvents,
         child: ListView.builder(
           itemCount: events.length,
-          itemExtent: 112,
+          itemExtent: 124,
           itemBuilder: (context, index) => _buildPolicyItem(events[index]),
         ),
       );
@@ -349,23 +349,31 @@ class _PolicyPageState extends State<PolicyPage> {
                 ],
               ),
               const SizedBox(height: 6),
-              Text(
-                event.title,
-                style: AppTypography.bodyMedium.copyWith(
-                  fontWeight: FontWeight.w600,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      event.title,
+                      style: AppTypography.bodyMedium.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (event.summary != null && event.summary!.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        event.summary!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.bodySmall,
+                      ),
+                    ],
+                  ],
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
               ),
-              if (event.summary != null && event.summary!.isNotEmpty) ...[
-                const SizedBox(height: 6),
-                Text(
-                  event.summary!,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.bodySmall,
-                ),
-              ],
               const SizedBox(height: 6),
               Wrap(
                 spacing: 4,
