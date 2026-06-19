@@ -26,131 +26,105 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildProfileSection(),
-          _buildDivider(),
-          _buildTimezoneSection(),
-          _buildDivider(),
-          _buildDensitySection(),
-          _buildDivider(),
-          _buildAccountSection(),
-        ],
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('SETTINGS', style: AppTypography.monoSection),
+              const SizedBox(height: 12),
+              _buildProfileCard(),
+              const SizedBox(height: 8),
+              _buildTimezoneRow(),
+              const SizedBox(height: 8),
+              _buildDensityRow(),
+              const Spacer(),
+              _buildLogoutButton(),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildDivider() {
-    return const Divider(height: 1, color: AppThemeColors.border);
-  }
-
-  Widget _buildProfileSection() {
+  Widget _buildProfileCard() {
     return Watch((_) {
-      return Padding(
-        padding: const EdgeInsets.all(12),
+      return Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: AppThemeColors.surface,
+          border: Border.all(color: AppThemeColors.border),
+          borderRadius: BorderRadius.circular(4),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('PROFILE', style: AppTypography.sectionHeader),
-            const SizedBox(height: 8),
-            _buildInfoRow('Username', _settingsProvider.username.value),
+            const Text('PROFILE', style: AppTypography.monoSection),
+            const SizedBox(height: 6),
+            _buildRow('Username', _settingsProvider.username.value),
             const SizedBox(height: 4),
-            _buildInfoRow(
-              'Email',
-              '${_settingsProvider.username.value}@taug.app',
-            ),
+            _buildRow('Email', '${_settingsProvider.username.value}@taug.app'),
           ],
         ),
       );
     });
   }
 
-  Widget _buildInfoRow(String label, String value) {
-    return Row(
-      children: [
-        Text(label, style: AppTypography.bodySmall),
-        const Spacer(),
-        Text(value, style: AppTypography.monoSmall),
-      ],
-    );
-  }
-
-  Widget _buildTimezoneSection() {
-    return Padding(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            AppStrings.timezone.toUpperCase(),
-            style: AppTypography.sectionHeader,
-          ),
-          const SizedBox(height: 8),
-          Watch((_) {
-            return DropdownButton<String>(
-              value: _settingsProvider.timezone.value,
-              isExpanded: true,
-              underline: const SizedBox(),
-              dropdownColor: AppThemeColors.surface,
-              style: AppTypography.bodySmall,
-              items: const [
-                DropdownMenuItem(
-                  value: 'Asia/Jakarta',
-                  child: Text('WIB (UTC+7)'),
-                ),
-                DropdownMenuItem(
-                  value: 'Asia/Makassar',
-                  child: Text('WITA (UTC+8)'),
-                ),
-                DropdownMenuItem(
-                  value: 'Asia/Jayapura',
-                  child: Text('WIT (UTC+9)'),
-                ),
-                DropdownMenuItem(value: 'UTC', child: Text('UTC')),
-                DropdownMenuItem(
-                  value: 'America/New_York',
-                  child: Text('EST (UTC-5)'),
-                ),
-              ],
-              onChanged: (value) {
-                if (value != null) _settingsProvider.updateTimezone(value);
-              },
-            );
-          }),
-        ],
+  Widget _buildTimezoneRow() {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: AppThemeColors.surface,
+        border: Border.all(color: AppThemeColors.border),
+        borderRadius: BorderRadius.circular(4),
       ),
-    );
-  }
-
-  Widget _buildDensitySection() {
-    return Padding(
-      padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            AppStrings.densityMode.toUpperCase(),
-            style: AppTypography.sectionHeader,
-          ),
-          const SizedBox(height: 8),
+          const Text('TIMEZONE', style: AppTypography.monoSection),
+          const SizedBox(height: 6),
           Watch((_) {
             return Row(
               children: [
                 Expanded(
-                  child: _buildDensityOption(
-                    AppStrings.compact,
-                    'compact',
-                    _settingsProvider.densityMode.value == 'compact',
+                  child: Text(
+                    _getTimezoneLabel(_settingsProvider.timezone.value),
+                    style: AppTypography.monoData,
                   ),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _buildDensityOption(
-                    AppStrings.default_,
-                    'default',
-                    _settingsProvider.densityMode.value == 'default',
+                SizedBox(
+                  height: 24,
+                  child: DropdownButton<String>(
+                    value: _settingsProvider.timezone.value,
+                    underline: const SizedBox(),
+                    dropdownColor: AppThemeColors.surface,
+                    style: AppTypography.monoLabel,
+                    isDense: true,
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'Asia/Jakarta',
+                        child: Text('WIB (UTC+7)'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Asia/Makassar',
+                        child: Text('WITA (UTC+8)'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Asia/Jayapura',
+                        child: Text('WIT (UTC+9)'),
+                      ),
+                      DropdownMenuItem(value: 'UTC', child: Text('UTC')),
+                      DropdownMenuItem(
+                        value: 'America/New_York',
+                        child: Text('EST (UTC-5)'),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) _settingsProvider.updateTimezone(value);
+                    },
                   ),
                 ),
               ],
@@ -161,61 +135,104 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildDensityOption(String label, String value, bool isSelected) {
-    return InkWell(
+  Widget _buildDensityRow() {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: AppThemeColors.surface,
+        border: Border.all(color: AppThemeColors.border),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('DENSITY', style: AppTypography.monoSection),
+          const SizedBox(height: 6),
+          Watch((_) {
+            return Row(
+              children: [
+                _buildDensityChip(
+                  'Compact',
+                  'compact',
+                  _settingsProvider.densityMode.value == 'compact',
+                ),
+                const SizedBox(width: 6),
+                _buildDensityChip(
+                  'Default',
+                  'default',
+                  _settingsProvider.densityMode.value == 'default',
+                ),
+              ],
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDensityChip(String label, String value, bool selected) {
+    return GestureDetector(
       onTap: () => _settingsProvider.updateDensityMode(value),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
-          color: isSelected
-              ? AppThemeColors.accent
-              : AppThemeColors.backgroundLight,
-          borderRadius: BorderRadius.circular(4),
+          color: selected ? AppThemeColors.accent : Colors.transparent,
           border: Border.all(
-            color: isSelected ? AppThemeColors.accent : AppThemeColors.border,
+            color: selected ? AppThemeColors.accent : AppThemeColors.border,
           ),
+          borderRadius: BorderRadius.circular(3),
         ),
         child: Text(
           label,
-          style: AppTypography.labelMedium.copyWith(
-            color: isSelected
+          style: AppTypography.monoLabel.copyWith(
+            color: selected
                 ? AppThemeColors.textPrimary
                 : AppThemeColors.textSecondary,
           ),
-          textAlign: TextAlign.center,
         ),
       ),
     );
   }
 
-  Widget _buildAccountSection() {
-    return Padding(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('ACCOUNT', style: AppTypography.sectionHeader),
-          const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            height: 32,
-            child: OutlinedButton(
-              onPressed: () async {
-                await _authProvider.signOut();
-                if (!mounted) return;
-                if (context.mounted) {
-                  Navigator.of(context).popUntil((route) => route.isFirst);
-                }
-              },
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppThemeColors.bearish,
-                side: const BorderSide(color: AppThemeColors.bearish),
-              ),
-              child: const Text(AppStrings.logout),
-            ),
-          ),
-        ],
+  Widget _buildRow(String label, String value) {
+    return Row(
+      children: [
+        Text(label, style: AppTypography.caption),
+        const SizedBox(width: 12),
+        Text(value, style: AppTypography.monoData),
+      ],
+    );
+  }
+
+  Widget _buildLogoutButton() {
+    return SizedBox(
+      height: 28,
+      child: OutlinedButton(
+        onPressed: () async {
+          await _authProvider.signOut();
+          if (!mounted) return;
+          if (context.mounted) {
+            Navigator.of(context).popUntil((route) => route.isFirst);
+          }
+        },
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppThemeColors.bearish,
+          side: const BorderSide(color: AppThemeColors.border),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+        ),
+        child: const Text(AppStrings.logout, style: AppTypography.monoLabel),
       ),
     );
+  }
+
+  String _getTimezoneLabel(String tz) {
+    const map = {
+      'Asia/Jakarta': 'WIB (UTC+7)',
+      'Asia/Makassar': 'WITA (UTC+8)',
+      'Asia/Jayapura': 'WIT (UTC+9)',
+      'UTC': 'UTC',
+      'America/New_York': 'EST (UTC-5)',
+    };
+    return map[tz] ?? tz;
   }
 }
