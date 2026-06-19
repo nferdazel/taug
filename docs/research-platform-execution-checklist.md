@@ -101,8 +101,8 @@ Docs discipline for this repo:
 
 ### Core entities
 
-- `[todo]` `companies`
-- `[todo]` `securities`
+- `[done]` `companies`
+- `[done]` `securities`
 - `[todo]` `currencies`
 - `[todo]` `reporting_periods`
 - `[todo]` sector and industry normalization tables
@@ -254,6 +254,7 @@ Exit criteria:
 - `[done]` document source strategy and priority order
 - `[done]` define SEC filings foundation implementation checklist
 - `[done]` create raw spine and audit spine migration
+- `[done]` create canonical entity bridge migration for SEC attachment
 - `[done]` scaffold Python worker and GitHub Actions SEC submissions workflow
 - `[todo]` ingest SEC submissions
 - `[todo]` store raw documents immutably

@@ -125,9 +125,9 @@ Exit criteria:
 
 ### A4. Canonical entity prerequisites
 
-- `[todo]` create minimal `companies`
-- `[todo]` create minimal `securities`
-- `[todo]` create minimal `security_identifiers`
+- `[done]` create minimal `companies`
+- `[done]` create minimal `securities`
+- `[done]` create minimal `security_identifiers`
 
 Required minimum SEC mapping support:
 
