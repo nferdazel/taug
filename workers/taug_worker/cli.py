@@ -10,6 +10,7 @@ from .jobs.parse_sec_companyfacts import run_parse_sec_companyfacts
 from .jobs.sync_sec_companyfacts import run_sync_sec_companyfacts
 from .jobs.fetch_sec_filing_documents import run_fetch_sec_filing_documents
 from .jobs.compute_company_metrics import run_compute_company_metrics
+from .jobs.execute_screener import run_execute_screener
 from .jobs.sync_price_snapshots import run_sync_price_snapshots
 from .jobs.sync_sec_submissions import run_sync_sec_submissions
 from .sec_client import SecClient
@@ -77,6 +78,12 @@ def main() -> int:
     type=int,
     default=0,
     help="Maximum number of securities to fetch prices for (0 = all).",
+  )
+  screener_parser = subparsers.add_parser("execute-screener")
+  screener_parser.add_argument(
+    "--screener-id",
+    required=True,
+    help="UUID of the saved screener to execute.",
   )
 
   args = parser.parse_args()
@@ -273,6 +280,30 @@ def main() -> int:
           "failed": summary.failed,
           "inserted": summary.inserted,
           "failed_tickers": summary.failed_tickers,
+        },
+        ensure_ascii=True,
+        sort_keys=True,
+      )
+    )
+    return 0
+
+  if args.command == "execute-screener":
+    http_client = HttpClient()
+    supabase_client = SupabaseRestClient(
+      http_client=http_client,
+      supabase_url=config.supabase_url,
+      service_role_key=config.supabase_service_role_key,
+    )
+    summary = run_execute_screener(
+      supabase_client=supabase_client,
+      screener_id=args.screener_id,
+    )
+    print(
+      json.dumps(
+        {
+          "screener_id": summary.screener_id,
+          "screener_name": summary.screener_name,
+          "result_count": summary.result_count,
         },
         ensure_ascii=True,
         sort_keys=True,
