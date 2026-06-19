@@ -141,7 +141,7 @@ Not the target:
 - IDX issuer/reference data
 - home market preference model
 - `coverage_lists` table (done)
-- `recalculation_runs` table
+- `recalculation_runs` table (done)
 - data quality scoring model (done — `compute-data-quality` worker + `data_quality_scores` table)
 - screener filter execution worker (done — tested on AAPL/MSFT with gross_margin + ROE filters)
 
