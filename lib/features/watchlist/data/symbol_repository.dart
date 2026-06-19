@@ -69,10 +69,11 @@ class SymbolRepository {
     String query,
   ) async {
     try {
+      final sanitized = query.replaceAll(RegExp(r'[%_]'), '');
       final response = await _client
           .from(AppSchema.symbols)
           .select('ticker, name, exchanges!inner(code)')
-          .or('ticker.ilike.%$query%,name.ilike.%$query%')
+          .or('ticker.ilike.%$sanitized%,name.ilike.%$sanitized%')
           .limit(20);
 
       final results = response.map((json) {

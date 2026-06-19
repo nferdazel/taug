@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:signals/signals_flutter.dart';
 
 import '../../../../core/constants/app_strings.dart';
@@ -217,9 +218,7 @@ class _SettingsPageState extends State<SettingsPage> {
         onPressed: () async {
           await _authProvider.signOut();
           if (!mounted) return;
-          if (context.mounted) {
-            Navigator.of(context).popUntil((route) => route.isFirst);
-          }
+          context.go('/login');
         },
         style: OutlinedButton.styleFrom(
           foregroundColor: AppThemeColors.bearish,

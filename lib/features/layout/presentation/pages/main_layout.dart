@@ -15,7 +15,7 @@ class MainLayout extends StatefulWidget {
 }
 
 class _MainLayoutState extends State<MainLayout> {
-  final _currentIndex = Signal<int>(0);
+  final _currentIndex = Signal<int>(1);
 
   static const _tabs = [
     '/market',
