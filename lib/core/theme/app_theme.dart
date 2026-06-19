@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'app_spacing.dart';
 import '../constants/app_colors.dart';
+import 'app_spacing.dart';
 
 abstract final class AppTheme {
   static ThemeData get dark {

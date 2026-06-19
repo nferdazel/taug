@@ -1,5 +1,7 @@
 import 'dart:async';
+
 import 'package:signals/signals.dart';
+
 import '../../../../shared/models/price_data.dart';
 import '../../data/market_repository.dart';
 

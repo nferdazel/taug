@@ -3,19 +3,19 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../features/auth/presentation/pages/login_page.dart';
-import '../../features/brief/presentation/pages/brief_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
+import '../../features/brief/presentation/pages/brief_page.dart';
 import '../../features/calendar/presentation/pages/calendar_page.dart';
 import '../../features/chart/presentation/pages/chart_page.dart';
 import '../../features/company/presentation/pages/company_page.dart';
 import '../../features/layout/presentation/pages/main_layout.dart';
-import '../../features/screener/presentation/pages/screener_page.dart';
-import '../../features/valuation/presentation/pages/valuation_page.dart';
 import '../../features/market/presentation/pages/market_page.dart';
 import '../../features/news/presentation/pages/news_page.dart';
 import '../../features/policy/presentation/pages/policy_page.dart';
 import '../../features/portfolio/presentation/pages/portfolio_page.dart';
+import '../../features/screener/presentation/pages/screener_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
+import '../../features/valuation/presentation/pages/valuation_page.dart';
 import '../../features/watchlist/presentation/pages/watchlist_page.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();

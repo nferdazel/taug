@@ -1,4 +1,5 @@
 import 'package:signals/signals.dart';
+
 import '../../../../shared/models/price_data.dart';
 import '../../data/chart_repository.dart';
 
@@ -13,7 +14,7 @@ class ChartProvider {
   final error = Signal<String?>(null);
 
   ChartProvider({ChartRepository? repository})
-      : _repository = repository ?? ChartRepository();
+    : _repository = repository ?? ChartRepository();
 
   Future<void> loadChartData() async {
     isLoading.value = true;
