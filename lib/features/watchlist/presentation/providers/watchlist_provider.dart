@@ -1,5 +1,7 @@
 import 'dart:async';
+
 import 'package:signals/signals.dart';
+
 import '../../../../shared/models/price_data.dart';
 import '../../data/watchlist_repository.dart';
 import '../../domain/watchlist_entity.dart';
@@ -18,7 +20,7 @@ class WatchlistProvider {
   Timer? _refreshTimer;
 
   WatchlistProvider({WatchlistRepository? repository})
-      : _repository = repository ?? WatchlistRepository();
+    : _repository = repository ?? WatchlistRepository();
 
   void dispose() {
     _refreshTimer?.cancel();

@@ -1,4 +1,5 @@
 import 'package:signals/signals.dart';
+
 import '../../data/symbol_repository.dart';
 import '../../data/watchlist_repository.dart';
 
@@ -14,8 +15,8 @@ class SymbolSearchProvider {
   SymbolSearchProvider({
     SymbolRepository? symbolRepository,
     WatchlistRepository? watchlistRepository,
-  })  : _symbolRepository = symbolRepository ?? SymbolRepository(),
-        _watchlistRepository = watchlistRepository ?? WatchlistRepository();
+  }) : _symbolRepository = symbolRepository ?? SymbolRepository(),
+       _watchlistRepository = watchlistRepository ?? WatchlistRepository();
 
   Future<void> search(String query) async {
     if (query.isEmpty) {
@@ -44,16 +45,23 @@ class SymbolSearchProvider {
     isSearching.value = false;
   }
 
-  Future<int?> addToWatchlist(String watchlistId, SymbolSearchResult symbol) async {
+  Future<int?> addToWatchlist(
+    String watchlistId,
+    SymbolSearchResult symbol,
+  ) async {
     isAdding.value = true;
     searchError.value = null;
 
     try {
-      final localResult = await _symbolRepository.searchLocalSymbols(symbol.symbol);
+      final localResult = await _symbolRepository.searchLocalSymbols(
+        symbol.symbol,
+      );
       if (localResult.isSuccess && localResult.data!.isNotEmpty) {
         final symbolId = await _symbolRepository.getSymbolId(symbol.symbol);
         if (symbolId != null) {
-          final itemsResult = await _watchlistRepository.getWatchlistItems(watchlistId);
+          final itemsResult = await _watchlistRepository.getWatchlistItems(
+            watchlistId,
+          );
           if (itemsResult.isSuccess) {
             final alreadyExists = itemsResult.data!.any(
               (item) => item.ticker == symbol.symbol,

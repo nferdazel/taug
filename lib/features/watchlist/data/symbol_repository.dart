@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../../core/errors/failures.dart';
 import '../../../core/errors/result.dart';
 import '../../../core/schema/app_schema.dart';
@@ -33,7 +34,7 @@ class SymbolRepository {
   final SupabaseClient _client;
 
   SymbolRepository({SupabaseClient? client})
-      : _client = client ?? Supabase.instance.client;
+    : _client = client ?? Supabase.instance.client;
 
   Future<Result<List<SymbolSearchResult>>> searchSymbols(String query) async {
     try {
@@ -47,18 +48,25 @@ class SymbolRepository {
       if (response.data != null) {
         final data = response.data as List;
         final results = data
-            .map((json) => SymbolSearchResult.fromJson(json as Map<String, dynamic>))
+            .map(
+              (json) =>
+                  SymbolSearchResult.fromJson(json as Map<String, dynamic>),
+            )
             .toList();
         return Result.success(results);
       }
 
       return const Result.success([]);
     } catch (e) {
-      return Result.failure(DataSourceFailure(message: e.toString(), source: 'twelve_data'));
+      return Result.failure(
+        DataSourceFailure(message: e.toString(), source: 'twelve_data'),
+      );
     }
   }
 
-  Future<Result<List<SymbolSearchResult>>> searchLocalSymbols(String query) async {
+  Future<Result<List<SymbolSearchResult>>> searchLocalSymbols(
+    String query,
+  ) async {
     try {
       final response = await _client
           .from('${AppSchema.name}.${AppSchema.symbols}')
@@ -99,7 +107,9 @@ class SymbolRepository {
     try {
       final exchangeId = await _getExchangeId(symbol.exchange);
       if (exchangeId == null) {
-        return const Result.failure(ServerFailure(message: 'Exchange not found'));
+        return const Result.failure(
+          ServerFailure(message: 'Exchange not found'),
+        );
       }
 
       final response = await _client
@@ -137,7 +147,10 @@ class SymbolRepository {
     final name = symbol.name.toLowerCase();
     final ticker = symbol.symbol.toLowerCase();
 
-    if (ticker.endsWith('/usdt') || ticker.endsWith('/btc') || ticker.endsWith('/eth')) return 'crypto';
+    if (ticker.endsWith('/usdt') ||
+        ticker.endsWith('/btc') ||
+        ticker.endsWith('/eth'))
+      return 'crypto';
     if (name.contains('etf') || name.contains('fund')) return 'etf';
     if (name.contains('index')) return 'index';
     return 'equity';

@@ -1,14 +1,15 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../../core/errors/failures.dart';
 import '../../../core/errors/result.dart';
-import '../../../shared/models/news_article.dart';
 import '../../../core/schema/app_schema.dart';
+import '../../../shared/models/news_article.dart';
 
 class NewsRepository {
   final SupabaseClient _client;
 
   NewsRepository({SupabaseClient? client})
-      : _client = client ?? Supabase.instance.client;
+    : _client = client ?? Supabase.instance.client;
 
   Future<Result<List<NewsArticle>>> getNews({
     String? category,
@@ -34,9 +35,7 @@ class NewsRepository {
 
       return Result.success(articles);
     } catch (e) {
-      return Result.failure(
-        ServerFailure(message: e.toString()),
-      );
+      return Result.failure(ServerFailure(message: e.toString()));
     }
   }
 
@@ -45,9 +44,7 @@ class NewsRepository {
       await _client.functions.invoke('refresh-news');
       return const Result.success(null);
     } catch (e) {
-      return Result.failure(
-        ServerFailure(message: e.toString()),
-      );
+      return Result.failure(ServerFailure(message: e.toString()));
     }
   }
 }

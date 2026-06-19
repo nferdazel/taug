@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals/signals.dart';
+
 import '../../data/auth_repository.dart';
 
 class AuthProvider {
@@ -10,7 +11,7 @@ class AuthProvider {
   final isAuthenticated = Signal<bool>(false);
 
   AuthProvider({AuthRepository? repository})
-      : _repository = repository ?? AuthRepository() {
+    : _repository = repository ?? AuthRepository() {
     _init();
   }
 

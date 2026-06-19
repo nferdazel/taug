@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:signals/signals_flutter.dart';
+
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
@@ -82,7 +83,9 @@ class _SymbolSearchDialogState extends State<SymbolSearchDialog> {
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Text(
             error,
-            style: AppTypography.bodySmall.copyWith(color: AppThemeColors.bearish),
+            style: AppTypography.bodySmall.copyWith(
+              color: AppThemeColors.bearish,
+            ),
           ),
         );
       }
@@ -106,7 +109,9 @@ class _SymbolSearchDialogState extends State<SymbolSearchDialog> {
               dense: true,
               title: Text(
                 result.symbol,
-                style: AppTypography.monoSmall.copyWith(fontWeight: FontWeight.w600),
+                style: AppTypography.monoSmall.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               subtitle: Text(
                 '${result.name} • ${result.exchange}',
@@ -115,7 +120,10 @@ class _SymbolSearchDialogState extends State<SymbolSearchDialog> {
               ),
               trailing: const Icon(Icons.add, size: 14),
               onTap: () async {
-                final symbolId = await _provider.addToWatchlist(widget.watchlistId, result);
+                final symbolId = await _provider.addToWatchlist(
+                  widget.watchlistId,
+                  result,
+                );
                 if (symbolId != null && context.mounted) {
                   Navigator.pop(context);
                 }

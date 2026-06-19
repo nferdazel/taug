@@ -1,4 +1,5 @@
 import 'package:signals/signals.dart';
+
 import '../../../../shared/models/econ_event.dart';
 import '../../data/calendar_repository.dart';
 
@@ -13,7 +14,7 @@ class CalendarProvider {
   final error = Signal<String?>(null);
 
   CalendarProvider({CalendarRepository? repository})
-      : _repository = repository ?? CalendarRepository();
+    : _repository = repository ?? CalendarRepository();
 
   Future<void> loadEvents() async {
     isLoading.value = true;

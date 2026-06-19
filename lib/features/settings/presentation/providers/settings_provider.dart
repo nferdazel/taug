@@ -1,4 +1,5 @@
 import 'package:signals/signals.dart';
+
 import '../../data/settings_repository.dart';
 
 class SettingsProvider {
@@ -11,7 +12,7 @@ class SettingsProvider {
   final error = Signal<String?>(null);
 
   SettingsProvider({SettingsRepository? repository})
-      : _repository = repository ?? SettingsRepository();
+    : _repository = repository ?? SettingsRepository();
 
   Future<void> loadSettings() async {
     isLoading.value = true;
@@ -20,12 +21,14 @@ class SettingsProvider {
     final profileResult = await _repository.getProfile();
     if (profileResult.isSuccess) {
       username.value = profileResult.data!['username'] as String? ?? '';
-      timezone.value = profileResult.data!['timezone'] as String? ?? 'Asia/Jakarta';
+      timezone.value =
+          profileResult.data!['timezone'] as String? ?? 'Asia/Jakarta';
     }
 
     final settingsResult = await _repository.getSettings();
     if (settingsResult.isSuccess) {
-      densityMode.value = settingsResult.data!['density_mode'] as String? ?? 'compact';
+      densityMode.value =
+          settingsResult.data!['density_mode'] as String? ?? 'compact';
     }
 
     isLoading.value = false;

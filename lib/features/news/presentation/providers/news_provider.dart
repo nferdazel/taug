@@ -1,4 +1,5 @@
 import 'package:signals/signals.dart';
+
 import '../../../../shared/models/news_article.dart';
 import '../../data/news_repository.dart';
 
@@ -11,15 +12,13 @@ class NewsProvider {
   final error = Signal<String?>(null);
 
   NewsProvider({NewsRepository? repository})
-      : _repository = repository ?? NewsRepository();
+    : _repository = repository ?? NewsRepository();
 
   Future<void> loadNews() async {
     isLoading.value = true;
     error.value = null;
 
-    final result = await _repository.getNews(
-      category: selectedCategory.value,
-    );
+    final result = await _repository.getNews(category: selectedCategory.value);
 
     if (result.isSuccess) {
       articles.value = result.data!;

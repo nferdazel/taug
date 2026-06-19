@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:signals/signals_flutter.dart';
+
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
@@ -56,8 +57,10 @@ class _SettingsPageState extends State<SettingsPage> {
             const SizedBox(height: 8),
             _buildInfoRow('Username', _settingsProvider.username.value),
             const SizedBox(height: 4),
-            _buildInfoRow('Email',
-                '${_settingsProvider.username.value}@taug.app'),
+            _buildInfoRow(
+              'Email',
+              '${_settingsProvider.username.value}@taug.app',
+            ),
           ],
         ),
       );
@@ -80,7 +83,10 @@ class _SettingsPageState extends State<SettingsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(AppStrings.timezone.toUpperCase(), style: AppTypography.sectionHeader),
+          Text(
+            AppStrings.timezone.toUpperCase(),
+            style: AppTypography.sectionHeader,
+          ),
           const SizedBox(height: 8),
           Watch((_) {
             return DropdownButton<String>(
@@ -91,14 +97,22 @@ class _SettingsPageState extends State<SettingsPage> {
               style: AppTypography.bodySmall,
               items: const [
                 DropdownMenuItem(
-                    value: 'Asia/Jakarta', child: Text('WIB (UTC+7)')),
+                  value: 'Asia/Jakarta',
+                  child: Text('WIB (UTC+7)'),
+                ),
                 DropdownMenuItem(
-                    value: 'Asia/Makassar', child: Text('WITA (UTC+8)')),
+                  value: 'Asia/Makassar',
+                  child: Text('WITA (UTC+8)'),
+                ),
                 DropdownMenuItem(
-                    value: 'Asia/Jayapura', child: Text('WIT (UTC+9)')),
+                  value: 'Asia/Jayapura',
+                  child: Text('WIT (UTC+9)'),
+                ),
                 DropdownMenuItem(value: 'UTC', child: Text('UTC')),
                 DropdownMenuItem(
-                    value: 'America/New_York', child: Text('EST (UTC-5)')),
+                  value: 'America/New_York',
+                  child: Text('EST (UTC-5)'),
+                ),
               ],
               onChanged: (value) {
                 if (value != null) _settingsProvider.updateTimezone(value);
@@ -116,7 +130,10 @@ class _SettingsPageState extends State<SettingsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(AppStrings.densityMode.toUpperCase(), style: AppTypography.sectionHeader),
+          Text(
+            AppStrings.densityMode.toUpperCase(),
+            style: AppTypography.sectionHeader,
+          ),
           const SizedBox(height: 8),
           Watch((_) {
             return Row(
@@ -150,7 +167,9 @@ class _SettingsPageState extends State<SettingsPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
         decoration: BoxDecoration(
-          color: isSelected ? AppThemeColors.accent : AppThemeColors.backgroundLight,
+          color: isSelected
+              ? AppThemeColors.accent
+              : AppThemeColors.backgroundLight,
           borderRadius: BorderRadius.circular(4),
           border: Border.all(
             color: isSelected ? AppThemeColors.accent : AppThemeColors.border,
