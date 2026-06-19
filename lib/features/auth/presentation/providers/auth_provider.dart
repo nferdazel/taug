@@ -67,7 +67,7 @@ class AuthProvider {
     isLoading.value = false;
 
     if (result.isSuccess && context.mounted) {
-      context.go('/watchlist');
+      context.go('/brief');
     } else if (result.isFailure) {
       error.value = _extractError(result.error);
     }
@@ -105,7 +105,7 @@ class AuthProvider {
     isLoading.value = false;
 
     if (result.isSuccess && context.mounted) {
-      context.go('/watchlist');
+      context.go('/brief');
     } else if (result.isFailure) {
       error.value = _extractError(result.error);
     }

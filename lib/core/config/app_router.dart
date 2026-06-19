@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../features/auth/presentation/pages/login_page.dart';
+import '../../features/brief/presentation/pages/brief_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/calendar/presentation/pages/calendar_page.dart';
 import '../../features/chart/presentation/pages/chart_page.dart';
@@ -30,7 +31,7 @@ final router = GoRouter(
       return '/login';
     }
     if (session != null && isAuthRoute) {
-      return '/watchlist';
+      return '/brief';
     }
     return null;
   },
@@ -52,6 +53,11 @@ final router = GoRouter(
       navigatorKey: _shellNavigatorKey,
       builder: (context, state, child) => MainLayout(child: child),
       routes: [
+        GoRoute(
+          path: '/brief',
+          pageBuilder: (context, state) =>
+              const NoTransitionPage(child: BriefPage()),
+        ),
         GoRoute(
           path: '/market',
           pageBuilder: (context, state) =>

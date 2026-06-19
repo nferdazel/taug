@@ -15,6 +15,7 @@ class MainLayout extends StatefulWidget {
 
 class _MainLayoutState extends State<MainLayout> {
   static const _tabs = [
+    '/brief',
     '/market',
     '/watchlist',
     '/portfolio',
@@ -26,6 +27,7 @@ class _MainLayoutState extends State<MainLayout> {
   ];
 
   static const _tabLabels = [
+    'Brief',
     'Market',
     'Watchlist',
     'Portfolio',
@@ -37,6 +39,7 @@ class _MainLayoutState extends State<MainLayout> {
   ];
 
   static const _tabIcons = [
+    Icons.dashboard_outlined,
     Icons.show_chart,
     Icons.list_alt,
     Icons.account_balance_wallet_outlined,
