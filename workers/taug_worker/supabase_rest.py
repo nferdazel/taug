@@ -111,6 +111,17 @@ class FinancialStatementRecord:
   status: str
 
 
+@dataclass(frozen=True)
+class MetricDefinitionRecord:
+  id: str
+  code: str
+  name: str
+  category: str
+  formula_version: str
+  unit_type: str
+  aggregation_mode: str
+
+
 class SupabaseRestClient:
   def __init__(
     self,
@@ -1593,3 +1604,173 @@ class SupabaseRestClient:
       company_id=company_id,
       security_id=str(row["security_id"]),
     )
+
+  def get_primary_security_for_company(
+    self,
+    *,
+    company_id: str,
+  ) -> CanonicalSecurity | None:
+    rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "securities",
+      query={
+        "select": "id,company_id",
+        "company_id": f"eq.{company_id}",
+        "order": "is_primary_listing.desc,created_at.desc",
+        "limit": "1",
+      },
+    )
+    if not rows:
+      return None
+    return CanonicalSecurity(
+      company_id=str(rows[0]["company_id"]),
+      security_id=str(rows[0]["id"]),
+    )
+
+  def list_statement_history_for_company(
+    self,
+    *,
+    company_id: str,
+    limit: int,
+  ) -> list[dict[str, Any]]:
+    return self._request(
+      "GET",
+      "company_statement_history_v",
+      query={
+        "company_id": f"eq.{company_id}",
+        "order": "period_end.desc,published_at.desc",
+        "limit": str(limit),
+      },
+    )
+
+  def list_metric_definitions(self) -> list[dict[str, Any]]:
+    return self._request(
+      "GET",
+      "metric_definitions",
+      query={
+        "select": "id,code,name,category,formula_version,unit_type,aggregation_mode",
+        "is_active": "eq.true",
+        "order": "code",
+        "limit": "100",
+      },
+    )
+
+  def insert_metric_calculation_run(
+    self,
+    *,
+    run_type: str,
+    trigger_reason: str,
+    worker_version: str,
+    trigger_reference_type: str | None = None,
+    trigger_reference_id: str | None = None,
+    metadata: dict[str, object] | None = None,
+  ) -> str:
+    payload: dict[str, object] = {
+      "run_type": run_type,
+      "trigger_reason": trigger_reason,
+      "worker_version": worker_version,
+      "status": "running",
+    }
+    if trigger_reference_type is not None:
+      payload["trigger_reference_type"] = trigger_reference_type
+    if trigger_reference_id is not None:
+      payload["trigger_reference_id"] = trigger_reference_id
+    if metadata is not None:
+      payload["metadata"] = metadata
+    rows: list[dict[str, Any]] = self._request(
+      "POST",
+      "metric_calculation_runs",
+      headers={"Prefer": "return=representation"},
+      payload=[payload],
+    )
+    return str(rows[0]["id"])
+
+  def update_metric_calculation_run(
+    self,
+    *,
+    run_id: str,
+    status: str,
+    metadata: dict[str, object] | None = None,
+  ) -> None:
+    payload: dict[str, object] = {
+      "status": status,
+      "finished_at": datetime.now(timezone.utc).isoformat(),
+    }
+    if metadata is not None:
+      payload["metadata"] = metadata
+    self._request(
+      "PATCH",
+      "metric_calculation_runs",
+      query={"id": f"eq.{run_id}"},
+      headers={"Prefer": "return=minimal"},
+      payload=payload,
+    )
+
+  def upsert_security_metric_snapshot(
+    self,
+    *,
+    security_id: str,
+    company_id: str,
+    metric_definition_id: str,
+    reporting_period_id: str | None,
+    as_of_date: str,
+    value_numeric: float | None,
+    computation_status: str,
+    stale_input_flag: bool,
+    missing_input_flag: bool,
+    validation_warning_flag: bool,
+    currency_id: str | None,
+    calculation_run_id: str,
+    formula_version: str,
+    input_fingerprint: str | None,
+    metadata: dict[str, object] | None = None,
+  ) -> UpsertResult:
+    query: dict[str, str] = {
+      "select": "id",
+      "security_id": f"eq.{security_id}",
+      "metric_definition_id": f"eq.{metric_definition_id}",
+      "as_of_date": f"eq.{as_of_date}",
+      "formula_version": f"eq.{formula_version}",
+      "limit": "1",
+    }
+    if reporting_period_id is not None:
+      query["reporting_period_id"] = f"eq.{reporting_period_id}"
+    else:
+      query["reporting_period_id"] = "is.null"
+
+    existing_rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "security_metric_snapshots",
+      query=query,
+    )
+    if existing_rows:
+      return UpsertResult(id=str(existing_rows[0]["id"]), created=False)
+
+    snap_payload: dict[str, object] = {
+      "security_id": security_id,
+      "company_id": company_id,
+      "metric_definition_id": metric_definition_id,
+      "reporting_period_id": reporting_period_id,
+      "as_of_date": as_of_date,
+      "value_numeric": value_numeric,
+      "computation_status": computation_status,
+      "stale_input_flag": stale_input_flag,
+      "missing_input_flag": missing_input_flag,
+      "validation_warning_flag": validation_warning_flag,
+      "currency_id": currency_id,
+      "calculation_run_id": calculation_run_id,
+      "formula_version": formula_version,
+      "input_fingerprint": input_fingerprint,
+    }
+    if metadata is not None:
+      snap_payload["metadata"] = metadata
+
+    rows: list[dict[str, Any]] = self._request(
+      "POST",
+      "security_metric_snapshots",
+      headers={"Prefer": "return=representation"},
+      payload=[snap_payload],
+    )
+    if not rows:
+      raise ValueError("Failed to upsert security metric snapshot")
+    return UpsertResult(id=str(rows[0]["id"]), created=True)

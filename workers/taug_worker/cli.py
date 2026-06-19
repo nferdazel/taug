@@ -9,6 +9,7 @@ from .http_client import HttpClient
 from .jobs.parse_sec_companyfacts import run_parse_sec_companyfacts
 from .jobs.sync_sec_companyfacts import run_sync_sec_companyfacts
 from .jobs.fetch_sec_filing_documents import run_fetch_sec_filing_documents
+from .jobs.compute_company_metrics import run_compute_company_metrics
 from .jobs.sync_sec_submissions import run_sync_sec_submissions
 from .sec_client import SecClient
 from .supabase_rest import SupabaseRestClient
@@ -63,6 +64,11 @@ def main() -> int:
     type=int,
     default=10,
     help="Maximum number of filing documents to fetch in one run.",
+  )
+  metrics_parser = subparsers.add_parser("compute-company-metrics")
+  metrics_parser.add_argument(
+    "--company-ids",
+    help="Comma-separated company UUIDs to compute metrics for.",
   )
 
   args = parser.parse_args()
@@ -204,6 +210,37 @@ def main() -> int:
     )
     return 0
 
+  if args.command == "compute-company-metrics":
+    company_ids: list[str] = _resolve_company_ids(args.company_ids, config)
+
+    http_client = HttpClient()
+    supabase_client = SupabaseRestClient(
+      http_client=http_client,
+      supabase_url=config.supabase_url,
+      service_role_key=config.supabase_service_role_key,
+    )
+    summary = run_compute_company_metrics(
+      company_ids=company_ids,
+      supabase_client=supabase_client,
+    )
+    print(
+      json.dumps(
+        {
+          "run_id": summary.run_id,
+          "processed_companies": summary.processed_companies,
+          "succeeded_companies": summary.succeeded_companies,
+          "failed_companies": summary.failed_companies,
+          "computed_snapshots": summary.computed_snapshots,
+          "skipped_snapshots": summary.skipped_snapshots,
+          "successful_company_ids": summary.successful_company_ids,
+          "failed_company_ids": summary.failed_company_ids,
+        },
+        ensure_ascii=True,
+        sort_keys=True,
+      )
+    )
+    return 0
+
   raise ValueError(f"Unsupported command: {args.command}")
 
 
@@ -213,6 +250,12 @@ def _resolve_ciks(cli_value: str | None, config: WorkerConfig) -> tuple[str, ...
   if config.sec_target_ciks:
     return config.sec_target_ciks
   raise ValueError("No target CIKs provided. Use --ciks or SEC_TARGET_CIKS.")
+
+
+def _resolve_company_ids(cli_value: str | None, config: WorkerConfig) -> list[str]:
+  if cli_value and cli_value.strip():
+    return [item.strip() for item in cli_value.split(",") if item.strip()]
+  raise ValueError("No company IDs provided. Use --company-ids.")
 
 
 if __name__ == "__main__":
