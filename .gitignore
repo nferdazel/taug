@@ -54,3 +54,9 @@ coverage/
 
 # Platform specific
 /android/local.properties
+
+# DevTools
+devtools_options.yaml
+
+# Supabase CLI
+supabase/.temp/
