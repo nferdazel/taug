@@ -10,6 +10,7 @@ from .jobs.parse_sec_companyfacts import run_parse_sec_companyfacts
 from .jobs.sync_sec_companyfacts import run_sync_sec_companyfacts
 from .jobs.fetch_sec_filing_documents import run_fetch_sec_filing_documents
 from .jobs.compute_company_metrics import run_compute_company_metrics
+from .jobs.compute_data_quality import run_compute_data_quality
 from .jobs.execute_screener import run_execute_screener
 from .jobs.sync_price_snapshots import run_sync_price_snapshots
 from .jobs.sync_sec_submissions import run_sync_sec_submissions
@@ -85,6 +86,7 @@ def main() -> int:
     required=True,
     help="UUID of the saved screener to execute.",
   )
+  subparsers.add_parser("compute-data-quality")
 
   args = parser.parse_args()
   config = WorkerConfig.from_env()
@@ -304,6 +306,31 @@ def main() -> int:
           "screener_id": summary.screener_id,
           "screener_name": summary.screener_name,
           "result_count": summary.result_count,
+        },
+        ensure_ascii=True,
+        sort_keys=True,
+      )
+    )
+    return 0
+
+  if args.command == "compute-data-quality":
+    http_client = HttpClient()
+    supabase_client = SupabaseRestClient(
+      http_client=http_client,
+      supabase_url=config.supabase_url,
+      service_role_key=config.supabase_service_role_key,
+    )
+    summary = run_compute_data_quality(
+      supabase_client=supabase_client,
+    )
+    print(
+      json.dumps(
+        {
+          "processed_companies": summary.processed_companies,
+          "succeeded_companies": summary.succeeded_companies,
+          "failed_companies": summary.failed_companies,
+          "successful_company_ids": summary.successful_company_ids,
+          "failed_company_ids": summary.failed_company_ids,
         },
         ensure_ascii=True,
         sort_keys=True,
