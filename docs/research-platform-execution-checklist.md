@@ -112,6 +112,7 @@ Docs discipline for this repo:
 - `[done]` `raw_sources`
 - `[done]` `raw_documents`
 - `[done]` SEC raw filing document ingestion path
+- `[done]` SEC raw companyfacts ingestion path
 - `[todo]` `raw_financials`
 - `[todo]` `raw_macro`
 - `[todo]` `raw_ownership`
@@ -287,6 +288,7 @@ Exit criteria:
   - `statement_taxonomy_items`
   - `financial_statements`
   - `financial_statement_items`
+- `[done]` implement SEC companyfacts raw-ingestion job with validation, audit trail, checkpointing, and duplicate detection
 - `[todo]` parse and normalize company facts / statements
 - `[todo]` support historical periods and statement versions
 - `[todo]` support restatements

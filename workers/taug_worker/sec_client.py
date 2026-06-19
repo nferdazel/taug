@@ -20,6 +20,14 @@ class SecSubmissionsParseError(SecClientError):
   pass
 
 
+class SecCompanyfactsFetchError(SecClientError):
+  pass
+
+
+class SecCompanyfactsParseError(SecClientError):
+  pass
+
+
 class SecClient:
   def __init__(self, *, http_client: HttpClient, user_agent: str) -> None:
     self._http_client = http_client
@@ -86,6 +94,45 @@ class SecClient:
         f"status={response.status_code} body={body_text[:400]}"
       )
     return response.body
+
+  def fetch_companyfacts(self, cik: str) -> dict[str, object]:
+    normalized_cik: str = cik.zfill(10)
+    response = self._http_client.request(
+      "GET",
+      f"https://data.sec.gov/api/xbrl/companyfacts/CIK{normalized_cik}.json",
+      headers={
+        "Accept": "application/json",
+        "User-Agent": self._user_agent,
+      },
+      timeout_seconds=60,
+    )
+    if response.status_code != 200:
+      body_text: str = response.body.decode("utf-8", errors="replace")
+      raise SecCompanyfactsFetchError(
+        f"SEC companyfacts fetch failed for CIK {normalized_cik}: "
+        f"status={response.status_code} body={body_text[:400]}",
+        code="sec_companyfacts_fetch_failed",
+      )
+
+    try:
+      payload: object = response.json()
+    except UnicodeDecodeError as exc:
+      raise SecCompanyfactsParseError(
+        f"SEC companyfacts payload decode failed for CIK {normalized_cik}: {exc}",
+        code="sec_companyfacts_payload_decode_failed",
+      ) from exc
+    except JSONDecodeError as exc:
+      raise SecCompanyfactsParseError(
+        f"SEC companyfacts payload JSON parse failed for CIK {normalized_cik}: {exc}",
+        code="sec_companyfacts_payload_json_parse_failed",
+      ) from exc
+    if not isinstance(payload, dict):
+      raise SecCompanyfactsParseError(
+        f"Unexpected SEC companyfacts payload root type for CIK {normalized_cik}",
+        code="sec_companyfacts_payload_root_type_invalid",
+      )
+
+    return payload
 
   @staticmethod
   def canonical_payload_bytes(payload: dict[str, object]) -> bytes:

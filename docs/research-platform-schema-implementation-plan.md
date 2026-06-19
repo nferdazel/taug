@@ -287,6 +287,7 @@ Dependencies:
 Current status:
 
 - schema foundation for `statement_taxonomy_items`, `financial_statements`, and `financial_statement_items` is implemented
+- raw `sec_companyfacts` ingestion with validation, audit trail, checkpointing, and duplicate detection is implemented
 - parser and taxonomy mapping workflow are still pending
 
 Rule:

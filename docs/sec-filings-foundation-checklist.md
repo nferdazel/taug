@@ -316,6 +316,7 @@ Validation note:
 - local temporal-sanity validation on `2026-06-19` confirmed synthetic bad values emit deterministic sanity failure codes and live `0000320193` filings emit `sec_filing_temporal_sanity=passed`
 - local filing-version linkage validation on `2026-06-19` confirmed live `0000320193` filing versions emit `sec_filing_version_linkage=passed` with expected `filing_id`, `raw_record_id`, `version_number=1`, and `status=active`
 - local amendment-link validation on `2026-06-19` confirmed both synthetic and live paths: the synthetic helper test updated the supersession chain and emitted one `restatement_event` plus one amendment-link audit event, and a live rerun for `0000320193` linked amendment filing version `62fb343e-71d7-406a-bd50-fe9251009035` to prior version `3b17f3d5-5d73-413b-b0a9-ca6063ae7cf2` with matching `restatement_events` and `filing_version_amendment_linked` audit evidence
+- local companyfacts-ingestion validation on `2026-06-19` confirmed live `0000320193` sync created one `sec_companyfacts` `raw_record`, emitted `sec_companyfacts_required_keys=passed`, stored fact-shape metadata (`taxonomy_count=2`, `fact_count=505`, `unit_count=508`, `fact_entry_count=24852`), wrote a `companyfacts_sync` checkpoint, and a rerun emitted `created_raw_records=0`, `replayed_raw_records=1`, plus `sec_companyfacts_duplicate_detection=passed`
 
 ## F. Storage Convention Checklist
 
@@ -324,7 +325,7 @@ Validation note:
 - `[done]` define `record_type` values for SEC:
   - `sec_submissions`
   - `sec_filing_index`
-  - `sec_companyfacts` later
+  - `sec_companyfacts`
 - `[done]` define `source_record_key` convention
 - `[done]` define `source_entity_key` convention using CIK
 

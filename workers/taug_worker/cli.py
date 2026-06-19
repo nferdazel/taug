@@ -6,6 +6,7 @@ import sys
 
 from .config import WorkerConfig
 from .http_client import HttpClient
+from .jobs.sync_sec_companyfacts import run_sync_sec_companyfacts
 from .jobs.fetch_sec_filing_documents import run_fetch_sec_filing_documents
 from .jobs.sync_sec_submissions import run_sync_sec_submissions
 from .sec_client import SecClient
@@ -32,6 +33,17 @@ def main() -> int:
     type=int,
     default=25,
     help="Maximum number of recent filings to normalize per company in one run.",
+  )
+  companyfacts_parser = subparsers.add_parser("sync-sec-companyfacts")
+  companyfacts_parser.add_argument(
+    "--ciks",
+    help="Comma-separated CIK list. Defaults to SEC_TARGET_CIKS.",
+  )
+  companyfacts_parser.add_argument(
+    "--max-companies",
+    type=int,
+    default=0,
+    help="Optional cap after parsing the input list.",
   )
   document_parser = subparsers.add_parser("fetch-sec-filing-documents")
   document_parser.add_argument(
@@ -76,6 +88,40 @@ def main() -> int:
           "replayed_filings": summary.replayed_filings,
           "created_filing_versions": summary.created_filing_versions,
           "replayed_filing_versions": summary.replayed_filing_versions,
+        },
+        ensure_ascii=True,
+        sort_keys=True,
+      )
+    )
+    return 0
+
+  if args.command == "sync-sec-companyfacts":
+    ciks: tuple[str, ...] = _resolve_ciks(args.ciks, config)
+    if args.max_companies > 0:
+      ciks = ciks[: args.max_companies]
+
+    http_client = HttpClient()
+    sec_client = SecClient(http_client=http_client, user_agent=config.sec_user_agent)
+    supabase_client = SupabaseRestClient(
+      http_client=http_client,
+      supabase_url=config.supabase_url,
+      service_role_key=config.supabase_service_role_key,
+    )
+
+    summary = run_sync_sec_companyfacts(
+      ciks=ciks,
+      sec_client=sec_client,
+      supabase_client=supabase_client,
+    )
+    print(
+      json.dumps(
+        {
+          "fetch_run_id": summary.fetch_run_id,
+          "processed_ciks": summary.processed_ciks,
+          "succeeded_ciks": summary.succeeded_ciks,
+          "failed_ciks": summary.failed_ciks,
+          "created_raw_records": summary.created_raw_records,
+          "replayed_raw_records": summary.replayed_raw_records,
         },
         ensure_ascii=True,
         sort_keys=True,
