@@ -74,6 +74,7 @@ feature/
 - [Research Platform Schema Implementation Plan](docs/research-platform-schema-implementation-plan.md)
 - [Research Platform Screener and Metric Engine Design](docs/research-platform-screener-metric-engine.md)
 - [Research Platform Source Strategy](docs/research-platform-source-strategy.md)
+- [SEC Filings Foundation Checklist](docs/sec-filings-foundation-checklist.md)
 
 ## Data Sources
 

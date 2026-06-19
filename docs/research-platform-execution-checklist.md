@@ -251,6 +251,7 @@ Exit criteria:
 ### Phase 3: Filings foundation
 
 - `[done]` document source strategy and priority order
+- `[done]` define SEC filings foundation implementation checklist
 - `[todo]` ingest SEC submissions
 - `[todo]` store raw documents immutably
 - `[todo]` build filing and filing_version model
@@ -259,6 +260,7 @@ Exit criteria:
 
 - can trace filing document from database
 - source strategy document exists
+- SEC filings foundation checklist exists
 
 ### Phase 4: Statement normalization
 

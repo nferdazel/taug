@@ -1,0 +1,421 @@
+# Taug SEC Filings Foundation Checklist
+
+Last updated: 2026-06-19
+
+## Purpose
+
+This document turns the SEC foundation plan into an execution checklist.
+
+It is the first phase-3 artifact intended to bridge planning into implementation.
+
+The goal is not to build all of SEC support at once.
+
+The goal is to reach the first trustworthy filing foundation that can:
+
+- discover filings
+- store raw filing artifacts immutably
+- create filing lineage
+- support later statement normalization
+
+## Scope Boundary
+
+This checklist covers:
+
+- SEC submissions and filing metadata
+- raw filing documents
+- filing identity and version chain
+- initial worker job definitions
+- initial migration batches required for SEC
+
+This checklist does not yet cover:
+
+- full statement normalization
+- full companyfacts parsing
+- full screener metric computation
+- historical backtesting
+
+## Success Definition
+
+Phase 3 SEC foundation is successful when:
+
+1. A worker can discover new SEC filings for a target universe.
+2. Raw SEC payloads are stored immutably.
+3. Raw filing documents are stored immutably.
+4. A filing can be traced from company to filing to filing version to raw document.
+5. Amendments or changed filing packages create new versions instead of overwriting history.
+
+## Target Initial Universe
+
+Start narrow.
+
+Recommended first universe:
+
+- 25 to 100 large US companies
+
+Reason:
+
+- enough variety to validate architecture
+- small enough to debug mapping and replay behavior
+
+Do not start with the entire US listed universe.
+
+## Phase-3 Workstreams
+
+There are four workstreams:
+
+1. SQL foundation
+2. Worker foundation
+3. SEC fetch and storage
+4. Filing lineage validation
+
+## A. SQL Foundation Checklist
+
+### A1. Raw ingestion tables
+
+- `[todo]` create `raw_sources`
+- `[todo]` create `raw_fetch_runs`
+- `[todo]` create `raw_documents`
+- `[todo]` create `raw_records`
+- `[todo]` create `raw_document_links`
+
+Required notes:
+
+- all raw tables must be additive
+- no destructive migration in this batch
+
+Exit criteria:
+
+- worker has a place to write raw SEC payloads and document metadata
+
+### A2. Audit and validation tables
+
+- `[todo]` create `audit_events`
+- `[todo]` create `validation_events`
+- `[todo]` create `restatement_events` or document its deferred status explicitly
+
+Exit criteria:
+
+- worker failures and validation failures can be recorded in database
+
+### A3. Filing lineage tables
+
+- `[todo]` create `filings`
+- `[todo]` create `filing_versions`
+
+Required columns to verify:
+
+- logical filing key
+- filing type
+- filing date
+- acceptance datetime
+- `raw_document_id`
+- `raw_record_id`
+- `parser_version`
+- `supersedes_filing_version_id`
+- `superseded_by_filing_version_id`
+- `is_restated`
+
+Exit criteria:
+
+- one logical filing can have many versions without overwriting old history
+
+### A4. Canonical entity prerequisites
+
+- `[todo]` create minimal `companies`
+- `[todo]` create minimal `securities`
+- `[todo]` create minimal `security_identifiers`
+
+Required minimum SEC mapping support:
+
+- internal `company_id`
+- CIK mapping
+- ticker mapping where available
+
+Exit criteria:
+
+- SEC filing can be attached to a canonical company entity
+
+## B. Worker Foundation Checklist
+
+### B1. Worker project bootstrap
+
+- `[todo]` create Python worker project
+- `[todo]` define module layout:
+  - `sources/sec/`
+  - `jobs/`
+  - `storage/`
+  - `validators/`
+  - `audit/`
+- `[todo]` define environment variable contract
+- `[todo]` define worker versioning convention
+
+Exit criteria:
+
+- worker repo or worker directory can run one explicit SEC job end-to-end
+
+### B2. Job registry and scheduler contract
+
+- `[todo]` define `filing_discovery` job
+- `[todo]` define `document_fetch` job
+- `[todo]` define retry policy
+- `[todo]` define checkpoint storage approach
+
+Checkpoint examples:
+
+- last CIK processed
+- last accession processed
+- last successful SEC submissions fetch timestamp
+
+Exit criteria:
+
+- job scope and idempotency rules are explicit
+
+### B3. Supabase integration contract
+
+- `[todo]` define write path from worker to Postgres
+- `[todo]` define write path from worker to Storage
+- `[todo]` define service-role credential handling
+- `[todo]` define timeout and retry behavior for DB/storage writes
+
+Exit criteria:
+
+- worker can write raw rows and document metadata reliably
+
+## C. SEC Fetch and Storage Checklist
+
+### C1. Source metadata seed
+
+- `[todo]` insert `raw_sources` row for `sec_edgar`
+- `[todo]` document licensing/access notes in source metadata
+- `[todo]` mark source as official
+
+Exit criteria:
+
+- SEC becomes an explicit source in lineage model
+
+### C2. Submissions fetch
+
+- `[todo]` fetch SEC submissions payload for target universe
+- `[todo]` store each submissions payload in `raw_records`
+- `[todo]` hash payloads
+- `[todo]` link records to `raw_fetch_runs`
+
+Required rule:
+
+- raw payload should be stored before normalization
+
+Exit criteria:
+
+- submissions payload is replayable from database
+
+### C3. Filing discovery normalization
+
+- `[todo]` extract filing metadata from raw submissions payload
+- `[todo]` create logical `filings`
+- `[todo]` create first `filing_versions`
+- `[todo]` preserve source accession keys
+
+Exit criteria:
+
+- discovered SEC filings exist as normalized logical filings
+
+### C4. Raw document fetch
+
+- `[todo]` resolve document URLs for target filing package
+- `[todo]` download primary filing documents
+- `[todo]` store immutable files in Storage
+- `[todo]` record `content_hash`
+- `[todo]` create `raw_documents`
+- `[todo]` link `raw_documents` to related `raw_records`
+
+Suggested initial document scope:
+
+- primary filing document
+- XBRL instance when available
+- filing package metadata document
+
+Exit criteria:
+
+- at least one filing can be traced to its stored raw document
+
+## D. Filing Versioning Checklist
+
+### D1. Version identity rule
+
+- `[todo]` define what makes one logical filing unique
+- `[todo]` define what creates a new filing version
+
+Recommended signals:
+
+- accession number
+- changed package hash
+- amendment type
+- changed raw document hash
+
+Exit criteria:
+
+- worker can decide insert-new-version vs no-op deterministically
+
+### D2. Restatement and amendment handling
+
+- `[todo]` detect amendment filings
+- `[todo]` create new `filing_versions` for amendments
+- `[todo]` connect supersession chain
+- `[todo]` emit `restatement_events` or equivalent audit event
+
+Exit criteria:
+
+- amendment does not overwrite prior filing version
+
+## E. Validation Checklist
+
+### E1. Raw validation
+
+- `[todo]` validate payload parse success
+- `[todo]` validate required SEC keys exist
+- `[todo]` validate fetched document hash and byte size
+- `[todo]` validate duplicate detection rules
+
+### E2. Normalization validation
+
+- `[todo]` validate filing mapped to canonical company
+- `[todo]` validate filing date and acceptance datetime sanity
+- `[todo]` validate version linkage integrity
+
+### E3. Operational validation
+
+- `[todo]` verify rerun is idempotent
+- `[todo]` verify partial failure leaves audit trail
+- `[todo]` verify checkpoint only moves after success
+
+Exit criteria:
+
+- rerunning the same SEC job does not create uncontrolled duplicates
+
+## F. Storage Convention Checklist
+
+### F1. Raw record conventions
+
+- `[todo]` define `record_type` values for SEC:
+  - `sec_submissions`
+  - `sec_filing_index`
+  - `sec_companyfacts` later
+- `[todo]` define `source_record_key` convention
+- `[todo]` define `source_entity_key` convention using CIK
+
+### F2. Raw document path convention
+
+- `[todo]` define Storage path pattern
+
+Recommended pattern:
+
+- `raw/sec_edgar/{yyyy}/{mm}/{dd}/{document_id}`
+
+### F3. Metadata conventions
+
+- `[todo]` define metadata fields stored on raw SEC documents
+- `[todo]` define metadata fields stored on raw SEC payload records
+
+Recommended metadata examples:
+
+- accession number
+- filing type
+- cik
+- ticker
+- acceptance datetime
+- source URL
+
+Exit criteria:
+
+- all SEC artifacts follow one predictable storage and metadata convention
+
+## G. First Migration Batch Order
+
+The first SEC implementation should not start with statement tables.
+
+Recommended order:
+
+1. raw ingestion tables
+2. audit and validation tables
+3. minimal canonical company/security mapping tables
+4. filing lineage tables
+5. worker bootstrap
+6. SEC submissions fetch job
+7. raw document fetch job
+
+Do not skip this order.
+
+## H. First Worker Jobs
+
+### Job 1: `sync_sec_submissions`
+
+Purpose:
+
+- fetch submissions metadata
+- store raw payload
+- normalize logical filings
+
+Definition of done:
+
+- one target company produces raw records and filings rows
+
+### Job 2: `fetch_sec_filing_documents`
+
+Purpose:
+
+- fetch documents for discovered filings
+- store immutable raw docs
+- link docs to filing versions
+
+Definition of done:
+
+- one discovered filing can be opened from stored raw document path
+
+### Job 3: `reconcile_sec_filing_versions`
+
+Purpose:
+
+- detect changed or amended filings
+- insert new versions when necessary
+
+Definition of done:
+
+- amendment creates new version rather than overwrite
+
+## I. Anti-Patterns To Avoid
+
+Avoid:
+
+- fetching SEC data straight into final statement tables
+- skipping raw payload storage because it feels redundant
+- using only ticker without CIK-aware mapping
+- assuming one filing equals one immutable truth forever
+- treating document storage as optional
+
+## J. Phase-3 Exit Criteria
+
+Phase 3 is complete only when all of the following are true:
+
+1. SEC exists in `raw_sources`.
+2. Worker can fetch and store submissions payloads.
+3. Worker can store raw filing documents immutably.
+4. `filings` and `filing_versions` are populated for target universe.
+5. At least one amendment or changed package path is handled without destructive overwrite.
+6. Audit and validation events exist for failure cases.
+
+## K. Recommended Immediate Next Implementation Steps
+
+1. Write first SQL migrations for raw spine and audit spine.
+2. Write minimal canonical entity migrations needed for SEC attachment.
+3. Scaffold Python worker project.
+4. Implement `sync_sec_submissions`.
+5. Implement `fetch_sec_filing_documents`.
+6. Test on narrow SEC universe.
+
+## Progress Sync Rule
+
+Before implementing any of the above:
+
+1. update this checklist if scope changes
+2. update the execution checklist when status changes
+3. then commit
