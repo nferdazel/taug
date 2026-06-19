@@ -289,7 +289,9 @@ Exit criteria:
   - `financial_statements`
   - `financial_statement_items`
 - `[done]` implement SEC companyfacts raw-ingestion job with validation, audit trail, checkpointing, and duplicate detection
-- `[todo]` parse and normalize company facts / statements
+- `[partial]` parse and normalize company facts / statements:
+  - SEC companyfacts parser MVP writes core statement rows for curated facts from `10-K` / `10-Q` filings
+  - current write path is row-by-row via Supabase REST and must be optimized before broad-scale backfill
 - `[todo]` support historical periods and statement versions
 - `[todo]` support restatements
 

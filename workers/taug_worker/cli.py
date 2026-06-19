@@ -6,6 +6,7 @@ import sys
 
 from .config import WorkerConfig
 from .http_client import HttpClient
+from .jobs.parse_sec_companyfacts import run_parse_sec_companyfacts
 from .jobs.sync_sec_companyfacts import run_sync_sec_companyfacts
 from .jobs.fetch_sec_filing_documents import run_fetch_sec_filing_documents
 from .jobs.sync_sec_submissions import run_sync_sec_submissions
@@ -40,6 +41,17 @@ def main() -> int:
     help="Comma-separated CIK list. Defaults to SEC_TARGET_CIKS.",
   )
   companyfacts_parser.add_argument(
+    "--max-companies",
+    type=int,
+    default=0,
+    help="Optional cap after parsing the input list.",
+  )
+  parse_companyfacts_parser = subparsers.add_parser("parse-sec-companyfacts")
+  parse_companyfacts_parser.add_argument(
+    "--ciks",
+    help="Comma-separated CIK list. Defaults to SEC_TARGET_CIKS.",
+  )
+  parse_companyfacts_parser.add_argument(
     "--max-companies",
     type=int,
     default=0,
@@ -122,6 +134,41 @@ def main() -> int:
           "failed_ciks": summary.failed_ciks,
           "created_raw_records": summary.created_raw_records,
           "replayed_raw_records": summary.replayed_raw_records,
+        },
+        ensure_ascii=True,
+        sort_keys=True,
+      )
+    )
+    return 0
+
+  if args.command == "parse-sec-companyfacts":
+    ciks: tuple[str, ...] = _resolve_ciks(args.ciks, config)
+    if args.max_companies > 0:
+      ciks = ciks[: args.max_companies]
+
+    http_client = HttpClient()
+    supabase_client = SupabaseRestClient(
+      http_client=http_client,
+      supabase_url=config.supabase_url,
+      service_role_key=config.supabase_service_role_key,
+    )
+    summary = run_parse_sec_companyfacts(
+      ciks=ciks,
+      supabase_client=supabase_client,
+    )
+    print(
+      json.dumps(
+        {
+          "fetch_run_id": summary.fetch_run_id,
+          "processed_ciks": summary.processed_ciks,
+          "succeeded_ciks": summary.succeeded_ciks,
+          "failed_ciks": summary.failed_ciks,
+          "created_reporting_periods": summary.created_reporting_periods,
+          "replayed_reporting_periods": summary.replayed_reporting_periods,
+          "created_statements": summary.created_statements,
+          "replayed_statements": summary.replayed_statements,
+          "created_items": summary.created_items,
+          "replayed_items": summary.replayed_items,
         },
         ensure_ascii=True,
         sort_keys=True,

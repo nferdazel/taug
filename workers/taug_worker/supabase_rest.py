@@ -71,6 +71,15 @@ class FilingVersionRecord:
   status: str
 
 
+@dataclass(frozen=True)
+class RawRecord:
+  id: str
+  source_entity_key: str | None
+  payload_json: dict[str, Any]
+  metadata: dict[str, Any]
+  created_at: str
+
+
 class SupabaseRestClient:
   def __init__(
     self,
@@ -310,6 +319,51 @@ class SupabaseRestClient:
       raise ValueError("Failed to resolve raw record after upsert")
     return UpsertResult(id=str(existing_rows[0]["id"]), created=False)
 
+  def list_latest_raw_records(
+    self,
+    *,
+    record_type: str,
+    source_entity_keys: list[str],
+    limit: int,
+  ) -> list[RawRecord]:
+    if not source_entity_keys:
+      return []
+    entity_key_filter: str = ",".join(source_entity_keys)
+    rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "raw_records",
+      query={
+        "select": "id,source_entity_key,payload_json,metadata,created_at",
+        "record_type": f"eq.{record_type}",
+        "source_entity_key": f"in.({entity_key_filter})",
+        "order": "created_at.desc",
+        "limit": str(limit),
+      },
+    )
+    latest_by_entity: dict[str, RawRecord] = {}
+    for row in rows:
+      source_entity_key: Any = row.get("source_entity_key")
+      payload_json: Any = row.get("payload_json")
+      metadata: Any = row.get("metadata")
+      created_at: Any = row.get("created_at")
+      if (
+        not isinstance(source_entity_key, str)
+        or not isinstance(payload_json, dict)
+        or not isinstance(metadata, dict)
+        or not isinstance(created_at, str)
+      ):
+        continue
+      if source_entity_key in latest_by_entity:
+        continue
+      latest_by_entity[source_entity_key] = RawRecord(
+        id=str(row["id"]),
+        source_entity_key=source_entity_key,
+        payload_json=payload_json,
+        metadata=metadata,
+        created_at=created_at,
+      )
+    return [latest_by_entity[key] for key in source_entity_keys if key in latest_by_entity]
+
   def ensure_canonical_security(
     self,
     *,
@@ -396,6 +450,12 @@ class SupabaseRestClient:
       )
 
     return CanonicalSecurity(company_id=company_id, security_id=security_id)
+
+  def get_canonical_security_by_cik(self, *, cik: str) -> CanonicalSecurity | None:
+    return self._get_security_by_identifier(
+      identifier_type="CIK",
+      identifier_value=cik,
+    )
 
   def upsert_filing(
     self,
@@ -485,6 +545,48 @@ class SupabaseRestClient:
     if not existing_rows:
       raise ValueError("Failed to resolve filing version after upsert")
     return UpsertResult(id=str(existing_rows[0]["id"]), created=False)
+
+  def list_filings_for_company(
+    self,
+    *,
+    company_id: str,
+    raw_source_id: int,
+    limit: int,
+  ) -> list[FilingRecord]:
+    rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "filings",
+      query={
+        "select": (
+          "id,company_id,filing_key,raw_source_id,filing_type,"
+          "filing_date,report_date,acceptance_datetime,is_amendment"
+        ),
+        "company_id": f"eq.{company_id}",
+        "raw_source_id": f"eq.{raw_source_id}",
+        "order": "filing_date.desc,created_at.desc",
+        "limit": str(limit),
+      },
+    )
+    return [
+      FilingRecord(
+        id=str(row["id"]),
+        company_id=str(row["company_id"]),
+        filing_key=str(row["filing_key"]),
+        raw_source_id=int(row["raw_source_id"]),
+        filing_type=str(row["filing_type"]),
+        filing_date=str(row["filing_date"]),
+        report_date=(
+          str(row["report_date"]) if row.get("report_date") is not None else None
+        ),
+        acceptance_datetime=(
+          str(row["acceptance_datetime"])
+          if row.get("acceptance_datetime") is not None
+          else None
+        ),
+        is_amendment=bool(row["is_amendment"]),
+      )
+      for row in rows
+    ]
 
   def get_filing_version_record(
     self,
@@ -746,6 +848,253 @@ class SupabaseRestClient:
       )
       for row in rows
     ]
+
+  def list_currencies(self) -> dict[str, str]:
+    rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "currencies",
+      query={"select": "id,code", "limit": "200"},
+    )
+    return {
+      str(row["code"]): str(row["id"])
+      for row in rows
+      if isinstance(row.get("code"), str) and row.get("id") is not None
+    }
+
+  def upsert_reporting_period(
+    self,
+    *,
+    company_id: str,
+    period_type: str,
+    fiscal_year: int,
+    fiscal_quarter: int | None,
+    period_start: str | None,
+    period_end: str,
+    label: str,
+    last_reported_at: str | None,
+    last_fetched_at: str | None,
+    last_verified_at: str | None,
+    metadata: dict[str, object],
+  ) -> UpsertResult:
+    query: dict[str, str] = {
+      "select": "id",
+      "company_id": f"eq.{company_id}",
+      "period_type": f"eq.{period_type}",
+      "fiscal_year": f"eq.{fiscal_year}",
+      "period_end": f"eq.{period_end}",
+      "limit": "1",
+    }
+    query["fiscal_quarter"] = (
+      f"eq.{fiscal_quarter}" if fiscal_quarter is not None else "is.null"
+    )
+    existing_rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "reporting_periods",
+      query=query,
+    )
+    if existing_rows:
+      return UpsertResult(id=str(existing_rows[0]["id"]), created=False)
+
+    rows: list[dict[str, Any]] = self._request(
+      "POST",
+      "reporting_periods",
+      headers={"Prefer": "return=representation"},
+      payload=[
+        {
+          "company_id": company_id,
+          "period_type": period_type,
+          "fiscal_year": fiscal_year,
+          "fiscal_quarter": fiscal_quarter,
+          "period_start": period_start,
+          "period_end": period_end,
+          "label": label,
+          "last_reported_at": last_reported_at,
+          "last_fetched_at": last_fetched_at,
+          "last_verified_at": last_verified_at,
+          "metadata": metadata,
+        },
+      ],
+    )
+    if not rows:
+      raise ValueError("Failed to upsert reporting period")
+    return UpsertResult(id=str(rows[0]["id"]), created=True)
+
+  def upsert_statement_taxonomy_item(
+    self,
+    *,
+    code: str,
+    name: str,
+    statement_type: str,
+    unit_type: str | None,
+    sign_convention: str,
+    taxonomy_source: str,
+    is_core: bool,
+    metadata: dict[str, object],
+  ) -> UpsertResult:
+    existing_rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "statement_taxonomy_items",
+      query={
+        "select": "id",
+        "taxonomy_source": f"eq.{taxonomy_source}",
+        "code": f"eq.{code}",
+        "limit": "1",
+      },
+    )
+    if existing_rows:
+      return UpsertResult(id=str(existing_rows[0]["id"]), created=False)
+
+    rows: list[dict[str, Any]] = self._request(
+      "POST",
+      "statement_taxonomy_items",
+      headers={"Prefer": "return=representation"},
+      payload=[
+        {
+          "code": code,
+          "name": name,
+          "statement_type": statement_type,
+          "unit_type": unit_type,
+          "sign_convention": sign_convention,
+          "taxonomy_source": taxonomy_source,
+          "is_core": is_core,
+          "metadata": metadata,
+        },
+      ],
+    )
+    if not rows:
+      raise ValueError("Failed to upsert statement taxonomy item")
+    return UpsertResult(id=str(rows[0]["id"]), created=True)
+
+  def upsert_financial_statement(
+    self,
+    *,
+    company_id: str,
+    security_id: str | None,
+    filing_id: str,
+    filing_version_id: str,
+    reporting_period_id: str | None,
+    statement_type: str,
+    statement_version: int,
+    currency_id: str | None,
+    period_start: str | None,
+    period_end: str,
+    published_at: str | None,
+    is_restated: bool,
+    last_reported_at: str | None,
+    last_fetched_at: str | None,
+    last_verified_at: str | None,
+    parser_version: str | None,
+    status: str,
+    metadata: dict[str, object],
+  ) -> UpsertResult:
+    existing_rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "financial_statements",
+      query={
+        "select": "id",
+        "filing_version_id": f"eq.{filing_version_id}",
+        "statement_type": f"eq.{statement_type}",
+        "period_end": f"eq.{period_end}",
+        "statement_version": f"eq.{statement_version}",
+        "limit": "1",
+      },
+    )
+    if existing_rows:
+      return UpsertResult(id=str(existing_rows[0]["id"]), created=False)
+
+    rows: list[dict[str, Any]] = self._request(
+      "POST",
+      "financial_statements",
+      headers={"Prefer": "return=representation"},
+      payload=[
+        {
+          "company_id": company_id,
+          "security_id": security_id,
+          "filing_id": filing_id,
+          "filing_version_id": filing_version_id,
+          "reporting_period_id": reporting_period_id,
+          "statement_type": statement_type,
+          "statement_version": statement_version,
+          "currency_id": currency_id,
+          "period_start": period_start,
+          "period_end": period_end,
+          "published_at": published_at,
+          "is_restated": is_restated,
+          "last_reported_at": last_reported_at,
+          "last_fetched_at": last_fetched_at,
+          "last_verified_at": last_verified_at,
+          "parser_version": parser_version,
+          "status": status,
+          "metadata": metadata,
+        },
+      ],
+    )
+    if not rows:
+      raise ValueError("Failed to upsert financial statement")
+    return UpsertResult(id=str(rows[0]["id"]), created=True)
+
+  def upsert_financial_statement_item(
+    self,
+    *,
+    financial_statement_id: str,
+    taxonomy_item_id: str | None,
+    lineage_source_type: str,
+    lineage_source_id: str,
+    value_numeric: int | float | None,
+    value_text: str | None,
+    unit: str | None,
+    scale: int | None,
+    decimals: int | None,
+    fact_period_start: str | None,
+    fact_period_end: str | None,
+    fact_instant: str | None,
+    is_reported: bool,
+    is_calculated: bool,
+    confidence_score: float | None,
+    metadata: dict[str, object],
+  ) -> UpsertResult:
+    existing_rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "financial_statement_items",
+      query={
+        "select": "id",
+        "financial_statement_id": f"eq.{financial_statement_id}",
+        "lineage_source_type": f"eq.{lineage_source_type}",
+        "lineage_source_id": f"eq.{lineage_source_id}",
+        "limit": "1",
+      },
+    )
+    if existing_rows:
+      return UpsertResult(id=str(existing_rows[0]["id"]), created=False)
+
+    rows: list[dict[str, Any]] = self._request(
+      "POST",
+      "financial_statement_items",
+      headers={"Prefer": "return=representation"},
+      payload=[
+        {
+          "financial_statement_id": financial_statement_id,
+          "taxonomy_item_id": taxonomy_item_id,
+          "lineage_source_type": lineage_source_type,
+          "lineage_source_id": lineage_source_id,
+          "value_numeric": value_numeric,
+          "value_text": value_text,
+          "unit": unit,
+          "scale": scale,
+          "decimals": decimals,
+          "fact_period_start": fact_period_start,
+          "fact_period_end": fact_period_end,
+          "fact_instant": fact_instant,
+          "is_reported": is_reported,
+          "is_calculated": is_calculated,
+          "confidence_score": confidence_score,
+          "metadata": metadata,
+        },
+      ],
+    )
+    if not rows:
+      raise ValueError("Failed to upsert financial statement item")
+    return UpsertResult(id=str(rows[0]["id"]), created=True)
 
   def update_filing_version_supersession(
     self,
