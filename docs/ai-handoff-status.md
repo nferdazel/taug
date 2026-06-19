@@ -81,15 +81,25 @@ These are preserved, not the current bottleneck.
 - filing version restatement chain
 - statement layer schema
 - SEC raw companyfacts ingestion
-- SEC companyfacts parser MVP
+- SEC companyfacts parser MVP (35 XBRL concepts)
 - parser replay hardening
 - first research serving views
+- metric engine schema (`metric_definitions` with 19 MVP metrics, `security_metric_snapshots`, `security_price_snapshots`, `screening_universe_memberships`)
 
 ### Serving views already implemented
 
 - `company_research_summary_v`
 - `company_latest_statement_facts_v`
 - `filing_timeline_v`
+- `company_statement_history_v`
+- `company_statement_items_v`
+
+### What still needs implementation
+
+- formula engine worker job (compute metrics from statements + price data)
+- valuation snapshot serving view (reads from `security_metric_snapshots`)
+- quality and freshness read model
+- Flutter company research pages (deferred until serving views exist)
 
 These are the first Flutter-safe read surfaces for research pages.
 

@@ -214,6 +214,8 @@ Docs discipline for this repo:
   - `company_research_summary_v`
   - `company_latest_statement_facts_v`
   - `filing_timeline_v`
+  - `company_statement_history_v`
+  - `company_statement_items_v`
 - `[todo]` company page
 - `[todo]` security master page
 - `[todo]` filings timeline page
@@ -307,8 +309,11 @@ Exit criteria:
   - company summary
   - latest statement fact snapshot
   - filing timeline
-- `[todo]` support historical periods and statement versions
-- `[todo]` support restatements
+- `[done]` support historical periods and statement versions:
+  - `company_statement_history_v` — pivoted historical statements per company
+  - `company_statement_items_v` — raw line-item browse per company
+- `[done]` expand parser fact catalog from 20 to 35 core XBRL concepts
+- `[done]` support restatements (filing-level supersession + statement-level supersession linked during parse)
 
 Exit criteria:
 
@@ -319,7 +324,14 @@ Exit criteria:
 - `[done]` design formula engine
 - `[done]` design metric snapshot/read model
 - `[done]` design saved screener support
-- `[todo]` implement formula engine
+- `[done]` implement metric engine schema:
+  - `metric_definitions` (19 MVP metrics seeded)
+  - `metric_inputs`
+  - `metric_calculation_runs`
+  - `security_metric_snapshots`
+  - `security_price_snapshots`
+  - `screening_universe_memberships`
+- `[todo]` implement formula engine worker job
 - `[todo]` implement metric snapshot/read model
 - `[todo]` implement saved screener support
 
