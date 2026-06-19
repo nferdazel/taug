@@ -1,6 +1,6 @@
 # Taug AI Handoff Status
 
-Last updated: 2026-06-19
+Last updated: 2026-06-20
 
 ## Purpose
 
@@ -111,6 +111,13 @@ Not the target:
 - Full pipeline: sync → companyfacts → parse → compute
 - 11 statement-only metrics computed correctly
 - 7 price-dependent metrics correctly marked missing_input
+- Pipeline re-verified on 2026-06-20: all SEC jobs idempotent, metrics engine working
+
+### Known operational issue
+
+- Twelve Data API rate limit exceeded (2903 credits used, 800 daily limit)
+- `sync-price-snapshots` will fail until API credits reset (next UTC midnight)
+- Price-dependent metrics (PE, PB, PS, EV/EBIT, EV/EBITDA, market_cap, enterprise_value) remain `missing_input` until price data is available
 
 ## What Is Still Incomplete (Intentionally Deferred)
 
@@ -125,7 +132,7 @@ Not the target:
 - `coverage_lists` table
 - `recalculation_runs` table
 - data quality scoring model
-- screener filter execution worker
+- screener filter execution worker (next implementation task)
 
 ### Operational
 
