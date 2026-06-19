@@ -21,11 +21,11 @@ filing_coverage AS (
 ),
 validation_health AS (
   SELECT
-    ve.entity_id,
+    ve.entity_id AS cik,
     COUNT(*) FILTER (WHERE ve.status = 'passed') AS passed_validations,
     COUNT(*) FILTER (WHERE ve.status = 'failed') AS failed_validations
   FROM taug.validation_events AS ve
-  WHERE ve.entity_type = 'raw_record'
+  WHERE ve.entity_type = 'sec_company'
   GROUP BY ve.entity_id
 ),
 fact_coverage AS (
@@ -107,7 +107,7 @@ LEFT JOIN statement_freshness AS sf
 LEFT JOIN fact_coverage AS fcov
   ON fcov.company_id = c.id
 LEFT JOIN validation_health AS vh
-  ON vh.entity_id = cc.cik;
+  ON vh.cik = cc.cik;
 
 GRANT SELECT ON taug.company_data_quality_v TO authenticated;
 GRANT SELECT ON taug.company_data_quality_v TO service_role;
