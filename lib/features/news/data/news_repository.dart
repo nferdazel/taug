@@ -1,8 +1,8 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/errors/failures.dart';
 import '../../../core/errors/result.dart';
+import '../../../shared/models/news_article.dart';
 import '../../../core/schema/app_schema.dart';
-import '../../../../shared/models/news_article.dart';
 
 class NewsRepository {
   final SupabaseClient _client;
