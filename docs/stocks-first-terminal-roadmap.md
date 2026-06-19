@@ -204,24 +204,33 @@ Requirements:
 
 ### Main tabs for v1
 
-- `Terminal`
+- `Brief`
+- `Market`
 - `Watchlists`
+- `Chart`
 - `News`
 - `Policy`
 - `Calendar`
-- `Filings`
 - `Portfolio`
 - `Settings`
 
-### Terminal tab layout
+### Brief tab layout
 
 Desktop-first multi-panel shell:
 
-- Left: watchlists and symbol lists
-- Center: quote summary, compact chart, key metrics
-- Right: latest headlines, filings, policy/macro events for selected symbol or region
+- Left: ranked top-impact news and policy
+- Right top: market movers
+- Right bottom: macro calendar snapshot
 
-Charts remain available, but the central value is the information surface around the instrument.
+Charts remain available, but are not the default landing surface.
+
+## Current UI Baseline
+
+- 12px minimum readable typography
+- 2px-grid-derived spacing system
+- Fixed-height rows and cards for terminal consistency
+- Source and latency labels are passive status indicators, not interactive controls
+- Default chart mode is `Line`
 
 ## Target Data Architecture
 

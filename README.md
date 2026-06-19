@@ -5,8 +5,9 @@ A high-performance financial terminal built with Flutter Web (WASM), designed fo
 ## Features
 
 ### Market Data
+- **Terminal Brief** — Dense landing page with top impact headlines, movers, and macro snapshot
 - **Watchlist** — Custom watchlists with real-time price updates (auto-refresh every 5s)
-- **Chart** — 4 chart types: Candlestick, Line, Area, OHLC Bar (Syncfusion)
+- **Chart** — 4 chart types with `Line` as default: Line, Area, Candlestick, OHLC Bar
 - **Order Book** — 10-level ask/bid depth with spread indicator
 - **Running Trades** — Time & sales feed
 - **Market Overview** — Top movers with auto-refresh
@@ -18,13 +19,16 @@ A high-performance financial terminal built with Flutter Web (WASM), designed fo
 
 ### News & Calendar
 - **RSS News Feed** — Aggregated from CNBC, Reuters, MarketWatch, Antara
+- **Policy Monitor** — Official Fed and SEC policy/regulatory feed
 - **Economic Calendar** — Events with importance levels (High/Medium/Low)
 - **Category Filters** — Markets, Economy, Geopolitics, Earnings
+- **Top Impact Ranking** — Ranked headlines combining news and policy relevance
 
 ### Platform
 - **Auth** — Register/login with username + password
 - **Settings** — Timezone selection, density mode
-- **7-Tab Layout** — Market, Watchlist, Portfolio, Chart, News, Calendar, Settings
+- **Terminal UI Baseline** — 12px typography floor with compact 2px-grid sizing
+- **9-Tab Layout** — Brief, Market, Watchlist, Portfolio, Chart, News, Policy, Calendar, Settings
 
 ## Tech Stack
 
@@ -47,7 +51,7 @@ Feature-First Clean Architecture:
 ```
 lib/
 ├── core/          # Config, theme, errors, network, utils
-├── features/      # Feature modules (auth, watchlist, chart, news, calendar, market, portfolio, settings)
+├── features/      # Feature modules (auth, brief, watchlist, chart, news, policy, calendar, market, portfolio, settings)
 ├── shared/        # Models and reusable widgets
 └── main.dart      # Entry point
 ```
