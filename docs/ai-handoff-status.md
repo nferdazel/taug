@@ -87,7 +87,7 @@ Not the target:
 - `company_data_quality_v`
 - `screener_results_v`
 
-### Worker jobs (7 total)
+### Worker jobs (8 total)
 
 - `sync-sec-submissions` — fetch SEC EDGAR submissions, normalize filings
 - `fetch-sec-filing-documents` — store immutable raw filing documents
@@ -96,6 +96,7 @@ Not the target:
 - `compute-company-metrics` — compute 19 metrics (tested on AAPL + MSFT)
 - `sync-price-snapshots` — fetch quotes from Twelve Data API
 - `execute-screener` — execute saved screener filters against metric snapshots
+- `compute-data-quality` — compute data quality scores per company
 
 ### CI/CD (6 workflows)
 
@@ -137,9 +138,9 @@ Not the target:
 - FRED, Bank Indonesia, BPS integrations
 - IDX issuer/reference data
 - home market preference model
-- `coverage_lists` table
+- `coverage_lists` table (done)
 - `recalculation_runs` table
-- data quality scoring model
+- data quality scoring model (done — `compute-data-quality` worker + `data_quality_scores` table)
 - screener filter execution worker (done — tested on AAPL/MSFT with gross_margin + ROE filters)
 
 ### Operational

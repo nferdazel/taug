@@ -143,7 +143,7 @@ Docs discipline for this repo:
 - `[done]` `research_notes`
 - `[done]` `investment_theses`
 - `[done]` `saved_screeners`
-- `[todo]` `coverage_lists`
+- `[done]` `coverage_lists`
 
 ### Audit and quality layer
 
@@ -152,7 +152,7 @@ Docs discipline for this repo:
 - `[done]` `ingestion_checkpoints`
 - `[todo]` `recalculation_runs`
 - `[done]` `restatement_events`
-- `[todo]` data quality scoring model
+- `[done]` data quality scoring model
 
 ## G. User Preference Gaps
 
