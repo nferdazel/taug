@@ -26,6 +26,7 @@ class WorkerConfig:
   sec_target_ciks: tuple[str, ...]
   raw_documents_bucket: str
   twelve_data_api_key: str
+  fred_api_key: str
 
   @classmethod
   def from_env(cls) -> "WorkerConfig":
@@ -37,4 +38,5 @@ class WorkerConfig:
       raw_documents_bucket=os.getenv("RAW_DOCUMENTS_BUCKET", "raw-documents").strip()
       or "raw-documents",
       twelve_data_api_key=os.getenv("TWELVE_DATA_API_KEY", "").strip(),
+      fred_api_key=os.getenv("FRED_API_KEY", "").strip(),
     )
