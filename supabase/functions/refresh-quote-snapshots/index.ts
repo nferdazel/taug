@@ -120,13 +120,18 @@ Deno.serve(async (req) => {
       const primary = sources.find((source) =>
         source.is_primary === true && source.is_active !== false
       );
+      const primaryVendorSymbol = typeof primary?.vendor_symbol === "string"
+        ? primary.vendor_symbol
+        : row.ticker as string;
+      const primaryVendor = typeof primary?.vendor === "string"
+        ? primary.vendor
+        : "twelve_data";
 
       return {
         symbolId: row.id as number,
         ticker: row.ticker as string,
-        vendorSymbol: (primary?.vendor_symbol as string?) ??
-          (row.ticker as string),
-        vendor: (primary?.vendor as string?) ?? "twelve_data",
+        vendorSymbol: primaryVendorSymbol,
+        vendor: primaryVendor,
       };
     }).filter((target) => target.vendor === "twelve_data");
 
