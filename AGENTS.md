@@ -195,7 +195,7 @@ Paths MUST strictly follow: `lib/features/[feature_name]/[data|domain|presentati
 
 - **Format:** `<type>(<scope>): <short description in lowercase>`
 - **Allowed types:** `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`
-- **Author Identity:** `Fredianto <private@example.com>`
+- **Author Identity:** Use the existing configured Git identity. Do not hardcode a personal email in repo files.
 - **Micro-scopes:** `auth`, `watchlist`, `chart`, `news`, `calendar`, `settings`, `market`, `portfolio`, `layout`, `theme`, `ci`, `deps`, `core`, `shared`, `schema`, `functions`
 
 ---
