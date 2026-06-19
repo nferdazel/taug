@@ -56,6 +56,15 @@ class FilingRecord:
   filing_key: str
 
 
+@dataclass(frozen=True)
+class FilingVersionRecord:
+  id: str
+  filing_id: str
+  raw_record_id: str | None
+  version_number: int
+  status: str
+
+
 class SupabaseRestClient:
   def __init__(
     self,
@@ -470,6 +479,33 @@ class SupabaseRestClient:
     if not existing_rows:
       raise ValueError("Failed to resolve filing version after upsert")
     return UpsertResult(id=str(existing_rows[0]["id"]), created=False)
+
+  def get_filing_version_record(
+    self,
+    *,
+    filing_version_id: str,
+  ) -> FilingVersionRecord:
+    rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "filing_versions",
+      query={
+        "select": "id,filing_id,raw_record_id,version_number,status",
+        "id": f"eq.{filing_version_id}",
+        "limit": "1",
+      },
+    )
+    if not rows:
+      raise ValueError(f"Failed to resolve filing version row: {filing_version_id}")
+    row: dict[str, Any] = rows[0]
+    return FilingVersionRecord(
+      id=str(row["id"]),
+      filing_id=str(row["filing_id"]),
+      raw_record_id=(
+        str(row["raw_record_id"]) if row.get("raw_record_id") is not None else None
+      ),
+      version_number=int(row["version_number"]),
+      status=str(row["status"]),
+    )
 
   def list_pending_sec_filing_documents(self, *, limit: int) -> list[PendingFilingDocument]:
     rows: list[dict[str, Any]] = self._request(

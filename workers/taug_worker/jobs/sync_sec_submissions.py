@@ -619,6 +619,70 @@ def _normalize_filing_discovery(
         "primary_document": primary_document,
       },
     )
+    filing_version_record = supabase_client.get_filing_version_record(
+      filing_version_id=filing_version_result.id,
+    )
+    version_failure_codes: list[str] = []
+    if filing_version_record.filing_id != filing_result.id:
+      version_failure_codes.append("filing_id_mismatch")
+    if filing_version_record.raw_record_id != raw_record_id:
+      version_failure_codes.append("raw_record_id_mismatch")
+    if filing_version_record.version_number != 1:
+      version_failure_codes.append("unexpected_version_number")
+    if filing_version_record.status != "active":
+      version_failure_codes.append("unexpected_status")
+    if version_failure_codes:
+      failure_payload: dict[str, object] = {
+        "source": "sec_edgar",
+        "cik": cik,
+        "filing_id": filing_result.id,
+        "filing_version_id": filing_version_result.id,
+        "raw_record_id": raw_record_id,
+        "expected_version_number": 1,
+        "actual_version_number": filing_version_record.version_number,
+        "expected_status": "active",
+        "actual_status": filing_version_record.status,
+        "expected_filing_id": filing_result.id,
+        "actual_filing_id": filing_version_record.filing_id,
+        "expected_raw_record_id": raw_record_id,
+        "actual_raw_record_id": filing_version_record.raw_record_id,
+        "failure_codes": version_failure_codes,
+      }
+      supabase_client.insert_validation_event(
+        entity_type="filing_version",
+        entity_id=filing_version_result.id,
+        validation_rule="sec_filing_version_linkage",
+        status="failed",
+        message="Resolved filing_version linkage does not match expected filing/version invariants.",
+        payload=failure_payload,
+      )
+      supabase_client.insert_audit_event(
+        event_type="filing_version_linkage_failed",
+        entity_type="filing_version",
+        entity_id=filing_version_result.id,
+        severity="error",
+        payload=failure_payload,
+      )
+      raise ValueError(
+        "SEC filing version linkage validation failed: "
+        + ", ".join(version_failure_codes)
+      )
+    supabase_client.insert_validation_event(
+      entity_type="filing_version",
+      entity_id=filing_version_result.id,
+      validation_rule="sec_filing_version_linkage",
+      status="passed",
+      message="Resolved filing_version linkage matches expected filing/version invariants.",
+      payload={
+        "source": "sec_edgar",
+        "cik": cik,
+        "filing_id": filing_result.id,
+        "filing_version_id": filing_version_result.id,
+        "raw_record_id": raw_record_id,
+        "version_number": filing_version_record.version_number,
+        "status": filing_version_record.status,
+      },
+    )
     if filing_version_result.created:
       created_filing_versions += 1
     else:

@@ -290,7 +290,7 @@ Exit criteria:
 
 - `[done]` validate filing mapped to canonical company
 - `[done]` validate filing date and acceptance datetime sanity
-- `[todo]` validate version linkage integrity
+- `[done]` validate version linkage integrity
 
 ### E3. Operational validation
 
@@ -314,6 +314,7 @@ Validation note:
 - local duplicate-detection validation on `2026-06-19` confirmed live submissions reruns emit `sec_submissions_duplicate_detection=passed` and direct duplicate `raw_document` insertion returns the existing row with `created=False`
 - local company-mapping validation on `2026-06-19` confirmed live `0000320193` filings emit `sec_filing_company_mapping=passed` with matching canonical `company_id`
 - local temporal-sanity validation on `2026-06-19` confirmed synthetic bad values emit deterministic sanity failure codes and live `0000320193` filings emit `sec_filing_temporal_sanity=passed`
+- local filing-version linkage validation on `2026-06-19` confirmed live `0000320193` filing versions emit `sec_filing_version_linkage=passed` with expected `filing_id`, `raw_record_id`, `version_number=1`, and `status=active`
 
 ## F. Storage Convention Checklist
 

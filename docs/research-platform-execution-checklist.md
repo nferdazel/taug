@@ -270,6 +270,7 @@ Exit criteria:
 - `[done]` validate duplicate detection rules for raw payload and raw document reuse
 - `[done]` validate filing-to-canonical-company mapping during filing normalization
 - `[done]` validate filing date and acceptance datetime sanity during filing normalization
+- `[done]` validate filing-version linkage integrity during filing normalization
 
 Exit criteria:
 
