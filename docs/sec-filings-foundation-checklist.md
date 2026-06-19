@@ -103,8 +103,8 @@ Exit criteria:
 
 ### A3. Filing lineage tables
 
-- `[todo]` create `filings`
-- `[todo]` create `filing_versions`
+- `[done]` create `filings`
+- `[done]` create `filing_versions`
 
 Required columns to verify:
 
@@ -214,10 +214,10 @@ Exit criteria:
 
 ### C3. Filing discovery normalization
 
-- `[todo]` extract filing metadata from raw submissions payload
-- `[todo]` create logical `filings`
-- `[todo]` create first `filing_versions`
-- `[todo]` preserve source accession keys
+- `[done]` extract filing metadata from raw submissions payload
+- `[done]` create logical `filings`
+- `[done]` create first `filing_versions`
+- `[done]` preserve source accession keys
 
 Exit criteria:
 
@@ -246,7 +246,7 @@ Exit criteria:
 
 ### D1. Version identity rule
 
-- `[todo]` define what makes one logical filing unique
+- `[done]` define what makes one logical filing unique
 - `[todo]` define what creates a new filing version
 
 Recommended signals:
@@ -300,12 +300,12 @@ Exit criteria:
 
 ### F1. Raw record conventions
 
-- `[todo]` define `record_type` values for SEC:
+- `[done]` define `record_type` values for SEC:
   - `sec_submissions`
   - `sec_filing_index`
   - `sec_companyfacts` later
-- `[todo]` define `source_record_key` convention
-- `[todo]` define `source_entity_key` convention using CIK
+- `[done]` define `source_record_key` convention
+- `[done]` define `source_entity_key` convention using CIK
 
 ### F2. Raw document path convention
 

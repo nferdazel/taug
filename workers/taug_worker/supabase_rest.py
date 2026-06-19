@@ -14,6 +14,12 @@ class RawSource:
   code: str
 
 
+@dataclass(frozen=True)
+class CanonicalSecurity:
+  company_id: str
+  security_id: str
+
+
 class SupabaseRestClient:
   def __init__(
     self,
@@ -131,14 +137,14 @@ class SupabaseRestClient:
     payload_json: dict[str, object],
     payload_hash: str,
     metadata: dict[str, object],
-  ) -> None:
-    self._request(
+  ) -> str:
+    rows: list[dict[str, Any]] = self._request(
       "POST",
       "raw_records",
       query={
         "on_conflict": "raw_source_id,record_type,source_record_key,payload_hash",
       },
-      headers={"Prefer": "resolution=ignore-duplicates,return=minimal"},
+      headers={"Prefer": "resolution=ignore-duplicates,return=representation"},
       payload=[
         {
           "raw_source_id": raw_source_id,
@@ -152,6 +158,186 @@ class SupabaseRestClient:
         },
       ],
     )
+    if rows:
+      return str(rows[0]["id"])
+
+    existing_rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "raw_records",
+      query={
+        "select": "id",
+        "raw_source_id": f"eq.{raw_source_id}",
+        "record_type": f"eq.{record_type}",
+        "source_record_key": f"eq.{source_record_key}",
+        "payload_hash": f"eq.{payload_hash}",
+        "limit": "1",
+      },
+    )
+    if not existing_rows:
+      raise ValueError("Failed to resolve raw record after upsert")
+    return str(existing_rows[0]["id"])
+
+  def ensure_canonical_security(
+    self,
+    *,
+    cik: str,
+    ticker: str | None,
+    company_name: str,
+  ) -> CanonicalSecurity:
+    existing: CanonicalSecurity | None = self._get_security_by_identifier(
+      identifier_type="CIK",
+      identifier_value=cik,
+    )
+    if existing is not None:
+      return existing
+
+    company_rows: list[dict[str, Any]] = self._request(
+      "POST",
+      "companies",
+      headers={"Prefer": "return=representation"},
+      payload=[
+        {
+          "legal_name": company_name,
+          "display_name": company_name,
+          "domicile_country_code": "US",
+          "metadata": {
+            "cik": cik,
+            "seed_source": "sec_edgar",
+          },
+        },
+      ],
+    )
+    company_id: str = str(company_rows[0]["id"])
+
+    security_name: str = company_name if ticker is None else f"{company_name} ({ticker})"
+    security_rows: list[dict[str, Any]] = self._request(
+      "POST",
+      "securities",
+      headers={"Prefer": "return=representation"},
+      payload=[
+        {
+          "company_id": company_id,
+          "ticker": ticker or cik,
+          "name": security_name,
+          "security_type": "common_stock",
+          "is_primary_listing": True,
+          "status": "active",
+          "metadata": {
+            "seed_source": "sec_edgar",
+          },
+        },
+      ],
+    )
+    security_id: str = str(security_rows[0]["id"])
+
+    self._request(
+      "POST",
+      "security_identifiers",
+      query={"on_conflict": "identifier_type,identifier_value"},
+      headers={"Prefer": "resolution=ignore-duplicates,return=minimal"},
+      payload=[
+        {
+          "security_id": security_id,
+          "identifier_type": "CIK",
+          "identifier_value": cik,
+          "source": "sec_edgar",
+          "is_primary": True,
+        },
+      ],
+    )
+    if ticker is not None:
+      self._request(
+        "POST",
+        "security_identifiers",
+        query={"on_conflict": "identifier_type,identifier_value"},
+        headers={"Prefer": "resolution=ignore-duplicates,return=minimal"},
+        payload=[
+          {
+            "security_id": security_id,
+            "identifier_type": "TICKER",
+            "identifier_value": ticker,
+            "source": "sec_edgar",
+            "is_primary": True,
+          },
+        ],
+      )
+
+    return CanonicalSecurity(company_id=company_id, security_id=security_id)
+
+  def upsert_filing(
+    self,
+    *,
+    company_id: str,
+    raw_source_id: int,
+    filing_type: str,
+    filing_key: str,
+    filing_date: str,
+    acceptance_datetime: str | None,
+    report_date: str | None,
+    is_amendment: bool,
+    metadata: dict[str, object],
+  ) -> str:
+    rows: list[dict[str, Any]] = self._request(
+      "POST",
+      "filings",
+      query={"on_conflict": "raw_source_id,filing_key"},
+      headers={"Prefer": "resolution=merge-duplicates,return=representation"},
+      payload=[
+        {
+          "company_id": company_id,
+          "raw_source_id": raw_source_id,
+          "filing_type": filing_type,
+          "filing_key": filing_key,
+          "filing_date": filing_date,
+          "acceptance_datetime": acceptance_datetime,
+          "report_date": report_date,
+          "is_amendment": is_amendment,
+          "metadata": metadata,
+        },
+      ],
+    )
+    return str(rows[0]["id"])
+
+  def upsert_filing_version(
+    self,
+    *,
+    filing_id: str,
+    raw_record_id: str,
+    parser_version: str,
+    metadata: dict[str, object],
+  ) -> str:
+    rows: list[dict[str, Any]] = self._request(
+      "POST",
+      "filing_versions",
+      query={"on_conflict": "filing_id,version_number"},
+      headers={"Prefer": "resolution=ignore-duplicates,return=representation"},
+      payload=[
+        {
+          "filing_id": filing_id,
+          "version_number": 1,
+          "raw_record_id": raw_record_id,
+          "parser_version": parser_version,
+          "status": "active",
+          "metadata": metadata,
+        },
+      ],
+    )
+    if rows:
+      return str(rows[0]["id"])
+
+    existing_rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "filing_versions",
+      query={
+        "select": "id",
+        "filing_id": f"eq.{filing_id}",
+        "version_number": "eq.1",
+        "limit": "1",
+      },
+    )
+    if not existing_rows:
+      raise ValueError("Failed to resolve filing version after upsert")
+    return str(existing_rows[0]["id"])
 
   def insert_audit_event(
     self,
@@ -257,3 +443,35 @@ class SupabaseRestClient:
     if not isinstance(data, list):
       raise ValueError(f"Unexpected Supabase response shape for table {table}")
     return data
+
+  def _get_security_by_identifier(
+    self,
+    *,
+    identifier_type: str,
+    identifier_value: str,
+  ) -> CanonicalSecurity | None:
+    rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "security_identifiers",
+      query={
+        "select": "security_id,securities(company_id)",
+        "identifier_type": f"eq.{identifier_type}",
+        "identifier_value": f"eq.{identifier_value}",
+        "limit": "1",
+      },
+    )
+    if not rows:
+      return None
+
+    row: dict[str, Any] = rows[0]
+    securities_value: Any = row.get("securities")
+    if not isinstance(securities_value, dict):
+      raise ValueError("Unexpected security embedding in identifier lookup")
+    company_id: Any = securities_value.get("company_id")
+    if not isinstance(company_id, str):
+      raise ValueError("Missing company_id in security identifier lookup")
+
+    return CanonicalSecurity(
+      company_id=company_id,
+      security_id=str(row["security_id"]),
+    )

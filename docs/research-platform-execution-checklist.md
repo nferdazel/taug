@@ -118,8 +118,8 @@ Docs discipline for this repo:
 
 ### Filing and statement layer
 
-- `[todo]` `filings`
-- `[todo]` `filing_versions`
+- `[done]` `filings`
+- `[done]` `filing_versions`
 - `[todo]` `financial_statements`
 - `[todo]` `financial_statement_items`
 - `[todo]` taxonomy mapping strategy
@@ -256,9 +256,9 @@ Exit criteria:
 - `[done]` create raw spine and audit spine migration
 - `[done]` create canonical entity bridge migration for SEC attachment
 - `[done]` scaffold Python worker and GitHub Actions SEC submissions workflow
-- `[todo]` ingest SEC submissions
+- `[done]` implement SEC submissions ingestion path
 - `[todo]` store raw documents immutably
-- `[todo]` build filing and filing_version model
+- `[done]` build filing and filing_version model
 
 Exit criteria:
 
