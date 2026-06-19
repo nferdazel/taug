@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:signals/signals_flutter.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../watchlist/data/symbol_repository.dart';
@@ -42,8 +43,8 @@ class _PortfolioPageState extends State<PortfolioPage> {
 
   Widget _buildToolbar() {
     return Container(
-      height: 32,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      height: AppSpacing.tabBarHeight,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       decoration: const BoxDecoration(
         border: Border(bottom: BorderSide(color: AppThemeColors.border)),
       ),
@@ -54,12 +55,16 @@ class _PortfolioPageState extends State<PortfolioPage> {
           Watch((_) {
             final isLoading = _provider.isLoading.value;
             return SizedBox(
-              height: 22,
+              height: AppSpacing.buttonHeight,
               child: TextButton.icon(
                 onPressed: () => _provider.loadPrices(),
                 icon: isLoading
-                    ? const SizedBox(width: 10, height: 10, child: CircularProgressIndicator(strokeWidth: 1.5))
-                    : const Icon(Icons.refresh, size: 12),
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 1.5),
+                      )
+                    : const Icon(Icons.refresh, size: 16),
                 label: const Text('Refresh', style: AppTypography.monoMeta),
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 6),
@@ -81,7 +86,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
       final isPositive = totalPnL >= 0;
 
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: const BoxDecoration(
           border: Border(bottom: BorderSide(color: AppThemeColors.border)),
         ),
@@ -97,7 +102,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
                 ),
               ],
             ),
-            const SizedBox(width: 20),
+            const SizedBox(width: 16),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -105,17 +110,19 @@ class _PortfolioPageState extends State<PortfolioPage> {
                 Text(
                   '${isPositive ? '+' : ''}\$${totalPnL.toStringAsFixed(2)} (${isPositive ? '+' : ''}${totalPnLPercent.toStringAsFixed(2)}%)',
                   style: AppTypography.monoLabel.copyWith(
-                    color: isPositive ? AppThemeColors.bullish : AppThemeColors.bearish,
+                    color: isPositive
+                        ? AppThemeColors.bullish
+                        : AppThemeColors.bearish,
                   ),
                 ),
               ],
             ),
             const Spacer(),
             SizedBox(
-              height: 24,
+              height: AppSpacing.buttonHeight,
               child: ElevatedButton.icon(
                 onPressed: _showAddHoldingDialog,
-                icon: const Icon(Icons.add, size: 12),
+                icon: const Icon(Icons.add, size: 14),
                 label: const Text('Add', style: AppTypography.monoMeta),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -136,7 +143,11 @@ class _PortfolioPageState extends State<PortfolioPage> {
 
       if (isLoading && holdings.isEmpty) {
         return const Center(
-          child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+          child: SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
         );
       }
 
@@ -145,11 +156,18 @@ class _PortfolioPageState extends State<PortfolioPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 24, color: AppThemeColors.bearish),
+              const Icon(
+                Icons.error_outline,
+                size: 24,
+                color: AppThemeColors.bearish,
+              ),
               const SizedBox(height: 6),
               Text(error, style: AppTypography.caption),
               const SizedBox(height: 8),
-              ElevatedButton(onPressed: _provider.loadHoldings, child: const Text(AppStrings.retry)),
+              ElevatedButton(
+                onPressed: _provider.loadHoldings,
+                child: const Text(AppStrings.retry),
+              ),
             ],
           ),
         );
@@ -160,7 +178,11 @@ class _PortfolioPageState extends State<PortfolioPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.account_balance_wallet_outlined, size: 24, color: AppThemeColors.textTertiary),
+              const Icon(
+                Icons.account_balance_wallet_outlined,
+                size: 24,
+                color: AppThemeColors.textTertiary,
+              ),
               const SizedBox(height: 6),
               const Text('No holdings yet', style: AppTypography.caption),
               const SizedBox(height: 8),
@@ -182,20 +204,58 @@ class _PortfolioPageState extends State<PortfolioPage> {
     return Column(
       children: [
         Container(
-          height: 28,
-          padding: const EdgeInsets.symmetric(horizontal: 6),
+          height: 30,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
           decoration: const BoxDecoration(
             color: AppThemeColors.backgroundLight,
             border: Border(bottom: BorderSide(color: AppThemeColors.border)),
           ),
           child: const Row(
             children: [
-              Expanded(flex: 2, child: Text('Symbol', style: AppTypography.monoSection)),
-              Expanded(flex: 1, child: Text('Qty', style: AppTypography.monoSection, textAlign: TextAlign.right)),
-              Expanded(flex: 2, child: Text('Avg Price', style: AppTypography.monoSection, textAlign: TextAlign.right)),
-              Expanded(flex: 2, child: Text('Price', style: AppTypography.monoSection, textAlign: TextAlign.right)),
-              Expanded(flex: 2, child: Text('Value', style: AppTypography.monoSection, textAlign: TextAlign.right)),
-              Expanded(flex: 2, child: Text('P&L', style: AppTypography.monoSection, textAlign: TextAlign.right)),
+              Expanded(
+                flex: 2,
+                child: Text('Symbol', style: AppTypography.monoSection),
+              ),
+              Expanded(
+                flex: 1,
+                child: Text(
+                  'Qty',
+                  style: AppTypography.monoSection,
+                  textAlign: TextAlign.right,
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Text(
+                  'Avg Price',
+                  style: AppTypography.monoSection,
+                  textAlign: TextAlign.right,
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Text(
+                  'Price',
+                  style: AppTypography.monoSection,
+                  textAlign: TextAlign.right,
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Text(
+                  'Value',
+                  style: AppTypography.monoSection,
+                  textAlign: TextAlign.right,
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Text(
+                  'P&L',
+                  style: AppTypography.monoSection,
+                  textAlign: TextAlign.right,
+                ),
+              ),
               SizedBox(width: 24),
             ],
           ),
@@ -203,7 +263,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
         Expanded(
           child: ListView.builder(
             itemCount: holdings.length,
-            itemExtent: 32,
+            itemExtent: 36,
             itemBuilder: (context, index) => _buildHoldingRow(holdings[index]),
           ),
         ),
@@ -222,10 +282,12 @@ class _PortfolioPageState extends State<PortfolioPage> {
       final isPositive = pnl >= 0;
 
       return Container(
-        height: 32,
-        padding: const EdgeInsets.symmetric(horizontal: 6),
+        height: 36,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
         decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: AppThemeColors.border, width: 0.5)),
+          border: Border(
+            bottom: BorderSide(color: AppThemeColors.border, width: 0.5),
+          ),
         ),
         child: Row(
           children: [
@@ -235,22 +297,44 @@ class _PortfolioPageState extends State<PortfolioPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(holding.ticker ?? '-', style: AppTypography.monoLabel.copyWith(fontWeight: FontWeight.w600)),
-                  Text(holding.name ?? '', style: AppTypography.monoMeta, maxLines: 1, overflow: TextOverflow.ellipsis),
+                  Text(
+                    holding.ticker ?? '-',
+                    style: AppTypography.monoLabel.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    holding.name ?? '',
+                    style: AppTypography.monoMeta,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ],
               ),
             ),
             Expanded(
               flex: 1,
-              child: Text(holding.quantity.toString(), style: AppTypography.monoLabel, textAlign: TextAlign.right),
+              child: Text(
+                holding.quantity.toString(),
+                style: AppTypography.monoLabel,
+                textAlign: TextAlign.right,
+              ),
             ),
             Expanded(
               flex: 2,
-              child: Text(holding.avgPrice.toStringAsFixed(2), style: AppTypography.monoLabel, textAlign: TextAlign.right),
+              child: Text(
+                holding.avgPrice.toStringAsFixed(2),
+                style: AppTypography.monoLabel,
+                textAlign: TextAlign.right,
+              ),
             ),
             Expanded(
               flex: 2,
-              child: Text(currentPrice.toStringAsFixed(2), style: AppTypography.monoData, textAlign: TextAlign.right),
+              child: Text(
+                currentPrice.toStringAsFixed(2),
+                style: AppTypography.monoData,
+                textAlign: TextAlign.right,
+              ),
             ),
             Expanded(
               flex: 2,
@@ -265,7 +349,9 @@ class _PortfolioPageState extends State<PortfolioPage> {
               child: Text(
                 '${isPositive ? '+' : ''}${pnlPercent.toStringAsFixed(2)}%',
                 style: AppTypography.monoLabel.copyWith(
-                  color: isPositive ? AppThemeColors.bullish : AppThemeColors.bearish,
+                  color: isPositive
+                      ? AppThemeColors.bullish
+                      : AppThemeColors.bearish,
                 ),
                 textAlign: TextAlign.right,
               ),
@@ -274,7 +360,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
               width: 24,
               child: IconButton(
                 onPressed: () => _provider.removeHolding(holding.id),
-                icon: const Icon(Icons.close, size: 12),
+                icon: const Icon(Icons.close, size: 14),
                 padding: EdgeInsets.zero,
                 color: AppThemeColors.textTertiary,
               ),

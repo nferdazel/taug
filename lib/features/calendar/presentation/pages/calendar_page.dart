@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:signals/signals_flutter.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/models/data_origin.dart';
@@ -69,19 +70,19 @@ class _CalendarPageState extends State<CalendarPage> {
 
   Widget _buildToolbar() {
     return Container(
-      height: 36,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      height: AppSpacing.tabBarHeight,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       decoration: const BoxDecoration(
         border: Border(bottom: BorderSide(color: AppThemeColors.border)),
       ),
       child: Row(
         children: [
           _buildDateSelector(),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.xl),
           _buildCountryFilter(),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.xl),
           _buildImportanceFilter(),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.xl),
           const DataStatusBadge(origin: _calendarOrigin),
           const Spacer(),
           _buildRefreshButton(),
@@ -94,10 +95,10 @@ class _CalendarPageState extends State<CalendarPage> {
     return Watch((_) {
       final date = _selectedDate.value;
       return SizedBox(
-        height: 24,
+        height: AppSpacing.buttonHeight,
         child: TextButton.icon(
           onPressed: _showDatePicker,
-          icon: const Icon(Icons.calendar_today, size: 12),
+          icon: const Icon(Icons.calendar_today, size: 14),
           label: Text(DateFormat('MMM d, yyyy').format(date)),
           style: TextButton.styleFrom(
             backgroundColor: AppThemeColors.backgroundLight,
@@ -122,7 +123,7 @@ class _CalendarPageState extends State<CalendarPage> {
           value: _selectedCountry.value,
           underline: const SizedBox(),
           dropdownColor: AppThemeColors.surface,
-          style: AppTypography.monoTiny,
+          style: AppTypography.monoLabel,
           isDense: true,
           items: countries
               .map(
@@ -161,8 +162,8 @@ class _CalendarPageState extends State<CalendarPage> {
   Widget _buildImportanceButton(int level, String emoji, int current) {
     final isSelected = current == level;
     return SizedBox(
-      height: 24,
-      width: 24,
+      height: AppSpacing.buttonHeight,
+      width: AppSpacing.buttonHeight,
       child: TextButton(
         onPressed: () {
           _minImportance.value = level;
@@ -175,7 +176,7 @@ class _CalendarPageState extends State<CalendarPage> {
           padding: EdgeInsets.zero,
           minimumSize: Size.zero,
         ),
-        child: Text(emoji, style: const TextStyle(fontSize: 10)),
+        child: Text(emoji, style: const TextStyle(fontSize: 12)),
       ),
     );
   }
@@ -184,17 +185,17 @@ class _CalendarPageState extends State<CalendarPage> {
     return Watch((_) {
       final isLoading = _isLoading.value;
       return SizedBox(
-        height: 24,
-        width: 24,
+        height: AppSpacing.buttonHeight,
+        width: AppSpacing.buttonHeight,
         child: IconButton(
           onPressed: isLoading ? null : _refreshCalendar,
           icon: isLoading
               ? const SizedBox(
-                  width: 12,
-                  height: 12,
+                  width: 14,
+                  height: 14,
                   child: CircularProgressIndicator(strokeWidth: 1.5),
                 )
-              : const Icon(Icons.refresh, size: 14),
+              : const Icon(Icons.refresh, size: 16),
           padding: EdgeInsets.zero,
         ),
       );
@@ -274,7 +275,7 @@ class _CalendarPageState extends State<CalendarPage> {
           Expanded(
             child: ListView.builder(
               itemCount: events.length,
-              itemExtent: 32,
+              itemExtent: 36,
               itemBuilder: (context, index) => _buildEventRow(events[index]),
             ),
           ),
@@ -285,7 +286,7 @@ class _CalendarPageState extends State<CalendarPage> {
 
   Widget _buildTableHeader() {
     return Container(
-      height: 28,
+      height: 30,
       padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: const BoxDecoration(
         color: AppThemeColors.backgroundLight,
@@ -341,7 +342,7 @@ class _CalendarPageState extends State<CalendarPage> {
   Widget _buildEventRow(EconEvent event) {
     final importance = event.importance;
     return Container(
-      height: 32,
+      height: 36,
       padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: const BoxDecoration(
         border: Border(
