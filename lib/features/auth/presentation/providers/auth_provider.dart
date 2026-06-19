@@ -11,7 +11,7 @@ class AuthProvider {
   final isAuthenticated = Signal<bool>(false);
 
   AuthProvider({AuthRepository? repository})
-    : _repository = repository ?? AuthRepository() {
+      : _repository = repository ?? AuthRepository() {
     _init();
   }
 
@@ -20,6 +20,21 @@ class AuthProvider {
     _repository.authStateChanges.listen((state) {
       isAuthenticated.value = state.session != null;
     });
+  }
+
+  String _extractError(Object errorObj) {
+    final str = errorObj.toString();
+    debugPrint('[Auth] Error: $str');
+
+    if (str.contains('AuthException')) {
+      final match = RegExp(r'AuthException\((.*?)\)').firstMatch(str);
+      if (match != null) return match.group(1) ?? str;
+    }
+    if (str.contains('PostgrestException')) {
+      final match = RegExp(r'message: (.*?)[,\)]').firstMatch(str);
+      if (match != null) return match.group(1) ?? str;
+    }
+    return str;
   }
 
   Future<void> signIn({
@@ -45,7 +60,7 @@ class AuthProvider {
     if (result.isSuccess && context.mounted) {
       context.go('/watchlist');
     } else if (result.isFailure) {
-      error.value = (result.error as dynamic).message;
+      error.value = _extractError(result.error);
     }
   }
 
@@ -83,7 +98,7 @@ class AuthProvider {
     if (result.isSuccess && context.mounted) {
       context.go('/watchlist');
     } else if (result.isFailure) {
-      error.value = (result.error as dynamic).message;
+      error.value = _extractError(result.error);
     }
   }
 

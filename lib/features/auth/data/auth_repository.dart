@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/errors/failures.dart';
@@ -7,7 +8,7 @@ class AuthRepository {
   final SupabaseClient _client;
 
   AuthRepository({SupabaseClient? client})
-    : _client = client ?? Supabase.instance.client;
+      : _client = client ?? Supabase.instance.client;
 
   User? get currentUser => _client.auth.currentUser;
   Session? get currentSession => _client.auth.currentSession;
@@ -20,19 +21,23 @@ class AuthRepository {
   }) async {
     try {
       final email = '$username@taug.app';
+      debugPrint('[Auth] Signing in: $email');
       final response = await _client.auth.signInWithPassword(
         email: email,
         password: password,
       );
 
       if (response.user != null) {
+        debugPrint('[Auth] Sign in success: ${response.user!.id}');
         return Result.success(response.user!);
       }
 
       return const Result.failure(AuthFailure(message: 'Sign in failed'));
     } on AuthException catch (e) {
+      debugPrint('[Auth] AuthException: ${e.message}');
       return Result.failure(AuthFailure(message: e.message));
     } catch (e) {
+      debugPrint('[Auth] Unexpected error: $e');
       return Result.failure(AuthFailure(message: e.toString()));
     }
   }
@@ -43,6 +48,7 @@ class AuthRepository {
   }) async {
     try {
       final email = '$username@taug.app';
+      debugPrint('[Auth] Signing up: $email');
       final response = await _client.auth.signUp(
         email: email,
         password: password,
@@ -50,13 +56,16 @@ class AuthRepository {
       );
 
       if (response.user != null) {
+        debugPrint('[Auth] Sign up success: ${response.user!.id}');
         return Result.success(response.user!);
       }
 
       return const Result.failure(AuthFailure(message: 'Sign up failed'));
     } on AuthException catch (e) {
+      debugPrint('[Auth] AuthException: ${e.message}');
       return Result.failure(AuthFailure(message: e.message));
     } catch (e) {
+      debugPrint('[Auth] Unexpected error: $e');
       return Result.failure(AuthFailure(message: e.toString()));
     }
   }
@@ -66,8 +75,10 @@ class AuthRepository {
       await _client.auth.signOut();
       return const Result.success(null);
     } on AuthException catch (e) {
+      debugPrint('[Auth] SignOut error: ${e.message}');
       return Result.failure(AuthFailure(message: e.message));
     } catch (e) {
+      debugPrint('[Auth] SignOut error: $e');
       return Result.failure(AuthFailure(message: e.toString()));
     }
   }
