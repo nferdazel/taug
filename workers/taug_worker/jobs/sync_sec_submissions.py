@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from hashlib import sha256
 from typing import Iterable
 
@@ -36,6 +36,13 @@ class FilingNormalizationResult:
   replayed_filings: int
   created_filing_versions: int
   replayed_filing_versions: int
+
+
+@dataclass(frozen=True)
+class FilingSanityFailure:
+  code: str
+  message: str
+  details: dict[str, object]
 
 
 def run_sync_sec_submissions(
@@ -457,12 +464,14 @@ def _normalize_filing_discovery(
     filing_key: str = accession_numbers[index].strip()
     filing_date: str = filing_dates[index].strip()
     filing_type: str = filing_types[index].strip()
-    acceptance_datetime: str | None = _normalize_sec_acceptance_datetime(
+    raw_acceptance_datetime: str | None = (
       acceptance_datetimes[index] if index < len(acceptance_datetimes) else None
     )
-    report_date: str | None = _normalize_optional_date(
-      report_dates[index] if index < len(report_dates) else None
+    acceptance_datetime: str | None = _normalize_sec_acceptance_datetime(
+      raw_acceptance_datetime
     )
+    raw_report_date: str | None = report_dates[index] if index < len(report_dates) else None
+    report_date: str | None = _normalize_optional_date(raw_report_date)
     primary_document: str | None = (
       primary_documents[index].strip()
       if index < len(primary_documents) and primary_documents[index].strip()
@@ -532,6 +541,70 @@ def _normalize_filing_discovery(
         "raw_record_id": raw_record_id,
       },
     )
+    sanity_failures: tuple[FilingSanityFailure, ...] = _validate_filing_temporal_sanity(
+      filing_date=filing_date,
+      raw_acceptance_datetime=raw_acceptance_datetime,
+      acceptance_datetime=acceptance_datetime,
+      report_date=report_date,
+    )
+    if sanity_failures:
+      failure_payload: dict[str, object] = {
+        "source": "sec_edgar",
+        "cik": cik,
+        "filing_id": filing_result.id,
+        "filing_key": filing_record.filing_key,
+        "filing_date": filing_date,
+        "raw_acceptance_datetime": raw_acceptance_datetime,
+        "acceptance_datetime": acceptance_datetime,
+        "report_date": report_date,
+        "raw_record_id": raw_record_id,
+        "failure_codes": [failure.code for failure in sanity_failures],
+        "failures": [
+          {
+            "code": failure.code,
+            "message": failure.message,
+            "details": failure.details,
+          }
+          for failure in sanity_failures
+        ],
+      }
+      supabase_client.insert_validation_event(
+        entity_type="filing",
+        entity_id=filing_result.id,
+        validation_rule="sec_filing_temporal_sanity",
+        status="failed",
+        message=sanity_failures[0].message,
+        payload=failure_payload,
+      )
+      supabase_client.insert_audit_event(
+        event_type="filing_temporal_sanity_failed",
+        entity_type="filing",
+        entity_id=filing_result.id,
+        severity="error",
+        payload=failure_payload,
+      )
+      raise ValueError(
+        "SEC filing temporal sanity validation failed: "
+        + ", ".join(failure.code for failure in sanity_failures)
+      )
+    supabase_client.insert_validation_event(
+      entity_type="filing",
+      entity_id=filing_result.id,
+      validation_rule="sec_filing_temporal_sanity",
+      status="passed",
+      message="Resolved filing dates and acceptance datetime passed temporal sanity checks.",
+      payload={
+        "source": "sec_edgar",
+        "cik": cik,
+        "filing_id": filing_result.id,
+        "filing_key": filing_record.filing_key,
+        "filing_date": filing_date,
+        "raw_acceptance_datetime": raw_acceptance_datetime,
+        "acceptance_datetime": acceptance_datetime,
+        "report_date": report_date,
+        "raw_record_id": raw_record_id,
+      },
+    )
     if filing_result.created:
       created_filings += 1
     else:
@@ -576,6 +649,96 @@ def _normalize_optional_date(value: str | None) -> str | None:
     return None
   normalized: str = value.strip()
   return normalized or None
+
+
+def _validate_filing_temporal_sanity(
+  *,
+  filing_date: str,
+  raw_acceptance_datetime: str | None,
+  acceptance_datetime: str | None,
+  report_date: str | None,
+) -> tuple[FilingSanityFailure, ...]:
+  failures: list[FilingSanityFailure] = []
+
+  parsed_filing_date: date | None = _parse_iso_date(filing_date)
+  if parsed_filing_date is None:
+    failures.append(
+      FilingSanityFailure(
+        code="invalid_filing_date",
+        message="Filing date is not a valid ISO date.",
+        details={"filing_date": filing_date},
+      )
+    )
+    return tuple(failures)
+
+  if raw_acceptance_datetime is not None and raw_acceptance_datetime.strip():
+    if acceptance_datetime is None:
+      failures.append(
+        FilingSanityFailure(
+          code="invalid_acceptance_datetime",
+          message="Acceptance datetime is present but could not be normalized.",
+          details={"raw_acceptance_datetime": raw_acceptance_datetime},
+        )
+      )
+    else:
+      parsed_acceptance_datetime: datetime | None = _parse_iso_datetime(acceptance_datetime)
+      if parsed_acceptance_datetime is None:
+        failures.append(
+          FilingSanityFailure(
+            code="invalid_normalized_acceptance_datetime",
+            message="Normalized acceptance datetime is not a valid ISO timestamp.",
+            details={"acceptance_datetime": acceptance_datetime},
+          )
+        )
+      elif parsed_acceptance_datetime.date() < parsed_filing_date:
+        failures.append(
+          FilingSanityFailure(
+            code="acceptance_before_filing_date",
+            message="Acceptance datetime occurs before filing_date.",
+            details={
+              "filing_date": filing_date,
+              "acceptance_datetime": acceptance_datetime,
+            },
+          )
+        )
+
+  if report_date is not None:
+    parsed_report_date: date | None = _parse_iso_date(report_date)
+    if parsed_report_date is None:
+      failures.append(
+        FilingSanityFailure(
+          code="invalid_report_date",
+          message="Report date is not a valid ISO date.",
+          details={"report_date": report_date},
+        )
+      )
+    elif parsed_report_date > parsed_filing_date:
+      failures.append(
+        FilingSanityFailure(
+          code="report_date_after_filing_date",
+          message="Report date occurs after filing_date.",
+          details={
+            "report_date": report_date,
+            "filing_date": filing_date,
+          },
+        )
+      )
+
+  return tuple(failures)
+
+
+def _parse_iso_date(value: str) -> date | None:
+  try:
+    return date.fromisoformat(value)
+  except ValueError:
+    return None
+
+
+def _parse_iso_datetime(value: str) -> datetime | None:
+  try:
+    return datetime.fromisoformat(value.replace("Z", "+00:00"))
+  except ValueError:
+    return None
 
 
 def _normalize_sec_acceptance_datetime(value: str | None) -> str | None:

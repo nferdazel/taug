@@ -269,6 +269,7 @@ Exit criteria:
 - `[done]` validate SEC raw document hash and byte size before finalizing storage
 - `[done]` validate duplicate detection rules for raw payload and raw document reuse
 - `[done]` validate filing-to-canonical-company mapping during filing normalization
+- `[done]` validate filing date and acceptance datetime sanity during filing normalization
 
 Exit criteria:
 
