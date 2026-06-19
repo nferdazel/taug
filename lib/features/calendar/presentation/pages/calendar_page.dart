@@ -4,6 +4,7 @@ import 'package:signals/signals_flutter.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/models/econ_event.dart';
 import '../../data/calendar_repository.dart';
 
 class CalendarPage extends StatefulWidget {
@@ -15,7 +16,7 @@ class CalendarPage extends StatefulWidget {
 
 class _CalendarPageState extends State<CalendarPage> {
   final _repository = CalendarRepository();
-  final _events = Signal<List<dynamic>>([]);
+  final _events = Signal<List<EconEvent>>([]);
   final _selectedDate = Signal<DateTime>(DateTime.now());
   final _selectedCountry = Signal<String>('all');
   final _minImportance = Signal<int>(1);
@@ -264,8 +265,8 @@ class _CalendarPageState extends State<CalendarPage> {
     );
   }
 
-  Widget _buildEventRow(dynamic event) {
-    final importance = event.importance ?? 1;
+  Widget _buildEventRow(EconEvent event) {
+    final importance = event.importance;
     return Container(
       height: 32,
       padding: const EdgeInsets.symmetric(horizontal: 8),

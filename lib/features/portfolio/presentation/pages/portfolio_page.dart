@@ -4,6 +4,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../watchlist/data/symbol_repository.dart';
+import '../../domain/portfolio_entity.dart';
 import '../providers/portfolio_provider.dart';
 
 class PortfolioPage extends StatefulWidget {
@@ -177,7 +178,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
     });
   }
 
-  Widget _buildHoldingsTable(List holdings) {
+  Widget _buildHoldingsTable(List<PortfolioHolding> holdings) {
     return Column(
       children: [
         Container(
@@ -210,7 +211,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
     );
   }
 
-  Widget _buildHoldingRow(dynamic holding) {
+  Widget _buildHoldingRow(PortfolioHolding holding) {
     return Watch((_) {
       final price = _provider.prices.value[holding.ticker];
       final currentPrice = price?.price ?? 0;

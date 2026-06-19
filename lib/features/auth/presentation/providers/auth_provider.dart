@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals/signals.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../data/auth_repository.dart';
 
@@ -10,6 +12,8 @@ class AuthProvider {
   final error = Signal<String?>(null);
   final isAuthenticated = Signal<bool>(false);
 
+  StreamSubscription<AuthState>? _authSubscription;
+
   AuthProvider({AuthRepository? repository})
       : _repository = repository ?? AuthRepository() {
     _init();
@@ -17,9 +21,14 @@ class AuthProvider {
 
   void _init() {
     isAuthenticated.value = _repository.currentUser != null;
-    _repository.authStateChanges.listen((state) {
+    _authSubscription = _repository.authStateChanges.listen((state) {
       isAuthenticated.value = state.session != null;
     });
+  }
+
+  void dispose() {
+    _authSubscription?.cancel();
+    _authSubscription = null;
   }
 
   String _extractError(Object errorObj) {

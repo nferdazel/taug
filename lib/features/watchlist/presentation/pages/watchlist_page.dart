@@ -3,6 +3,7 @@ import 'package:signals/signals_flutter.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../domain/watchlist_entity.dart';
 import '../providers/watchlist_provider.dart';
 import 'symbol_search_dialog.dart';
 
@@ -191,7 +192,7 @@ class _WatchlistPageState extends State<WatchlistPage> {
     });
   }
 
-  Widget _buildPriceTable(List items) {
+  Widget _buildPriceTable(List<WatchlistItem> items) {
     return Column(
       children: [
         _buildTableHeader(),
@@ -234,7 +235,7 @@ class _WatchlistPageState extends State<WatchlistPage> {
     );
   }
 
-  Widget _buildTableRow(dynamic item, int index) {
+  Widget _buildTableRow(WatchlistItem item, int index) {
     return Watch((_) {
       final price = _provider.getPriceForSymbol(item.ticker ?? '');
 
