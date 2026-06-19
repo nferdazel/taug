@@ -222,8 +222,8 @@ Docs discipline for this repo:
 - `[done]` company research page (summary, metrics, statement history, quality)
 - `[done]` company page: company selector with search dialog
 - `[done]` company page: statement line items drill-down
+- `[done]` screener page (sortable metric table with quality indicators)
 - `[todo]` valuation snapshot page
-- `[todo]` screener page
 - `[todo]` research notes page
 
 ## L. Recommended Phase Order
