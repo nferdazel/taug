@@ -7,10 +7,10 @@ import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/models/data_origin.dart';
 import '../../../../shared/models/news_article.dart';
-import '../../../../shared/models/policy_event.dart';
+import '../../../../shared/models/terminal_headline.dart';
 import '../../../../shared/widgets/data_status_badge.dart';
+import '../../data/news_intelligence_repository.dart';
 import '../../data/news_repository.dart';
-import '../../../policy/data/policy_repository.dart';
 
 class NewsPage extends StatefulWidget {
   const NewsPage({super.key});
@@ -21,15 +21,15 @@ class NewsPage extends StatefulWidget {
 
 class _NewsPageState extends State<NewsPage> {
   final _repository = NewsRepository();
-  final _policyRepository = PolicyRepository();
+  final _intelligenceRepository = NewsIntelligenceRepository();
   final _articles = Signal<List<NewsArticle>>([]);
-  final _policyEvents = Signal<List<PolicyEvent>>([]);
+  final _topHeadlines = Signal<List<TerminalHeadline>>([]);
   final _selectedCategory = Signal<String>('all');
   final _policyOnly = Signal<bool>(false);
   final _isLoading = Signal<bool>(false);
-  final _isPolicyLoading = Signal<bool>(false);
+  final _isTopLoading = Signal<bool>(false);
   final _error = Signal<String?>(null);
-  final _policyError = Signal<String?>(null);
+  final _topError = Signal<String?>(null);
   final _lastUpdated = Signal<DateTime?>(null);
 
   @override
@@ -39,7 +39,7 @@ class _NewsPageState extends State<NewsPage> {
   }
 
   Future<void> _loadPage() async {
-    await Future.wait([_loadNews(), _loadPolicyHighlights()]);
+    await Future.wait([_loadNews(), _loadTopHeadlines()]);
   }
 
   Future<void> _loadNews() async {
@@ -61,29 +61,23 @@ class _NewsPageState extends State<NewsPage> {
     _isLoading.value = false;
   }
 
-  Future<void> _loadPolicyHighlights() async {
-    _isPolicyLoading.value = true;
-    _policyError.value = null;
+  Future<void> _loadTopHeadlines() async {
+    _isTopLoading.value = true;
+    _topError.value = null;
 
-    final result = await _policyRepository.getPolicyEvents(
-      minImportance: 2,
-      limit: 6,
-    );
+    final result = await _intelligenceRepository.getTopImpactHeadlines();
 
     if (result.isSuccess) {
-      _policyEvents.value = result.data!;
+      _topHeadlines.value = result.data!;
     } else {
-      _policyError.value = result.error.toString();
+      _topError.value = result.error.toString();
     }
 
-    _isPolicyLoading.value = false;
+    _isTopLoading.value = false;
   }
 
   Future<void> _refreshNews() async {
-    await Future.wait([
-      _repository.refreshNews(),
-      _policyRepository.refreshPolicyEvents(),
-    ]);
+    await _repository.refreshNews();
     await _loadPage();
   }
 
@@ -92,22 +86,22 @@ class _NewsPageState extends State<NewsPage> {
     return Column(
       children: [
         _buildToolbar(),
-        _buildPolicyHighlights(),
+        _buildTopImpactPanel(),
         Expanded(child: _buildContent()),
       ],
     );
   }
 
-  Widget _buildPolicyHighlights() {
+  Widget _buildTopImpactPanel() {
     return Watch((_) {
-      final events = _policyEvents.value;
-      final isLoading = _isPolicyLoading.value;
+      final headlines = _topHeadlines.value;
+      final isLoading = _isTopLoading.value;
 
-      if (isLoading && events.isEmpty) {
+      if (isLoading && headlines.isEmpty) {
         return const SizedBox(height: 0);
       }
 
-      if (events.isEmpty) {
+      if (headlines.isEmpty) {
         return const SizedBox(height: 0);
       }
 
@@ -130,16 +124,13 @@ class _NewsPageState extends State<NewsPage> {
                 ),
                 child: Row(
                   children: [
-                    const Text(
-                      'OFFICIAL POLICY',
-                      style: AppTypography.monoSection,
-                    ),
+                    const Text('TOP IMPACT', style: AppTypography.monoSection),
                     const SizedBox(width: 8),
-                    const DataStatusBadge(origin: _policyOrigin),
+                    const DataStatusBadge(origin: _topImpactOrigin),
                     const Spacer(),
-                    if (_policyError.value != null)
+                    if (_topError.value != null)
                       Text(
-                        'Feed degraded',
+                        'Ranking degraded',
                         style: AppTypography.monoTiny.copyWith(
                           color: AppThemeColors.warning,
                         ),
@@ -149,12 +140,12 @@ class _NewsPageState extends State<NewsPage> {
               ),
               Expanded(
                 child: ListView.builder(
-                  itemCount: events.length > 3 ? 3 : events.length,
+                  itemCount: headlines.length > 4 ? 4 : headlines.length,
                   itemExtent: 26,
                   itemBuilder: (context, index) {
-                    final event = events[index];
+                    final headline = headlines[index];
                     return InkWell(
-                      onTap: () => _launchUrl(event.url),
+                      onTap: () => _launchUrl(headline.url),
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         decoration: const BoxDecoration(
@@ -168,11 +159,11 @@ class _NewsPageState extends State<NewsPage> {
                         child: Row(
                           children: [
                             SizedBox(
-                              width: 96,
+                              width: 112,
                               child: Text(
-                                event.agency.toUpperCase(),
+                                headline.tag,
                                 style: AppTypography.monoTiny.copyWith(
-                                  color: _importanceColor(event.importance),
+                                  color: _importanceColor(headline.importance),
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -180,7 +171,7 @@ class _NewsPageState extends State<NewsPage> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                event.title,
+                                headline.title,
                                 style: AppTypography.monoTiny.copyWith(
                                   color: AppThemeColors.textPrimary,
                                 ),
@@ -190,13 +181,28 @@ class _NewsPageState extends State<NewsPage> {
                             ),
                             const SizedBox(width: 8),
                             SizedBox(
-                              width: 56,
-                              child: Text(
-                                _formatTime(event.publishedAt),
-                                style: AppTypography.monoTiny.copyWith(
-                                  color: AppThemeColors.textTertiary,
-                                ),
-                                textAlign: TextAlign.right,
+                              width: 92,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  if (headline.isBreaking) ...[
+                                    Text(
+                                      'B',
+                                      style: AppTypography.monoTiny.copyWith(
+                                        color: AppThemeColors.bearish,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                  ],
+                                  Text(
+                                    _formatTime(headline.publishedAt),
+                                    style: AppTypography.monoTiny.copyWith(
+                                      color: AppThemeColors.textTertiary,
+                                    ),
+                                    textAlign: TextAlign.right,
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -554,9 +560,9 @@ const DataOrigin _newsOrigin = DataOrigin(
   isSynthetic: false,
 );
 
-const DataOrigin _policyOrigin = DataOrigin(
-  sourceLabel: 'Official RSS',
-  latencyClass: DataLatencyClass.syndicated,
-  isOfficial: true,
+const DataOrigin _topImpactOrigin = DataOrigin(
+  sourceLabel: 'Ranked Feed',
+  latencyClass: DataLatencyClass.derived,
+  isOfficial: false,
   isSynthetic: false,
 );

@@ -16,6 +16,8 @@ final class NewsArticle extends Equatable {
   final List<String> categories;
   final List<int> symbols;
   final bool isBreaking;
+  final int importance;
+  final bool policyRelevant;
   final DataOrigin origin;
 
   const NewsArticle({
@@ -32,10 +34,18 @@ final class NewsArticle extends Equatable {
     this.categories = const [],
     this.symbols = const [],
     this.isBreaking = false,
+    this.importance = 1,
+    this.policyRelevant = false,
     required this.origin,
   });
 
   factory NewsArticle.fromJson(Map<String, dynamic> json) {
+    final Map<String, Object?> metadata =
+        (json['metadata'] as Map?)?.map(
+          (key, value) => MapEntry(key.toString(), value),
+        ) ??
+        const <String, Object?>{};
+
     return NewsArticle(
       id: json['id'] as String,
       externalId: json['external_id'] as String?,
@@ -56,6 +66,8 @@ final class NewsArticle extends Equatable {
           (json['symbols'] as List<dynamic>?)?.map((e) => e as int).toList() ??
           [],
       isBreaking: json['is_breaking'] as bool? ?? false,
+      importance: _readImportance(metadata),
+      policyRelevant: metadata['policy_relevant'] as bool? ?? false,
       origin: DataOrigin.fromJson(
         json,
         fallbackSourceLabel: json['source'] as String? ?? 'RSS',
@@ -80,6 +92,19 @@ final class NewsArticle extends Equatable {
     categories,
     symbols,
     isBreaking,
+    importance,
+    policyRelevant,
     origin,
   ];
+}
+
+int _readImportance(Map<String, Object?> metadata) {
+  final Object? value = metadata['importance'];
+  if (value is int) {
+    return value;
+  }
+  if (value is num) {
+    return value.toInt();
+  }
+  return 1;
 }
