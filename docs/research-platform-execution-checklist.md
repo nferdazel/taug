@@ -111,7 +111,7 @@ Docs discipline for this repo:
 
 - `[done]` `raw_sources`
 - `[done]` `raw_documents`
-- `[todo]` `raw_filings`
+- `[done]` SEC raw filing document ingestion path
 - `[todo]` `raw_financials`
 - `[todo]` `raw_macro`
 - `[todo]` `raw_ownership`
@@ -257,7 +257,7 @@ Exit criteria:
 - `[done]` create canonical entity bridge migration for SEC attachment
 - `[done]` scaffold Python worker and GitHub Actions SEC submissions workflow
 - `[done]` implement SEC submissions ingestion path
-- `[todo]` store raw documents immutably
+- `[done]` implement SEC document fetch workflow and storage path
 - `[done]` build filing and filing_version model
 
 Exit criteria:

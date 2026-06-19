@@ -149,6 +149,8 @@ The first research worker runs as a scheduled GitHub Actions job:
 
 - Workflow: `.github/workflows/sec-submissions-sync.yml`
 - Entry point: `python -m workers.taug_worker.cli sync-sec-submissions`
+- Secondary workflow: `.github/workflows/sec-filing-documents-sync.yml`
+- Secondary entry point: `python -m workers.taug_worker.cli fetch-sec-filing-documents`
 
 Required GitHub secrets:
 
@@ -163,10 +165,15 @@ Recommended `SEC_USER_AGENT` value:
 Recommended GitHub variable:
 
 - `SEC_TARGET_CIKS`
+- `RAW_DOCUMENTS_BUCKET`
 
 Recommended starter `SEC_TARGET_CIKS` value:
 
 - `0000320193,0000789019`
+
+Recommended `RAW_DOCUMENTS_BUCKET` value:
+
+- `raw-documents`
 
 ### Environment Variables
 
@@ -178,6 +185,7 @@ Recommended starter `SEC_TARGET_CIKS` value:
 | `TWELVE_DATA_API_KEY` | Twelve Data API key (free tier) |
 | `SEC_USER_AGENT` | SEC-compliant user agent string for EDGAR requests |
 | `SEC_TARGET_CIKS` | Default comma-separated SEC CIK list for worker runs |
+| `RAW_DOCUMENTS_BUCKET` | Supabase Storage bucket used for raw filing documents |
 
 ## Project Structure
 

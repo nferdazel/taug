@@ -24,6 +24,7 @@ class WorkerConfig:
   supabase_service_role_key: str
   sec_user_agent: str
   sec_target_ciks: tuple[str, ...]
+  raw_documents_bucket: str
 
   @classmethod
   def from_env(cls) -> "WorkerConfig":
@@ -32,4 +33,6 @@ class WorkerConfig:
       supabase_service_role_key=_require_env("SUPABASE_SERVICE_ROLE_KEY"),
       sec_user_agent=_require_env("SEC_USER_AGENT"),
       sec_target_ciks=_optional_csv("SEC_TARGET_CIKS"),
+      raw_documents_bucket=os.getenv("RAW_DOCUMENTS_BUCKET", "raw-documents").strip()
+      or "raw-documents",
     )

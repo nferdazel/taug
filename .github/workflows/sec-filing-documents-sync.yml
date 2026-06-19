@@ -1,0 +1,37 @@
+name: SEC Filing Documents Sync
+
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "Maximum number of filing documents to fetch"
+        required: false
+        default: "10"
+        type: string
+  schedule:
+    - cron: "45 2 * * *"
+
+jobs:
+  fetch-sec-filing-documents:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Fetch SEC filing documents
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+          RAW_DOCUMENTS_BUCKET: ${{ vars.RAW_DOCUMENTS_BUCKET != '' && vars.RAW_DOCUMENTS_BUCKET || 'raw-documents' }}
+        run: |
+          python -m workers.taug_worker.cli fetch-sec-filing-documents --limit "${{ github.event.inputs.limit || '10' }}"

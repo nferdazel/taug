@@ -235,6 +235,7 @@ def _normalize_filing_discovery(
       metadata={
         "primary_document": primary_document,
         "source": "sec_edgar",
+        "cik": payload.get("cik", cik),
       },
     )
     supabase_client.upsert_filing_version(

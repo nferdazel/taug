@@ -34,6 +34,29 @@ class SecClient:
 
     return payload
 
+  def fetch_filing_document(self, *, cik: str, accession_number: str, document_name: str) -> bytes:
+    normalized_cik: str = str(int(cik))
+    accession_without_dashes: str = accession_number.replace("-", "")
+    response = self._http_client.request(
+      "GET",
+      (
+        "https://www.sec.gov/Archives/edgar/data/"
+        f"{normalized_cik}/{accession_without_dashes}/{document_name}"
+      ),
+      headers={
+        "Accept": "*/*",
+        "User-Agent": self._user_agent,
+      },
+      timeout_seconds=60,
+    )
+    if response.status_code != 200:
+      body_text: str = response.body.decode("utf-8", errors="replace")
+      raise ValueError(
+        f"SEC filing document fetch failed for CIK {cik} accession {accession_number}: "
+        f"status={response.status_code} body={body_text[:400]}"
+      )
+    return response.body
+
   @staticmethod
   def canonical_payload_bytes(payload: dict[str, object]) -> bytes:
     return json.dumps(

@@ -20,6 +20,17 @@ class CanonicalSecurity:
   security_id: str
 
 
+@dataclass(frozen=True)
+class PendingFilingDocument:
+  filing_version_id: str
+  filing_id: str
+  raw_record_id: str
+  accession_number: str
+  cik: str
+  primary_document: str
+  filing_date: str
+
+
 class SupabaseRestClient:
   def __init__(
     self,
@@ -338,6 +349,149 @@ class SupabaseRestClient:
     if not existing_rows:
       raise ValueError("Failed to resolve filing version after upsert")
     return str(existing_rows[0]["id"])
+
+  def list_pending_sec_filing_documents(self, *, limit: int) -> list[PendingFilingDocument]:
+    rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "filing_versions",
+      query={
+        "select": "id,filing_id,raw_record_id,filings!inner(filing_key,filing_date,metadata)",
+        "raw_document_id": "is.null",
+        "limit": str(limit),
+        "order": "created_at.asc",
+      },
+    )
+    documents: list[PendingFilingDocument] = []
+    for row in rows:
+      filings_value: Any = row.get("filings")
+      if not isinstance(filings_value, dict):
+        continue
+      metadata: Any = filings_value.get("metadata")
+      if not isinstance(metadata, dict):
+        continue
+
+      primary_document: Any = metadata.get("primary_document")
+      cik: Any = metadata.get("cik")
+      filing_key: Any = filings_value.get("filing_key")
+      filing_date: Any = filings_value.get("filing_date")
+      raw_record_id: Any = row.get("raw_record_id")
+      if not all(
+        isinstance(value, str) and value.strip()
+        for value in (primary_document, cik, filing_key, filing_date, raw_record_id)
+      ):
+        continue
+
+      documents.append(
+        PendingFilingDocument(
+          filing_version_id=str(row["id"]),
+          filing_id=str(row["filing_id"]),
+          raw_record_id=str(raw_record_id),
+          accession_number=str(filing_key),
+          cik=str(cik),
+          primary_document=str(primary_document),
+          filing_date=str(filing_date),
+        )
+      )
+    return documents
+
+  def upload_raw_document(
+    self,
+    *,
+    bucket: str,
+    path: str,
+    content_type: str,
+    body: bytes,
+  ) -> None:
+    response = self._http_client.request(
+      "POST",
+      f"{self._base_url}/storage/v1/object/{bucket}/{path}",
+      headers={
+        "apikey": self._service_role_key,
+        "Authorization": f"Bearer {self._service_role_key}",
+        "Content-Type": content_type,
+        "x-upsert": "false",
+      },
+      body=body,
+      timeout_seconds=60,
+    )
+    if response.status_code not in (200, 201):
+      body_text: str = response.body.decode("utf-8", errors="replace")
+      raise ValueError(
+        f"Supabase Storage upload failed: bucket={bucket} path={path} "
+        f"status={response.status_code} body={body_text[:500]}"
+      )
+
+  def insert_raw_document(
+    self,
+    *,
+    raw_source_id: int,
+    fetch_run_id: str,
+    document_type: str,
+    document_url: str,
+    storage_path: str,
+    mime_type: str,
+    content_hash: str,
+    byte_size: int,
+    published_at: str | None,
+    metadata: dict[str, object],
+  ) -> str:
+    rows: list[dict[str, Any]] = self._request(
+      "POST",
+      "raw_documents",
+      headers={"Prefer": "return=representation"},
+      payload=[
+        {
+          "raw_source_id": raw_source_id,
+          "fetch_run_id": fetch_run_id,
+          "document_type": document_type,
+          "document_url": document_url,
+          "storage_path": storage_path,
+          "mime_type": mime_type,
+          "content_hash": content_hash,
+          "byte_size": byte_size,
+          "published_at": published_at,
+          "metadata": metadata,
+        },
+      ],
+    )
+    return str(rows[0]["id"])
+
+  def insert_raw_document_link(
+    self,
+    *,
+    raw_record_id: str,
+    raw_document_id: str,
+    link_type: str,
+  ) -> None:
+    self._request(
+      "POST",
+      "raw_document_links",
+      query={"on_conflict": "raw_record_id,raw_document_id,link_type"},
+      headers={"Prefer": "resolution=ignore-duplicates,return=minimal"},
+      payload=[
+        {
+          "raw_record_id": raw_record_id,
+          "raw_document_id": raw_document_id,
+          "link_type": link_type,
+        },
+      ],
+    )
+
+  def update_filing_version_document(
+    self,
+    *,
+    filing_version_id: str,
+    raw_document_id: str,
+  ) -> None:
+    self._request(
+      "PATCH",
+      "filing_versions",
+      query={"id": f"eq.{filing_version_id}"},
+      headers={"Prefer": "return=minimal"},
+      payload={
+        "raw_document_id": raw_document_id,
+      },
+    )
 
   def insert_audit_event(
     self,

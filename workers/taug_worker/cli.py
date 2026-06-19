@@ -6,6 +6,7 @@ import sys
 
 from .config import WorkerConfig
 from .http_client import HttpClient
+from .jobs.fetch_sec_filing_documents import run_fetch_sec_filing_documents
 from .jobs.sync_sec_submissions import run_sync_sec_submissions
 from .sec_client import SecClient
 from .supabase_rest import SupabaseRestClient
@@ -25,6 +26,13 @@ def main() -> int:
     type=int,
     default=0,
     help="Optional cap after parsing the input list.",
+  )
+  document_parser = subparsers.add_parser("fetch-sec-filing-documents")
+  document_parser.add_argument(
+    "--limit",
+    type=int,
+    default=10,
+    help="Maximum number of filing documents to fetch in one run.",
   )
 
   args = parser.parse_args()
@@ -55,6 +63,34 @@ def main() -> int:
           "processed_ciks": summary.processed_ciks,
           "succeeded_ciks": summary.succeeded_ciks,
           "failed_ciks": summary.failed_ciks,
+        },
+        ensure_ascii=True,
+        sort_keys=True,
+      )
+    )
+    return 0
+
+  if args.command == "fetch-sec-filing-documents":
+    http_client = HttpClient()
+    sec_client = SecClient(http_client=http_client, user_agent=config.sec_user_agent)
+    supabase_client = SupabaseRestClient(
+      http_client=http_client,
+      supabase_url=config.supabase_url,
+      service_role_key=config.supabase_service_role_key,
+    )
+    summary = run_fetch_sec_filing_documents(
+      sec_client=sec_client,
+      supabase_client=supabase_client,
+      bucket=config.raw_documents_bucket,
+      limit=args.limit,
+    )
+    print(
+      json.dumps(
+        {
+          "fetch_run_id": summary.fetch_run_id,
+          "attempted_documents": summary.attempted_documents,
+          "stored_documents": summary.stored_documents,
+          "failed_documents": summary.failed_documents,
         },
         ensure_ascii=True,
         sort_keys=True,

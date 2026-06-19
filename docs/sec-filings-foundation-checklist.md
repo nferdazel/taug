@@ -160,7 +160,7 @@ Exit criteria:
 ### B2. Job registry and scheduler contract
 
 - `[done]` define `filing_discovery` job
-- `[todo]` define `document_fetch` job
+- `[done]` define `document_fetch` job
 - `[done]` define retry policy
 - `[done]` define checkpoint storage approach
 
@@ -177,7 +177,7 @@ Exit criteria:
 ### B3. Supabase integration contract
 
 - `[done]` define write path from worker to Postgres
-- `[todo]` define write path from worker to Storage
+- `[done]` define write path from worker to Storage
 - `[done]` define service-role credential handling
 - `[done]` define timeout and retry behavior for DB/storage writes
 
@@ -189,9 +189,9 @@ Exit criteria:
 
 ### C1. Source metadata seed
 
-- `[todo]` insert `raw_sources` row for `sec_edgar`
-- `[todo]` document licensing/access notes in source metadata
-- `[todo]` mark source as official
+- `[done]` insert `raw_sources` row for `sec_edgar`
+- `[done]` document licensing/access notes in source metadata
+- `[done]` mark source as official
 
 Exit criteria:
 
@@ -199,10 +199,10 @@ Exit criteria:
 
 ### C2. Submissions fetch
 
-- `[todo]` fetch SEC submissions payload for target universe
-- `[todo]` store each submissions payload in `raw_records`
-- `[todo]` hash payloads
-- `[todo]` link records to `raw_fetch_runs`
+- `[done]` fetch SEC submissions payload for target universe
+- `[done]` store each submissions payload in `raw_records`
+- `[done]` hash payloads
+- `[done]` link records to `raw_fetch_runs`
 
 Required rule:
 
@@ -225,12 +225,12 @@ Exit criteria:
 
 ### C4. Raw document fetch
 
-- `[todo]` resolve document URLs for target filing package
-- `[todo]` download primary filing documents
-- `[todo]` store immutable files in Storage
-- `[todo]` record `content_hash`
-- `[todo]` create `raw_documents`
-- `[todo]` link `raw_documents` to related `raw_records`
+- `[done]` resolve document URLs for target filing package
+- `[done]` download primary filing documents
+- `[done]` store immutable files in Storage
+- `[done]` record `content_hash`
+- `[done]` create `raw_documents`
+- `[done]` link `raw_documents` to related `raw_records`
 
 Suggested initial document scope:
 
@@ -309,7 +309,7 @@ Exit criteria:
 
 ### F2. Raw document path convention
 
-- `[todo]` define Storage path pattern
+- `[done]` define Storage path pattern
 
 Recommended pattern:
 
@@ -317,8 +317,8 @@ Recommended pattern:
 
 ### F3. Metadata conventions
 
-- `[todo]` define metadata fields stored on raw SEC documents
-- `[todo]` define metadata fields stored on raw SEC payload records
+- `[done]` define metadata fields stored on raw SEC documents
+- `[done]` define metadata fields stored on raw SEC payload records
 
 Recommended metadata examples:
 
