@@ -161,6 +161,7 @@ Docs discipline for this repo:
 
 ### Priority foundation sources
 
+- `[done]` source strategy and ingestion priority documented
 - `[todo]` SEC EDGAR ingestion worker
 - `[todo]` FRED integration
 - `[todo]` Bank Indonesia integration
@@ -249,6 +250,7 @@ Exit criteria:
 
 ### Phase 3: Filings foundation
 
+- `[done]` document source strategy and priority order
 - `[todo]` ingest SEC submissions
 - `[todo]` store raw documents immutably
 - `[todo]` build filing and filing_version model
@@ -256,6 +258,7 @@ Exit criteria:
 Exit criteria:
 
 - can trace filing document from database
+- source strategy document exists
 
 ### Phase 4: Statement normalization
 
