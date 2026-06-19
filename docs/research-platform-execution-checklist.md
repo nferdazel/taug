@@ -16,6 +16,11 @@ It records:
 
 Use this file as the first source of truth before planning or implementing anything.
 
+Fast AI handoff companions:
+
+- `docs/ai-handoff-status.md`
+- `docs/ai-handoff-prompt.md`
+
 Docs discipline for this repo:
 
 - before every commit, sync the relevant `docs/` artifact first
