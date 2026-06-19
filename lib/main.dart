@@ -15,6 +15,9 @@ void main() async {
   await Supabase.initialize(
     url: AppEnv.supabaseUrl,
     anonKey: AppEnv.supabaseAnonKey,
+    realtimeClientOptions: const RealtimeClientOptions(
+      logLevel: RealtimeLogLevel.info,
+    ),
   );
 
   GoogleFonts.config.allowRuntimeFetching = true;
