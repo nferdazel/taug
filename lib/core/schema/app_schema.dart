@@ -25,4 +25,5 @@ abstract final class AppSchema {
   static const String screenerResults = 'screener_results_v';
   static const String savedScreeners = 'saved_screeners';
   static const String researchNotes = 'research_notes';
+  static const String investmentTheses = 'investment_theses';
 }

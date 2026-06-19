@@ -27,6 +27,8 @@ class _CompanyPageState extends State<CompanyPage> {
   final Signal<bool> _isLoadingDrillDown = Signal<bool>(false);
   final Signal<List<Map<String, dynamic>>> _notes = Signal<List<Map<String, dynamic>>>([]);
   final Signal<bool> _isLoadingNotes = Signal<bool>(false);
+  final Signal<List<Map<String, dynamic>>> _theses = Signal<List<Map<String, dynamic>>>([]);
+  final Signal<bool> _isLoadingTheses = Signal<bool>(false);
 
   @override
   void initState() {
@@ -46,6 +48,7 @@ class _CompanyPageState extends State<CompanyPage> {
       final companyId = response[0]['company_id'] as String;
       _provider.loadCompany(companyId);
       _loadNotes(companyId);
+      _loadTheses(companyId);
     }
   }
 
@@ -56,6 +59,7 @@ class _CompanyPageState extends State<CompanyPage> {
     _drillDownPeriod.value = null;
     _drillDownType.value = null;
     _loadNotes(company['company_id'] as String);
+    _loadTheses(company['company_id'] as String);
   }
 
   Future<void> _loadStatementItems({
@@ -211,6 +215,8 @@ class _CompanyPageState extends State<CompanyPage> {
     _isLoadingDrillDown.dispose();
     _notes.dispose();
     _isLoadingNotes.dispose();
+    _theses.dispose();
+    _isLoadingTheses.dispose();
     super.dispose();
   }
 
@@ -545,7 +551,7 @@ class _CompanyPageState extends State<CompanyPage> {
       title: 'STATEMENT HISTORY',
       subtitle: '${p.statements.length} periods',
       child: DefaultTabController(
-        length: 4,
+        length: 5,
         child: Column(
           children: <Widget>[
             Container(
@@ -565,6 +571,7 @@ class _CompanyPageState extends State<CompanyPage> {
                   Tab(text: 'BALANCE'),
                   Tab(text: 'CASH FLOW'),
                   Tab(text: 'NOTES'),
+                  Tab(text: 'THESIS'),
                 ],
               ),
             ),
@@ -575,6 +582,7 @@ class _CompanyPageState extends State<CompanyPage> {
                   _buildStatementTable(balanceRows, isBalance: true),
                   _buildStatementTable(cashFlowRows, isCashFlow: true),
                   _buildNotesTab(p.summary.companyId),
+                  _buildThesisTab(p.summary.companyId),
                 ],
               ),
             ),
@@ -987,6 +995,405 @@ class _CompanyPageState extends State<CompanyPage> {
             onPressed: () {
               Navigator.pop(ctx);
               _deleteNote(noteId, companyId);
+            },
+            child: Text('Delete', style: AppTypography.caption.copyWith(color: AppThemeColors.bearish)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _loadTheses(String companyId) async {
+    _isLoadingTheses.value = true;
+    try {
+      final response = await Supabase.instance.client
+          .from('investment_theses')
+          .select()
+          .eq('company_id', companyId)
+          .order('updated_at', ascending: false);
+      _theses.value = List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      debugPrint('[CompanyPage] _loadTheses: $e');
+    }
+    _isLoadingTheses.value = false;
+  }
+
+  Future<void> _createThesis(String companyId) async {
+    final result = await _showThesisDialog(context);
+    if (result == null) return;
+
+    try {
+      final userId = Supabase.instance.client.auth.currentUser?.id;
+      if (userId == null) return;
+
+      await Supabase.instance.client.from('investment_theses').insert({
+        'user_id': userId,
+        'company_id': companyId,
+        'title': result['title'],
+        'stance': result['stance'],
+        'summary': result['summary'],
+      });
+      _loadTheses(companyId);
+    } catch (e) {
+      debugPrint('[CompanyPage] _createThesis: $e');
+    }
+  }
+
+  Future<void> _updateThesisBody(String thesisId, String companyId, String newBody) async {
+    try {
+      await Supabase.instance.client
+          .from('investment_theses')
+          .update({'thesis_body': newBody, 'updated_at': DateTime.now().toIso8601String()})
+          .eq('id', thesisId);
+      _loadTheses(companyId);
+    } catch (e) {
+      debugPrint('[CompanyPage] _updateThesisBody: $e');
+    }
+  }
+
+  Future<void> _deleteThesis(String thesisId, String companyId) async {
+    try {
+      await Supabase.instance.client
+          .from('investment_theses')
+          .delete()
+          .eq('id', thesisId);
+      _loadTheses(companyId);
+    } catch (e) {
+      debugPrint('[CompanyPage] _deleteThesis: $e');
+    }
+  }
+
+  Future<Map<String, String>?> _showThesisDialog(BuildContext context) async {
+    final titleController = TextEditingController();
+    final summaryController = TextEditingController();
+    String stance = 'neutral';
+
+    final result = await showDialog<Map<String, String>>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          backgroundColor: AppThemeColors.surface,
+          shape: RoundedRectangleBorder(
+            side: const BorderSide(color: AppThemeColors.border),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          title: const Text('New Thesis', style: AppTypography.subheading),
+          content: SizedBox(
+            width: 400,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                TextField(
+                  controller: titleController,
+                  style: AppTypography.body,
+                  decoration: const InputDecoration(
+                    hintText: 'Thesis title...',
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide(color: AppThemeColors.border),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Row(
+                  children: <Widget>[
+                    const Text('Stance: ', style: AppTypography.caption),
+                    for (final s in ['bullish', 'neutral', 'bearish'])
+                      Padding(
+                        padding: const EdgeInsets.only(right: AppSpacing.sm),
+                        child: ChoiceChip(
+                          label: Text(s.toUpperCase(), style: AppTypography.monoTiny),
+                          selected: stance == s,
+                          onSelected: (_) => setDialogState(() => stance = s),
+                          selectedColor: AppThemeColors.accent.withAlpha(40),
+                          side: BorderSide(
+                            color: stance == s
+                                ? AppThemeColors.accent
+                                : AppThemeColors.border,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.md),
+                TextField(
+                  controller: summaryController,
+                  style: AppTypography.body,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    hintText: 'Quick summary...',
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide(color: AppThemeColors.border),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel', style: AppTypography.caption),
+            ),
+            TextButton(
+              onPressed: () {
+                if (titleController.text.isNotEmpty) {
+                  Navigator.pop(ctx, {
+                    'title': titleController.text,
+                    'stance': stance,
+                    'summary': summaryController.text,
+                  });
+                }
+              },
+              child: Text('Create', style: AppTypography.caption.copyWith(color: AppThemeColors.accent)),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    titleController.dispose();
+    summaryController.dispose();
+    return result;
+  }
+
+  Widget _buildThesisTab(String companyId) {
+    return Column(
+      children: <Widget>[
+        Container(
+          height: 28,
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: AppThemeColors.border)),
+          ),
+          child: Row(
+            children: <Widget>[
+              const Text('THESIS', style: AppTypography.monoSection),
+              const Spacer(),
+              SizedBox(
+                height: 20,
+                child: TextButton.icon(
+                  onPressed: () => _createThesis(companyId),
+                  icon: const Icon(Icons.add, size: 12),
+                  label: const Text('New', style: AppTypography.monoTiny),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: Watch((_) {
+            final theses = _theses.value;
+            final isLoading = _isLoadingTheses.value;
+
+            if (isLoading) {
+              return const Center(
+                child: SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 1.5),
+                ),
+              );
+            }
+
+            if (theses.isEmpty) {
+              return Center(
+                child: Text(
+                  'No theses yet',
+                  style: AppTypography.caption.copyWith(
+                    color: AppThemeColors.textTertiary,
+                  ),
+                ),
+              );
+            }
+
+            return ListView.builder(
+              itemCount: theses.length,
+              itemBuilder: (BuildContext context, int index) {
+                final thesis = theses[index];
+                return _buildThesisRow(thesis, companyId);
+              },
+            );
+          }),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildThesisRow(Map<String, dynamic> thesis, String companyId) {
+    final title = thesis['title'] as String? ?? '';
+    final stance = thesis['stance'] as String? ?? 'neutral';
+    final summary = thesis['summary'] as String? ?? '';
+    final status = thesis['status'] as String? ?? 'open';
+    final thesisId = thesis['id'] as String;
+
+    Color stanceColor;
+    switch (stance) {
+      case 'bullish':
+        stanceColor = AppThemeColors.bullish;
+      case 'bearish':
+        stanceColor = AppThemeColors.bearish;
+      default:
+        stanceColor = AppThemeColors.textSecondary;
+    }
+
+    return InkWell(
+      onTap: () async {
+        final body = thesis['thesis_body'] as String? ?? '';
+        final newBody = await _showThesisEditorDialog(context, title, body);
+        if (newBody != null) {
+          _updateThesisBody(thesisId, companyId, newBody);
+        }
+      },
+      onLongPress: () => _confirmDeleteThesis(thesisId, companyId),
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.sm,
+        ),
+        decoration: const BoxDecoration(
+          border: Border(
+            bottom: BorderSide(color: AppThemeColors.border, width: 0.5),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 3,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: stanceColor.withAlpha(30),
+                    border: Border.all(color: stanceColor.withAlpha(80)),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                  child: Text(
+                    stance.toUpperCase(),
+                    style: AppTypography.monoTiny.copyWith(
+                      color: stanceColor,
+                      fontSize: 8,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: AppTypography.body.copyWith(fontSize: 11),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (status != 'open')
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 3,
+                      vertical: 1,
+                    ),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: AppThemeColors.textTertiary.withAlpha(80)),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                    child: Text(
+                      status.toUpperCase(),
+                      style: AppTypography.monoTiny.copyWith(
+                        color: AppThemeColors.textTertiary,
+                        fontSize: 8,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            if (summary.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text(
+                  summary,
+                  style: AppTypography.monoMeta.copyWith(fontSize: 10),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<String?> _showThesisEditorDialog(
+    BuildContext context,
+    String title,
+    String currentBody,
+  ) async {
+    final controller = TextEditingController(text: currentBody);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppThemeColors.surface,
+        shape: RoundedRectangleBorder(
+          side: const BorderSide(color: AppThemeColors.border),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        title: Text('Thesis: $title', style: AppTypography.subheading),
+        content: SizedBox(
+          width: 500,
+          height: 300,
+          child: TextField(
+            controller: controller,
+            style: AppTypography.monoData.copyWith(fontSize: 11),
+            maxLines: null,
+            expands: true,
+            decoration: const InputDecoration(
+              hintText: 'Write your thesis...',
+              border: OutlineInputBorder(
+                borderSide: BorderSide(color: AppThemeColors.border),
+              ),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel', style: AppTypography.caption),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, controller.text),
+            child: Text('Save', style: AppTypography.caption.copyWith(color: AppThemeColors.accent)),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    return result;
+  }
+
+  void _confirmDeleteThesis(String thesisId, String companyId) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppThemeColors.surface,
+        shape: RoundedRectangleBorder(
+          side: const BorderSide(color: AppThemeColors.border),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        title: const Text('Delete Thesis', style: AppTypography.subheading),
+        content: const Text('Are you sure?', style: AppTypography.body),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel', style: AppTypography.caption),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _deleteThesis(thesisId, companyId);
             },
             child: Text('Delete', style: AppTypography.caption.copyWith(color: AppThemeColors.bearish)),
           ),

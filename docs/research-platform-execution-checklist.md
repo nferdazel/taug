@@ -224,8 +224,8 @@ Docs discipline for this repo:
 - `[done]` company page: statement line items drill-down
 - `[done]` screener page (sortable metric table with quality indicators)
 - `[done]` research notes (CRUD in company page, RLS protected)
+- `[done]` investment theses (CRUD with stance tracking, RLS protected)
 - `[todo]` valuation snapshot page
-- `[todo]` investment theses tracking
 
 ## L. Recommended Phase Order
 
