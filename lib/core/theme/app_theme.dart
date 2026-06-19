@@ -45,7 +45,7 @@ abstract final class AppTheme {
         scrolledUnderElevation: 0,
         titleTextStyle: TextStyle(
           fontFamily: 'IBM Plex Sans',
-          fontSize: 13,
+          fontSize: 14,
           fontWeight: FontWeight.w600,
           color: Color(AppColors.textPrimary),
         ),
@@ -56,12 +56,12 @@ abstract final class AppTheme {
         indicatorColor: Color(AppColors.accent),
         labelStyle: TextStyle(
           fontFamily: 'IBM Plex Sans',
-          fontSize: 11,
+          fontSize: 12,
           fontWeight: FontWeight.w600,
         ),
         unselectedLabelStyle: TextStyle(
           fontFamily: 'IBM Plex Sans',
-          fontSize: 11,
+          fontSize: 12,
           fontWeight: FontWeight.w400,
         ),
         dividerColor: Color(AppColors.border),
@@ -81,7 +81,10 @@ abstract final class AppTheme {
           borderRadius: BorderRadius.circular(4),
           borderSide: const BorderSide(color: Color(AppColors.accent)),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 10,
+        ),
         hintStyle: const TextStyle(
           fontFamily: 'IBM Plex Sans',
           fontSize: 12,
@@ -118,13 +121,13 @@ abstract final class AppTheme {
       dataTableTheme: const DataTableThemeData(
         headingTextStyle: TextStyle(
           fontFamily: 'IBM Plex Mono',
-          fontSize: 11,
+          fontSize: 12,
           fontWeight: FontWeight.w600,
           color: Color(AppColors.textSecondary),
         ),
         dataTextStyle: TextStyle(
           fontFamily: 'IBM Plex Mono',
-          fontSize: 11,
+          fontSize: 12,
           color: Color(AppColors.textPrimary),
         ),
         headingRowColor: WidgetStatePropertyAll(

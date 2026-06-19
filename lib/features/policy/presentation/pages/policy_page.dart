@@ -293,7 +293,7 @@ class _PolicyPageState extends State<PolicyPage> {
         onRefresh: _refreshEvents,
         child: ListView.builder(
           itemCount: events.length,
-          itemExtent: 96,
+          itemExtent: 112,
           itemBuilder: (context, index) => _buildPolicyItem(events[index]),
         ),
       );
@@ -361,7 +361,7 @@ class _PolicyPageState extends State<PolicyPage> {
                 const SizedBox(height: 6),
                 Text(
                   event.summary!,
-                  maxLines: 2,
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.bodySmall,
                 ),
