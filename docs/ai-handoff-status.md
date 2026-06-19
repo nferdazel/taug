@@ -96,8 +96,8 @@ These are preserved, not the current bottleneck.
 
 ### What still needs implementation
 
-- formula engine worker job (compute metrics from statements + price data)
-- valuation snapshot serving view (reads from `security_metric_snapshots`)
+- metric snapshot serving view (reads from `security_metric_snapshots`)
+- price data integration into `security_price_snapshots` (enables valuation metrics)
 - quality and freshness read model
 - Flutter company research pages (deferred until serving views exist)
 

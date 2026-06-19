@@ -331,8 +331,11 @@ Exit criteria:
   - `security_metric_snapshots`
   - `security_price_snapshots`
   - `screening_universe_memberships`
-- `[todo]` implement formula engine worker job
-- `[todo]` implement metric snapshot/read model
+- `[done]` implement formula engine worker job (`compute-company-metrics`)
+  - TTM aggregation for income/cash flow metrics
+  - Balance sheet metrics from latest period
+  - Price-dependent metrics marked as missing_input (price data pending)
+- `[todo]` implement metric snapshot read model (serving view)
 - `[todo]` implement saved screener support
 
 Exit criteria:
