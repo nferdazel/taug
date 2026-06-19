@@ -163,6 +163,7 @@ Exit criteria:
 - `[done]` define `document_fetch` job
 - `[done]` define retry policy
 - `[done]` define checkpoint storage approach
+- `[done]` implement database-backed checkpoint storage
 
 Checkpoint examples:
 
@@ -295,7 +296,7 @@ Exit criteria:
 
 - `[done]` verify rerun is idempotent
 - `[done]` verify partial failure leaves audit trail
-- `[todo]` verify checkpoint only moves after success
+- `[done]` verify checkpoint only moves after success
 
 Exit criteria:
 
@@ -305,6 +306,8 @@ Validation note:
 
 - local rerun validation on `2026-06-19` for `1` repeated CIK and `3` filings produced `created_raw_records=0`, `created_filings=0`, and `created_filing_versions=0`
 - local partial-failure validation on `2026-06-19` for `0000320193` plus bogus `0000000000` produced `raw_fetch_runs.status=partial`, `successful_cik_ids=["0000320193"]`, `failed_cik_ids=["0000000000"]`, and matching item-level + run-level audit events
+- local checkpoint validation on `2026-06-19` produced one `ingestion_checkpoints` row for successful single-CIK scope and no new checkpoint row for later partial mixed-CIK scope
+- local document-fetch checkpoint validation on `2026-06-19` produced a `document_fetch` checkpoint row after a successful `attempted_documents=1` run
 
 ## F. Storage Convention Checklist
 

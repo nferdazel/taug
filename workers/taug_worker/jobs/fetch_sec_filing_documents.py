@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from hashlib import sha256
 import mimetypes
 from pathlib import PurePosixPath
@@ -29,6 +30,14 @@ def run_fetch_sec_filing_documents(
 ) -> DocumentFetchSummary:
   source = supabase_client.ensure_sec_source()
   pending_documents = supabase_client.list_pending_sec_filing_documents(limit=limit)
+  checkpoint_scope: dict[str, object] = {
+    "job_type": "document_fetch",
+    "bucket": bucket,
+  }
+  checkpoint_scope_key: str = supabase_client.build_checkpoint_scope_key(
+    job_type="document_fetch",
+    scope=checkpoint_scope,
+  )
   fetch_run_id = supabase_client.insert_fetch_run(
     raw_source_id=source.id,
     job_type="document_fetch",
@@ -36,6 +45,7 @@ def run_fetch_sec_filing_documents(
       "source": source.code,
       "limit": limit,
       "pending_documents": len(pending_documents),
+      "checkpoint_scope_key": checkpoint_scope_key,
     },
     worker_version=__version__,
   )
@@ -159,6 +169,23 @@ def run_fetch_sec_filing_documents(
         "failed_filing_version_ids": failed_filing_version_ids,
       },
     )
+    if failed_count == 0:
+      supabase_client.upsert_ingestion_checkpoint(
+        raw_source_id=source.id,
+        job_type="document_fetch",
+        checkpoint_scope_key=checkpoint_scope_key,
+        last_success_fetch_run_id=fetch_run_id,
+        checkpoint_data={
+          "source": source.code,
+          "scope": checkpoint_scope,
+          "attempted_documents": len(pending_documents),
+          "stored_documents": stored_count,
+          "failed_documents": failed_count,
+          "stored_filing_version_ids": stored_filing_version_ids,
+          "failed_filing_version_ids": failed_filing_version_ids,
+          "checkpointed_at": datetime.now(timezone.utc).isoformat(),
+        },
+      )
     supabase_client.insert_audit_event(
       event_type="raw_fetch_run_completed" if failed_count == 0 else "raw_fetch_run_partial",
       entity_type="raw_fetch_run",

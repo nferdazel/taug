@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import json
+from hashlib import sha256
 from typing import Any
 
 from .http_client import HttpClient
@@ -35,6 +36,17 @@ class PendingFilingDocument:
 class UpsertResult:
   id: str
   created: bool
+
+
+@dataclass(frozen=True)
+class IngestionCheckpoint:
+  id: str
+  raw_source_id: int
+  job_type: str
+  checkpoint_scope_key: str
+  last_success_fetch_run_id: str | None
+  checkpoint_data: dict[str, Any]
+  updated_at: str
 
 
 class SupabaseRestClient:
@@ -141,6 +153,88 @@ class SupabaseRestClient:
       query={"id": f"eq.{fetch_run_id}"},
       headers={"Prefer": "return=minimal"},
       payload=payload,
+    )
+
+  def build_checkpoint_scope_key(
+    self,
+    *,
+    job_type: str,
+    scope: dict[str, object],
+  ) -> str:
+    canonical_scope: bytes = json.dumps(
+      scope,
+      ensure_ascii=True,
+      separators=(",", ":"),
+      sort_keys=True,
+    ).encode("utf-8")
+    scope_hash: str = sha256(canonical_scope).hexdigest()[:16]
+    return f"{job_type}:{scope_hash}"
+
+  def upsert_ingestion_checkpoint(
+    self,
+    *,
+    raw_source_id: int,
+    job_type: str,
+    checkpoint_scope_key: str,
+    last_success_fetch_run_id: str,
+    checkpoint_data: dict[str, object],
+  ) -> None:
+    rows: list[dict[str, Any]] = self._request(
+      "POST",
+      "ingestion_checkpoints",
+      query={"on_conflict": "raw_source_id,job_type,checkpoint_scope_key"},
+      headers={"Prefer": "resolution=merge-duplicates,return=representation"},
+      payload=[
+        {
+          "raw_source_id": raw_source_id,
+          "job_type": job_type,
+          "checkpoint_scope_key": checkpoint_scope_key,
+          "last_success_fetch_run_id": last_success_fetch_run_id,
+          "checkpoint_data": checkpoint_data,
+          "updated_at": datetime.now(timezone.utc).isoformat(),
+        },
+      ],
+    )
+    if not rows:
+      raise ValueError("Failed to upsert ingestion checkpoint")
+
+  def get_ingestion_checkpoint(
+    self,
+    *,
+    raw_source_id: int,
+    job_type: str,
+    checkpoint_scope_key: str,
+  ) -> IngestionCheckpoint | None:
+    rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "ingestion_checkpoints",
+      query={
+        "select": (
+          "id,raw_source_id,job_type,checkpoint_scope_key,"
+          "last_success_fetch_run_id,checkpoint_data,updated_at"
+        ),
+        "raw_source_id": f"eq.{raw_source_id}",
+        "job_type": f"eq.{job_type}",
+        "checkpoint_scope_key": f"eq.{checkpoint_scope_key}",
+        "limit": "1",
+      },
+    )
+    if not rows:
+      return None
+    row: dict[str, Any] = rows[0]
+    checkpoint_data: Any = row.get("checkpoint_data")
+    return IngestionCheckpoint(
+      id=str(row["id"]),
+      raw_source_id=int(row["raw_source_id"]),
+      job_type=str(row["job_type"]),
+      checkpoint_scope_key=str(row["checkpoint_scope_key"]),
+      last_success_fetch_run_id=(
+        str(row["last_success_fetch_run_id"])
+        if row.get("last_success_fetch_run_id") is not None
+        else None
+      ),
+      checkpoint_data=checkpoint_data if isinstance(checkpoint_data, dict) else {},
+      updated_at=str(row["updated_at"]),
     )
 
   def insert_raw_record(

@@ -46,6 +46,14 @@ def run_sync_sec_submissions(
     raise ValueError("At least one CIK is required for sync_sec_submissions")
 
   source: RawSource = supabase_client.ensure_sec_source()
+  checkpoint_scope: dict[str, object] = {
+    "ciks": normalized_ciks,
+    "job_type": "filing_discovery",
+  }
+  checkpoint_scope_key: str = supabase_client.build_checkpoint_scope_key(
+    job_type="filing_discovery",
+    scope=checkpoint_scope,
+  )
   fetch_run_id: str = supabase_client.insert_fetch_run(
     raw_source_id=source.id,
     job_type="filing_discovery",
@@ -54,6 +62,7 @@ def run_sync_sec_submissions(
       "record_type": "sec_submissions",
       "cik_count": len(normalized_ciks),
       "ciks": normalized_ciks,
+      "checkpoint_scope_key": checkpoint_scope_key,
     },
     worker_version=__version__,
   )
@@ -204,6 +213,29 @@ def run_sync_sec_submissions(
           "replayed_filings": replayed_filings,
           "created_filing_versions": created_filing_versions,
           "replayed_filing_versions": replayed_filing_versions,
+        },
+      )
+    if failure_count == 0:
+      supabase_client.upsert_ingestion_checkpoint(
+        raw_source_id=source.id,
+        job_type="filing_discovery",
+        checkpoint_scope_key=checkpoint_scope_key,
+        last_success_fetch_run_id=fetch_run_id,
+        checkpoint_data={
+          "source": source.code,
+          "scope": checkpoint_scope,
+          "processed_ciks": len(normalized_ciks),
+          "succeeded_ciks": success_count,
+          "failed_ciks": failure_count,
+          "successful_cik_ids": successful_cik_ids,
+          "failed_cik_ids": failed_cik_ids,
+          "created_raw_records": created_raw_records,
+          "replayed_raw_records": replayed_raw_records,
+          "created_filings": created_filings,
+          "replayed_filings": replayed_filings,
+          "created_filing_versions": created_filing_versions,
+          "replayed_filing_versions": replayed_filing_versions,
+          "checkpointed_at": datetime.now(timezone.utc).isoformat(),
         },
       )
     supabase_client.insert_audit_event(

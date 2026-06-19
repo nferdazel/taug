@@ -143,6 +143,7 @@ Docs discipline for this repo:
 
 - `[done]` `audit_events`
 - `[done]` `validation_events`
+- `[done]` `ingestion_checkpoints`
 - `[todo]` `recalculation_runs`
 - `[done]` `restatement_events`
 - `[todo]` data quality scoring model
@@ -262,6 +263,7 @@ Exit criteria:
 - `[done]` validate narrow-universe SEC smoke test locally
 - `[done]` validate SEC rerun idempotency on repeated narrow-universe sync
 - `[done]` validate partial-failure audit trail on mixed-result SEC sync
+- `[done]` validate checkpoint advancement only after successful run
 
 Exit criteria:
 
