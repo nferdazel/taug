@@ -6,5 +6,5 @@
 # If external packages are added later (e.g. pytest for testing),
 # list them below with pinned versions.
 
-# Testing (uncomment when test suite is added)
-# pytest>=8.0.0,<9.0.0
+# Testing
+pytest>=8.0.0,<9.0.0
