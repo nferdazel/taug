@@ -4,7 +4,7 @@ import 'package:signals/signals_flutter.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../providers/calendar_provider.dart';
+import '../../data/calendar_repository.dart';
 
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key});
@@ -14,12 +14,44 @@ class CalendarPage extends StatefulWidget {
 }
 
 class _CalendarPageState extends State<CalendarPage> {
-  final _provider = CalendarProvider();
+  final _repository = CalendarRepository();
+  final _events = Signal<List<dynamic>>([]);
+  final _selectedDate = Signal<DateTime>(DateTime.now());
+  final _selectedCountry = Signal<String>('all');
+  final _minImportance = Signal<int>(1);
+  final _isLoading = Signal<bool>(false);
+  final _error = Signal<String?>(null);
+  final _lastUpdated = Signal<DateTime?>(null);
 
   @override
   void initState() {
     super.initState();
-    _provider.loadEvents();
+    _loadEvents();
+  }
+
+  Future<void> _loadEvents() async {
+    _isLoading.value = true;
+    _error.value = null;
+
+    final result = await _repository.getEvents(
+      date: _selectedDate.value,
+      country: _selectedCountry.value,
+      importance: _minImportance.value,
+    );
+
+    if (result.isSuccess) {
+      _events.value = result.data!;
+      _lastUpdated.value = DateTime.now();
+    } else {
+      _error.value = result.error.toString();
+    }
+
+    _isLoading.value = false;
+  }
+
+  Future<void> _refreshCalendar() async {
+    await _repository.refreshCalendar();
+    await _loadEvents();
   }
 
   @override
@@ -37,9 +69,7 @@ class _CalendarPageState extends State<CalendarPage> {
       height: 36,
       padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: AppThemeColors.border),
-        ),
+        border: Border(bottom: BorderSide(color: AppThemeColors.border)),
       ),
       child: Row(
         children: [
@@ -57,7 +87,7 @@ class _CalendarPageState extends State<CalendarPage> {
 
   Widget _buildDateSelector() {
     return Watch((_) {
-      final date = _provider.selectedDate.value;
+      final date = _selectedDate.value;
       return SizedBox(
         height: 24,
         child: TextButton.icon(
@@ -75,7 +105,7 @@ class _CalendarPageState extends State<CalendarPage> {
 
   Widget _buildCountryFilter() {
     return Watch((_) {
-      final countries = ['all', 'US', 'EU', 'GB', 'JP', 'ID'];
+      final countries = ['all', 'US', 'EU', 'GB', 'JP', 'ID', 'CN'];
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 4),
         decoration: BoxDecoration(
@@ -84,19 +114,19 @@ class _CalendarPageState extends State<CalendarPage> {
           border: Border.all(color: AppThemeColors.border),
         ),
         child: DropdownButton<String>(
-          value: _provider.selectedCountry.value,
+          value: _selectedCountry.value,
           underline: const SizedBox(),
           dropdownColor: AppThemeColors.surface,
           style: AppTypography.monoTiny,
           isDense: true,
           items: countries
-              .map((c) => DropdownMenuItem(
-                    value: c,
-                    child: Text(c == 'all' ? 'All' : c),
-                  ))
+              .map((c) => DropdownMenuItem(value: c, child: Text(c == 'all' ? 'All' : c)))
               .toList(),
           onChanged: (value) {
-            if (value != null) _provider.selectCountry(value);
+            if (value != null) {
+              _selectedCountry.value = value;
+              _loadEvents();
+            }
           },
         ),
       );
@@ -105,7 +135,7 @@ class _CalendarPageState extends State<CalendarPage> {
 
   Widget _buildImportanceFilter() {
     return Watch((_) {
-      final current = _provider.minImportance.value;
+      final current = _minImportance.value;
       return Row(
         children: [
           _buildImportanceButton(1, '⚪', current),
@@ -124,11 +154,12 @@ class _CalendarPageState extends State<CalendarPage> {
       height: 24,
       width: 24,
       child: TextButton(
-        onPressed: () => _provider.setMinImportance(level),
+        onPressed: () {
+          _minImportance.value = level;
+          _loadEvents();
+        },
         style: TextButton.styleFrom(
-          backgroundColor: isSelected
-              ? AppThemeColors.accent
-              : AppThemeColors.backgroundLight,
+          backgroundColor: isSelected ? AppThemeColors.accent : AppThemeColors.backgroundLight,
           padding: EdgeInsets.zero,
           minimumSize: Size.zero,
         ),
@@ -138,37 +169,60 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   Widget _buildRefreshButton() {
-    return SizedBox(
-      height: 24,
-      width: 24,
-      child: IconButton(
-        onPressed: () => _provider.refreshCalendar(),
-        icon: const Icon(Icons.refresh, size: 14),
-        padding: EdgeInsets.zero,
-      ),
-    );
+    return Watch((_) {
+      final isLoading = _isLoading.value;
+      return SizedBox(
+        height: 24,
+        width: 24,
+        child: IconButton(
+          onPressed: isLoading ? null : _refreshCalendar,
+          icon: isLoading
+              ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 1.5))
+              : const Icon(Icons.refresh, size: 14),
+          padding: EdgeInsets.zero,
+        ),
+      );
+    });
   }
 
   Widget _buildContent() {
     return Watch((_) {
-      final events = _provider.events.value;
-      final isLoading = _provider.isLoading.value;
+      final events = _events.value;
+      final isLoading = _isLoading.value;
+      final error = _error.value;
 
       if (isLoading && events.isEmpty) {
         return const Center(
-          child: SizedBox(
-            width: 16,
-            height: 16,
-            child: CircularProgressIndicator(strokeWidth: 2),
+          child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+        );
+      }
+
+      if (error != null && events.isEmpty) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 32, color: AppThemeColors.bearish),
+              const SizedBox(height: 8),
+              Text(error, style: AppTypography.bodySmall, textAlign: TextAlign.center),
+              const SizedBox(height: 12),
+              ElevatedButton(onPressed: _loadEvents, child: const Text(AppStrings.retry)),
+            ],
           ),
         );
       }
 
       if (events.isEmpty) {
-        return const Center(
-          child: Text(
-            AppStrings.noData,
-            style: AppTypography.bodySmall,
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.calendar_today_outlined, size: 32, color: AppThemeColors.textTertiary),
+              const SizedBox(height: 8),
+              const Text('No events for this date', style: AppTypography.bodySmall),
+              const SizedBox(height: 12),
+              ElevatedButton(onPressed: _refreshCalendar, child: const Text('Fetch Events')),
+            ],
           ),
         );
       }
@@ -180,10 +234,7 @@ class _CalendarPageState extends State<CalendarPage> {
             child: ListView.builder(
               itemCount: events.length,
               itemExtent: 32,
-              itemBuilder: (context, index) {
-                final event = events[index];
-                return _buildEventRow(event);
-              },
+              itemBuilder: (context, index) => _buildEventRow(events[index]),
             ),
           ),
         ],
@@ -197,9 +248,7 @@ class _CalendarPageState extends State<CalendarPage> {
       padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: const BoxDecoration(
         color: AppThemeColors.backgroundLight,
-        border: Border(
-          bottom: BorderSide(color: AppThemeColors.border),
-        ),
+        border: Border(bottom: BorderSide(color: AppThemeColors.border)),
       ),
       child: const Row(
         children: [
@@ -216,44 +265,30 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   Widget _buildEventRow(dynamic event) {
+    final importance = event.importance ?? 1;
     return Container(
       height: 32,
       padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: AppThemeColors.border, width: 0.5),
-        ),
+        border: Border(bottom: BorderSide(color: AppThemeColors.border, width: 0.5)),
       ),
       child: Row(
         children: [
           SizedBox(
             width: 50,
-            child: Text(
-              event.eventTime ?? '-',
-              style: AppTypography.monoTiny,
-            ),
+            child: Text(event.eventTime ?? '-', style: AppTypography.monoTiny),
           ),
           Expanded(
             flex: 3,
-            child: Text(
-              event.title,
-              style: AppTypography.monoSmall,
-              overflow: TextOverflow.ellipsis,
-            ),
+            child: Text(event.title, style: AppTypography.monoSmall, overflow: TextOverflow.ellipsis),
           ),
           SizedBox(
             width: 40,
-            child: Text(
-              event.country,
-              style: AppTypography.monoTiny,
-            ),
+            child: Text(event.country, style: AppTypography.monoTiny),
           ),
           SizedBox(
             width: 30,
-            child: Text(
-              _getImportanceEmoji(event.importance),
-              style: const TextStyle(fontSize: 10),
-            ),
+            child: Text(_getImportanceEmoji(importance), style: const TextStyle(fontSize: 10)),
           ),
           Expanded(
             flex: 2,
@@ -267,9 +302,7 @@ class _CalendarPageState extends State<CalendarPage> {
             flex: 2,
             child: Text(
               event.forecast?.toString() ?? '-',
-              style: AppTypography.monoSmall.copyWith(
-                color: AppThemeColors.textSecondary,
-              ),
+              style: AppTypography.monoSmall.copyWith(color: AppThemeColors.textSecondary),
               textAlign: TextAlign.right,
             ),
           ),
@@ -277,9 +310,7 @@ class _CalendarPageState extends State<CalendarPage> {
             flex: 2,
             child: Text(
               event.previous?.toString() ?? '-',
-              style: AppTypography.monoSmall.copyWith(
-                color: AppThemeColors.textSecondary,
-              ),
+              style: AppTypography.monoSmall.copyWith(color: AppThemeColors.textSecondary),
               textAlign: TextAlign.right,
             ),
           ),
@@ -290,19 +321,16 @@ class _CalendarPageState extends State<CalendarPage> {
 
   String _getImportanceEmoji(int importance) {
     switch (importance) {
-      case 3:
-        return '🔴';
-      case 2:
-        return '🟡';
-      default:
-        return '⚪';
+      case 3: return '🔴';
+      case 2: return '🟡';
+      default: return '⚪';
     }
   }
 
   void _showDatePicker() async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: _provider.selectedDate.value,
+      initialDate: _selectedDate.value,
       firstDate: DateTime(2020),
       lastDate: DateTime(2030),
       builder: (context, child) {
@@ -319,7 +347,8 @@ class _CalendarPageState extends State<CalendarPage> {
     );
 
     if (picked != null) {
-      _provider.selectDate(picked);
+      _selectedDate.value = picked;
+      _loadEvents();
     }
   }
 }
