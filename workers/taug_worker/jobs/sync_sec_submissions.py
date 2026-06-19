@@ -7,7 +7,7 @@ from typing import Iterable
 
 from ..__init__ import __version__
 from ..sec_client import SecClient
-from ..supabase_rest import RawSource, SupabaseRestClient
+from ..supabase_rest import RawSource, SupabaseRestClient, UpsertResult
 
 
 @dataclass(frozen=True)
@@ -16,6 +16,20 @@ class SyncSummary:
   processed_ciks: int
   succeeded_ciks: int
   failed_ciks: int
+  created_raw_records: int
+  replayed_raw_records: int
+  created_filings: int
+  replayed_filings: int
+  created_filing_versions: int
+  replayed_filing_versions: int
+
+
+@dataclass(frozen=True)
+class FilingNormalizationResult:
+  created_filings: int
+  replayed_filings: int
+  created_filing_versions: int
+  replayed_filing_versions: int
 
 
 def run_sync_sec_submissions(
@@ -44,6 +58,12 @@ def run_sync_sec_submissions(
 
   success_count: int = 0
   failure_count: int = 0
+  created_raw_records: int = 0
+  replayed_raw_records: int = 0
+  created_filings: int = 0
+  replayed_filings: int = 0
+  created_filing_versions: int = 0
+  replayed_filing_versions: int = 0
 
   try:
     for cik in normalized_ciks:
@@ -55,7 +75,7 @@ def run_sync_sec_submissions(
         ticker: str | None = _extract_primary_ticker(payload)
         company_name: str = _extract_company_name(payload, cik)
 
-        raw_record_id: str = supabase_client.insert_raw_record(
+        raw_record: UpsertResult = supabase_client.insert_raw_record(
           raw_source_id=source.id,
           fetch_run_id=fetch_run_id,
           record_type="sec_submissions",
@@ -69,22 +89,30 @@ def run_sync_sec_submissions(
             "worker_version": __version__,
           },
         )
+        if raw_record.created:
+          created_raw_records += 1
+        else:
+          replayed_raw_records += 1
         canonical_security = supabase_client.ensure_canonical_security(
           cik=cik,
           ticker=ticker,
           company_name=company_name,
         )
-        discovered_filings: int = _normalize_filing_discovery(
+        normalization_result: FilingNormalizationResult = _normalize_filing_discovery(
           payload=payload,
           cik=cik,
           company_id=canonical_security.company_id,
           raw_source_id=source.id,
-          raw_record_id=raw_record_id,
+          raw_record_id=raw_record.id,
           supabase_client=supabase_client,
           max_filings_per_company=max_filings_per_company,
         )
+        created_filings += normalization_result.created_filings
+        replayed_filings += normalization_result.replayed_filings
+        created_filing_versions += normalization_result.created_filing_versions
+        replayed_filing_versions += normalization_result.replayed_filing_versions
         supabase_client.insert_audit_event(
-          event_type="raw_record_ingested",
+          event_type="raw_record_ingested" if raw_record.created else "raw_record_replayed",
           entity_type="raw_record",
           entity_id=source_record_key,
           severity="info",
@@ -96,9 +124,14 @@ def run_sync_sec_submissions(
             "cik": cik,
             "ticker": ticker,
             "payload_hash": payload_hash,
+            "raw_record_id": raw_record.id,
+            "raw_record_created": raw_record.created,
             "company_id": canonical_security.company_id,
             "security_id": canonical_security.security_id,
-            "discovered_filings": discovered_filings,
+            "created_filings": normalization_result.created_filings,
+            "replayed_filings": normalization_result.replayed_filings,
+            "created_filing_versions": normalization_result.created_filing_versions,
+            "replayed_filing_versions": normalization_result.replayed_filing_versions,
           },
         )
         success_count += 1
@@ -133,24 +166,36 @@ def run_sync_sec_submissions(
     supabase_client.update_fetch_run(
       fetch_run_id=fetch_run_id,
       status=final_status,
-      metadata={
-        "processed_ciks": len(normalized_ciks),
-        "succeeded_ciks": success_count,
-        "failed_ciks": failure_count,
-      },
-    )
+        metadata={
+          "processed_ciks": len(normalized_ciks),
+          "succeeded_ciks": success_count,
+          "failed_ciks": failure_count,
+          "created_raw_records": created_raw_records,
+          "replayed_raw_records": replayed_raw_records,
+          "created_filings": created_filings,
+          "replayed_filings": replayed_filings,
+          "created_filing_versions": created_filing_versions,
+          "replayed_filing_versions": replayed_filing_versions,
+        },
+      )
   except Exception as exc:
     supabase_client.update_fetch_run(
       fetch_run_id=fetch_run_id,
       status="failed",
       error_code="worker_crash",
       error_message=str(exc),
-      metadata={
-        "processed_ciks": len(normalized_ciks),
-        "succeeded_ciks": success_count,
-        "failed_ciks": failure_count,
-      },
-    )
+        metadata={
+          "processed_ciks": len(normalized_ciks),
+          "succeeded_ciks": success_count,
+          "failed_ciks": failure_count,
+          "created_raw_records": created_raw_records,
+          "replayed_raw_records": replayed_raw_records,
+          "created_filings": created_filings,
+          "replayed_filings": replayed_filings,
+          "created_filing_versions": created_filing_versions,
+          "replayed_filing_versions": replayed_filing_versions,
+        },
+      )
     raise
 
   return SyncSummary(
@@ -158,6 +203,12 @@ def run_sync_sec_submissions(
     processed_ciks=len(normalized_ciks),
     succeeded_ciks=success_count,
     failed_ciks=failure_count,
+    created_raw_records=created_raw_records,
+    replayed_raw_records=replayed_raw_records,
+    created_filings=created_filings,
+    replayed_filings=replayed_filings,
+    created_filing_versions=created_filing_versions,
+    replayed_filing_versions=replayed_filing_versions,
   )
 
 
@@ -186,13 +237,23 @@ def _normalize_filing_discovery(
   raw_record_id: str,
   supabase_client: SupabaseRestClient,
   max_filings_per_company: int,
-) -> int:
+) -> FilingNormalizationResult:
   filings_section: object = payload.get("filings")
   if not isinstance(filings_section, dict):
-    return 0
+    return FilingNormalizationResult(
+      created_filings=0,
+      replayed_filings=0,
+      created_filing_versions=0,
+      replayed_filing_versions=0,
+    )
   recent: object = filings_section.get("recent")
   if not isinstance(recent, dict):
-    return 0
+    return FilingNormalizationResult(
+      created_filings=0,
+      replayed_filings=0,
+      created_filing_versions=0,
+      replayed_filing_versions=0,
+    )
 
   accession_numbers: list[str] = _extract_string_array(recent.get("accessionNumber"))
   filing_dates: list[str] = _extract_string_array(recent.get("filingDate"))
@@ -210,7 +271,10 @@ def _normalize_filing_discovery(
   )
   if max_filings_per_company > 0:
     filing_count = min(filing_count, max_filings_per_company)
-  created_count: int = 0
+  created_filings: int = 0
+  replayed_filings: int = 0
+  created_filing_versions: int = 0
+  replayed_filing_versions: int = 0
 
   for index in range(filing_count):
     filing_key: str = accession_numbers[index].strip()
@@ -230,7 +294,7 @@ def _normalize_filing_discovery(
     if not filing_key or not filing_date or not filing_type:
       continue
 
-    filing_id: str = supabase_client.upsert_filing(
+    filing_result: UpsertResult = supabase_client.upsert_filing(
       company_id=company_id,
       raw_source_id=raw_source_id,
       filing_type=filing_type,
@@ -245,8 +309,12 @@ def _normalize_filing_discovery(
         "cik": payload.get("cik", cik),
       },
     )
-    supabase_client.upsert_filing_version(
-      filing_id=filing_id,
+    if filing_result.created:
+      created_filings += 1
+    else:
+      replayed_filings += 1
+    filing_version_result: UpsertResult = supabase_client.upsert_filing_version(
+      filing_id=filing_result.id,
       raw_record_id=raw_record_id,
       parser_version=__version__,
       metadata={
@@ -255,9 +323,17 @@ def _normalize_filing_discovery(
         "primary_document": primary_document,
       },
     )
-    created_count += 1
+    if filing_version_result.created:
+      created_filing_versions += 1
+    else:
+      replayed_filing_versions += 1
 
-  return created_count
+  return FilingNormalizationResult(
+    created_filings=created_filings,
+    replayed_filings=replayed_filings,
+    created_filing_versions=created_filing_versions,
+    replayed_filing_versions=replayed_filing_versions,
+  )
 
 
 def _extract_string_array(value: object) -> list[str]:

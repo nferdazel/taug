@@ -31,6 +31,12 @@ class PendingFilingDocument:
   filing_date: str
 
 
+@dataclass(frozen=True)
+class UpsertResult:
+  id: str
+  created: bool
+
+
 class SupabaseRestClient:
   def __init__(
     self,
@@ -148,7 +154,7 @@ class SupabaseRestClient:
     payload_json: dict[str, object],
     payload_hash: str,
     metadata: dict[str, object],
-  ) -> str:
+  ) -> UpsertResult:
     rows: list[dict[str, Any]] = self._request(
       "POST",
       "raw_records",
@@ -170,7 +176,7 @@ class SupabaseRestClient:
       ],
     )
     if rows:
-      return str(rows[0]["id"])
+      return UpsertResult(id=str(rows[0]["id"]), created=True)
 
     existing_rows: list[dict[str, Any]] = self._request(
       "GET",
@@ -186,7 +192,7 @@ class SupabaseRestClient:
     )
     if not existing_rows:
       raise ValueError("Failed to resolve raw record after upsert")
-    return str(existing_rows[0]["id"])
+    return UpsertResult(id=str(existing_rows[0]["id"]), created=False)
 
   def ensure_canonical_security(
     self,
@@ -287,12 +293,24 @@ class SupabaseRestClient:
     report_date: str | None,
     is_amendment: bool,
     metadata: dict[str, object],
-  ) -> str:
+  ) -> UpsertResult:
+    existing_rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "filings",
+      query={
+        "select": "id",
+        "raw_source_id": f"eq.{raw_source_id}",
+        "filing_key": f"eq.{filing_key}",
+        "limit": "1",
+      },
+    )
+    if existing_rows:
+      return UpsertResult(id=str(existing_rows[0]["id"]), created=False)
+
     rows: list[dict[str, Any]] = self._request(
       "POST",
       "filings",
-      query={"on_conflict": "raw_source_id,filing_key"},
-      headers={"Prefer": "resolution=merge-duplicates,return=representation"},
+      headers={"Prefer": "return=representation"},
       payload=[
         {
           "company_id": company_id,
@@ -307,7 +325,9 @@ class SupabaseRestClient:
         },
       ],
     )
-    return str(rows[0]["id"])
+    if not rows:
+      raise ValueError("Failed to resolve filing after upsert")
+    return UpsertResult(id=str(rows[0]["id"]), created=True)
 
   def upsert_filing_version(
     self,
@@ -316,7 +336,7 @@ class SupabaseRestClient:
     raw_record_id: str,
     parser_version: str,
     metadata: dict[str, object],
-  ) -> str:
+  ) -> UpsertResult:
     rows: list[dict[str, Any]] = self._request(
       "POST",
       "filing_versions",
@@ -334,7 +354,7 @@ class SupabaseRestClient:
       ],
     )
     if rows:
-      return str(rows[0]["id"])
+      return UpsertResult(id=str(rows[0]["id"]), created=True)
 
     existing_rows: list[dict[str, Any]] = self._request(
       "GET",
@@ -348,7 +368,7 @@ class SupabaseRestClient:
     )
     if not existing_rows:
       raise ValueError("Failed to resolve filing version after upsert")
-    return str(existing_rows[0]["id"])
+    return UpsertResult(id=str(existing_rows[0]["id"]), created=False)
 
   def list_pending_sec_filing_documents(self, *, limit: int) -> list[PendingFilingDocument]:
     rows: list[dict[str, Any]] = self._request(

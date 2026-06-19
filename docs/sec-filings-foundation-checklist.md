@@ -293,13 +293,17 @@ Exit criteria:
 
 ### E3. Operational validation
 
-- `[todo]` verify rerun is idempotent
+- `[done]` verify rerun is idempotent
 - `[todo]` verify partial failure leaves audit trail
 - `[todo]` verify checkpoint only moves after success
 
 Exit criteria:
 
 - rerunning the same SEC job does not create uncontrolled duplicates
+
+Validation note:
+
+- local rerun validation on `2026-06-19` for `1` repeated CIK and `3` filings produced `created_raw_records=0`, `created_filings=0`, and `created_filing_versions=0`
 
 ## F. Storage Convention Checklist
 

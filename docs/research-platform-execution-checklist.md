@@ -260,6 +260,7 @@ Exit criteria:
 - `[done]` implement SEC document fetch workflow and storage path
 - `[done]` build filing and filing_version model
 - `[done]` validate narrow-universe SEC smoke test locally
+- `[done]` validate SEC rerun idempotency on repeated narrow-universe sync
 
 Exit criteria:
 
