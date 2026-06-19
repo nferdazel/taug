@@ -64,6 +64,12 @@ feature/
 └── presentation/  # Pages, providers, widgets
 ```
 
+## Planning Docs
+
+- [Research Platform Pivot Audit](docs/research-platform-pivot-audit.md)
+- [Research Platform Gap Analysis](docs/research-platform-gap-analysis.md)
+- [Research Platform Execution Checklist](docs/research-platform-execution-checklist.md)
+
 ## Data Sources
 
 | Source | Data | Cost |

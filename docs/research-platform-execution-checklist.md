@@ -1,0 +1,290 @@
+# Taug Research Platform Execution Checklist
+
+Last updated: 2026-06-19
+
+## Purpose
+
+This checklist is intended for humans and AI agents.
+
+It records:
+
+- what has already been built
+- what should be preserved
+- what should be frozen
+- what is not started
+- what must happen next
+
+Use this file as the first source of truth before planning or implementing anything.
+
+## Status Legend
+
+- `[done]` implemented and committed
+- `[partial]` exists, but not suitable as final architecture
+- `[todo]` not started
+- `[defer]` intentionally postponed
+- `[stop]` should not be expanded in current architecture
+
+## A. Current Product State
+
+### App shell and user workspace
+
+- `[done]` auth flow
+- `[done]` compact terminal shell and tab navigation
+- `[done]` watchlists
+- `[done]` portfolios
+- `[done]` settings page
+- `[done]` compact design system pass
+
+### Market monitoring features
+
+- `[done]` quote snapshot cache
+- `[done]` delayed charting
+- `[done]` line chart default
+- `[done]` top movers page
+- `[done]` terminal brief landing page
+
+### Context feeds
+
+- `[done]` news aggregation feed
+- `[done]` policy feed page
+- `[done]` economic calendar page
+- `[done]` provenance/source badges
+- `[done]` basic freshness and source metadata
+
+### UI fixes already shipped
+
+- `[done]` startup hardening for web
+- `[done]` policy feed dedupe
+- `[done]` policy card fixed-height no-overflow layout
+- `[done]` 12px baseline grid normalization
+
+## B. Public Repo Hygiene
+
+- `[done]` `.env` ignored
+- `[done]` generated `app_env.g.dart` ignored
+- `[done]` `app_env.g.dart` removed from full local history
+- `[todo]` rotate any key that may have been used when old generated env file existed
+- `[todo]` final pre-public secret scan before first remote push
+
+## C. Product Direction Decisions
+
+- `[done]` terminal-only roadmap challenged
+- `[done]` pivot recommendation documented
+- `[done]` product reframed toward research platform / investment research workspace
+- `[todo]` final naming decision:
+  - financial research platform
+  - investment research workspace
+  - research terminal
+
+## D. What Must Be Frozen
+
+- `[stop]` do not expand order book / running trades as strategic feature
+- `[stop]` do not add AI/chatbot/LLM features
+- `[stop]` do not build screener UI on current schema
+- `[stop]` do not add more terminal-first features before data spine redesign
+- `[stop]` do not make Supabase Edge Functions the long-term ETL engine
+
+## E. Existing Architecture To Preserve
+
+- `[done]` Flutter shell can be preserved
+- `[done]` Supabase auth and RLS can be preserved
+- `[done]` watchlist and portfolio user data can be preserved
+- `[done]` compact design system can be preserved
+- `[partial]` `symbols` and `exchanges` can serve as temporary seed reference data
+
+## F. Critical Missing Foundations
+
+### Core entities
+
+- `[todo]` `companies`
+- `[todo]` `securities`
+- `[todo]` `currencies`
+- `[todo]` `reporting_periods`
+- `[todo]` sector and industry normalization tables
+
+### Raw immutable layer
+
+- `[todo]` `raw_sources`
+- `[todo]` `raw_documents`
+- `[todo]` `raw_filings`
+- `[todo]` `raw_financials`
+- `[todo]` `raw_macro`
+- `[todo]` `raw_ownership`
+
+### Filing and statement layer
+
+- `[todo]` `filings`
+- `[todo]` `filing_versions`
+- `[todo]` `financial_statements`
+- `[todo]` `financial_statement_items`
+- `[todo]` taxonomy mapping strategy
+
+### Restatement support
+
+- `[todo]` `filing_version`
+- `[todo]` `statement_version`
+- `[todo]` `is_restated`
+- `[todo]` `supersedes`
+- `[todo]` `superseded_by`
+
+### Research workflow layer
+
+- `[todo]` `research_notes`
+- `[todo]` `investment_theses`
+- `[todo]` `saved_screeners`
+- `[todo]` `coverage_lists`
+
+### Audit and quality layer
+
+- `[todo]` `audit_events`
+- `[todo]` `validation_events`
+- `[todo]` `recalculation_runs`
+- `[todo]` `restatement_events`
+- `[todo]` data quality scoring model
+
+## G. User Preference Gaps
+
+- `[partial]` user settings currently support timezone, density mode, default interval, default exchange, portfolio currency
+- `[todo]` add separate `country`
+- `[todo]` add separate `home_market`
+- `[todo]` add separate `preferred_exchanges`
+- `[todo]` add `base_currency`
+- `[todo]` add dashboard/news/screener defaults tied to home market
+
+## H. Data Source Plan
+
+### Priority foundation sources
+
+- `[todo]` SEC EDGAR ingestion worker
+- `[todo]` FRED integration
+- `[todo]` Bank Indonesia integration
+- `[todo]` BPS integration
+- `[todo]` IDX issuer/reference data review
+
+### Secondary sources
+
+- `[defer]` Nasdaq or exchange licensed datasets
+- `[defer]` KSEI after access/licensing review
+- `[defer]` IR website document fallbacks
+
+### Explicitly avoid as foundation
+
+- `[stop]` Yahoo Finance as core dependency
+- `[stop]` undocumented scraping as main data backbone
+
+## I. ETL / Worker Architecture
+
+- `[todo]` choose worker runtime:
+  - Python preferred for filings and financial parsing
+  - scheduled execution platform
+- `[todo]` define ingestion scheduler
+- `[todo]` define raw payload retention rules
+- `[todo]` define parser versioning
+- `[todo]` define validation pipeline
+- `[todo]` define restatement detection process
+
+## J. Screener Architecture
+
+- `[todo]` metric definition model
+- `[todo]` formula lineage design
+- `[todo]` point-in-time metric snapshot design
+- `[todo]` materialized screener read model
+- `[todo]` saved screener data model
+- `[todo]` screener filter DSL or normalized filter schema
+
+## K. Frontend Product Surfaces Needed Later
+
+- `[todo]` company page
+- `[todo]` security master page
+- `[todo]` filings timeline page
+- `[todo]` statement explorer
+- `[todo]` ratio trend page
+- `[todo]` valuation snapshot page
+- `[todo]` screener page
+- `[todo]` research notes page
+- `[todo]` data quality and freshness surfaces
+
+## L. Recommended Phase Order
+
+### Phase 0: Freeze and document
+
+- `[done]` pivot audit
+- `[done]` gap analysis
+- `[done]` execution checklist
+
+Exit criteria:
+
+- team agrees terminal expansion is frozen
+
+### Phase 1: Schema v2 design
+
+- `[todo]` design target research schema
+- `[todo]` define raw / normalized / derived / research layers
+- `[todo]` define home-market preference model
+
+Exit criteria:
+
+- schema review approved
+
+### Phase 2: Ingestion topology
+
+- `[todo]` choose worker runtime and deployment model
+- `[todo]` define raw document and payload storage layout
+- `[todo]` define validation and parser version conventions
+
+Exit criteria:
+
+- ingestion architecture approved
+
+### Phase 3: Filings foundation
+
+- `[todo]` ingest SEC submissions
+- `[todo]` store raw documents immutably
+- `[todo]` build filing and filing_version model
+
+Exit criteria:
+
+- can trace filing document from database
+
+### Phase 4: Statement normalization
+
+- `[todo]` parse and normalize company facts / statements
+- `[todo]` support historical periods and statement versions
+- `[todo]` support restatements
+
+Exit criteria:
+
+- can query historical statement items by entity and period
+
+### Phase 5: Derived metrics and screener core
+
+- `[todo]` implement formula engine
+- `[todo]` implement metric snapshot/read model
+- `[todo]` implement saved screener support
+
+Exit criteria:
+
+- screener queries are reproducible and explainable
+
+### Phase 6: Research workspace
+
+- `[todo]` research notes
+- `[todo]` thesis tracking
+- `[todo]` company workspace UI
+- `[todo]` quality/freshness indicator
+
+Exit criteria:
+
+- user can maintain an investment thesis on top of auditable data
+
+## M. Agent Guardrails
+
+Before any new implementation, the agent must ask:
+
+1. Is this feature central to research workflow?
+2. Does this require raw immutable data first?
+3. Can the value be traced to a source and version?
+4. Does this belong in Supabase, or in worker ETL?
+5. Am I accidentally expanding the old terminal roadmap?
+
+If the answer to question 5 is yes, stop and reassess.
