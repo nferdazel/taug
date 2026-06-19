@@ -5,6 +5,7 @@ import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/widgets/price_cell.dart';
 import '../providers/watchlist_provider.dart';
+import 'symbol_search_dialog.dart';
 
 class WatchlistPage extends StatefulWidget {
   const WatchlistPage({super.key});
@@ -19,7 +20,9 @@ class _WatchlistPageState extends State<WatchlistPage> {
   @override
   void initState() {
     super.initState();
-    _provider.loadWatchlists();
+    _provider.loadWatchlists().then((_) {
+      _provider.loadPrices();
+    });
   }
 
   @override
@@ -304,6 +307,14 @@ class _WatchlistPageState extends State<WatchlistPage> {
   }
 
   void _showAddSymbolDialog() {
-    // TODO: Implement symbol search and add
+    final currentWatchlist = _provider.currentWatchlist.value;
+    if (currentWatchlist == null) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => SymbolSearchDialog(
+        watchlistId: currentWatchlist.id,
+      ),
+    ).then((_) => _provider.loadWatchlistItems(currentWatchlist.id));
   }
 }
