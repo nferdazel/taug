@@ -216,6 +216,7 @@ Docs discipline for this repo:
   - `filing_timeline_v`
   - `company_statement_history_v`
   - `company_statement_items_v`
+  - `company_metric_snapshot_v`
 - `[todo]` company page
 - `[todo]` security master page
 - `[todo]` filings timeline page

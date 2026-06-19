@@ -93,6 +93,7 @@ These are preserved, not the current bottleneck.
 - `filing_timeline_v`
 - `company_statement_history_v`
 - `company_statement_items_v`
+- `company_metric_snapshot_v`
 
 ### What still needs implementation
 

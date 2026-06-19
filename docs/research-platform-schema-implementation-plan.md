@@ -457,7 +457,9 @@ Current status:
 - `filing_timeline_v` implemented
 - `company_statement_history_v` implemented
 - `company_statement_items_v` implemented
-- statement explorer / valuation / quality read models still pending
+- `company_metric_snapshot_v` implemented
+- screener read views still pending
+- freshness and quality views still pending
 
 Rule:
 
