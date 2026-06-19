@@ -6,7 +6,7 @@ from hashlib import sha256
 from typing import Iterable
 
 from ..__init__ import __version__
-from ..sec_client import SecClient
+from ..sec_client import SecClient, SecClientError, SecSubmissionsParseError
 from ..supabase_rest import RawSource, SupabaseRestClient, UpsertResult
 from ..validators.sec_submissions import (
   ValidationFailure,
@@ -215,15 +215,19 @@ def run_sync_sec_submissions(
       except Exception as exc:
         failure_count += 1
         failed_cik_ids.append(cik)
+        validation_rule: str = "sec_submissions_fetch"
+        if isinstance(exc, SecSubmissionsParseError):
+          validation_rule = "sec_submissions_payload_parse"
         supabase_client.insert_validation_event(
           entity_type="sec_company",
           entity_id=cik,
-          validation_rule="sec_submissions_fetch",
+          validation_rule=validation_rule,
           status="failed",
           message=str(exc),
           payload={
             "source": source.code,
             "worker_version": __version__,
+            "error_code": exc.code if isinstance(exc, SecClientError) else None,
           },
         )
         supabase_client.insert_audit_event(

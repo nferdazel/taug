@@ -1,8 +1,23 @@
 from __future__ import annotations
 
 import json
+from json import JSONDecodeError
 
 from .http_client import HttpClient
+
+
+class SecClientError(ValueError):
+  def __init__(self, message: str, *, code: str) -> None:
+    super().__init__(message)
+    self.code = code
+
+
+class SecSubmissionsFetchError(SecClientError):
+  pass
+
+
+class SecSubmissionsParseError(SecClientError):
+  pass
 
 
 class SecClient:
@@ -23,14 +38,29 @@ class SecClient:
     )
     if response.status_code != 200:
       body_text: str = response.body.decode("utf-8", errors="replace")
-      raise ValueError(
+      raise SecSubmissionsFetchError(
         f"SEC submissions fetch failed for CIK {normalized_cik}: "
-        f"status={response.status_code} body={body_text[:400]}"
+        f"status={response.status_code} body={body_text[:400]}",
+        code="sec_submissions_fetch_failed",
       )
 
-    payload: object = response.json()
+    try:
+      payload: object = response.json()
+    except UnicodeDecodeError as exc:
+      raise SecSubmissionsParseError(
+        f"SEC submissions payload decode failed for CIK {normalized_cik}: {exc}",
+        code="sec_submissions_payload_decode_failed",
+      ) from exc
+    except JSONDecodeError as exc:
+      raise SecSubmissionsParseError(
+        f"SEC submissions payload JSON parse failed for CIK {normalized_cik}: {exc}",
+        code="sec_submissions_payload_json_parse_failed",
+      ) from exc
     if not isinstance(payload, dict):
-      raise ValueError(f"Unexpected SEC submissions payload for CIK {normalized_cik}")
+      raise SecSubmissionsParseError(
+        f"Unexpected SEC submissions payload root type for CIK {normalized_cik}",
+        code="sec_submissions_payload_root_type_invalid",
+      )
 
     return payload
 
