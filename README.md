@@ -158,7 +158,7 @@ Required GitHub secrets:
 
 Recommended `SEC_USER_AGENT` value:
 
-- `Fredianto private@example.com`
+- `YOUR_NAME YOUR_EMAIL@example.com`
 
 Recommended GitHub variable:
 
@@ -166,7 +166,7 @@ Recommended GitHub variable:
 
 Recommended starter `SEC_TARGET_CIKS` value:
 
-- `0000320193,0000789019,0001018724,0001652044,0001326801,0001045810,0001067983`
+- `0000320193,0000789019`
 
 ### Environment Variables
 
