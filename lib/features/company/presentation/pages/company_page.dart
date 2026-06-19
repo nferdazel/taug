@@ -25,6 +25,8 @@ class _CompanyPageState extends State<CompanyPage> {
   final Signal<String?> _drillDownPeriod = Signal<String?>(null);
   final Signal<String?> _drillDownType = Signal<String?>(null);
   final Signal<bool> _isLoadingDrillDown = Signal<bool>(false);
+  final Signal<List<Map<String, dynamic>>> _notes = Signal<List<Map<String, dynamic>>>([]);
+  final Signal<bool> _isLoadingNotes = Signal<bool>(false);
 
   @override
   void initState() {
@@ -41,7 +43,9 @@ class _CompanyPageState extends State<CompanyPage> {
         .order('display_name');
     if (response.isNotEmpty && mounted) {
       _companies.value = List<Map<String, dynamic>>.from(response);
-      _provider.loadCompany(response[0]['company_id'] as String);
+      final companyId = response[0]['company_id'] as String;
+      _provider.loadCompany(companyId);
+      _loadNotes(companyId);
     }
   }
 
@@ -51,6 +55,7 @@ class _CompanyPageState extends State<CompanyPage> {
     _drillDownItems.value = [];
     _drillDownPeriod.value = null;
     _drillDownType.value = null;
+    _loadNotes(company['company_id'] as String);
   }
 
   Future<void> _loadStatementItems({
@@ -85,6 +90,104 @@ class _CompanyPageState extends State<CompanyPage> {
     _drillDownType.value = null;
   }
 
+  Future<void> _loadNotes(String companyId) async {
+    _isLoadingNotes.value = true;
+    try {
+      final response = await Supabase.instance.client
+          .from('research_notes')
+          .select()
+          .eq('company_id', companyId)
+          .order('is_posted', ascending: false)
+          .order('updated_at', ascending: false);
+      _notes.value = List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      debugPrint('[CompanyPage] _loadNotes: $e');
+    }
+    _isLoadingNotes.value = false;
+  }
+
+  Future<void> _createNote(String companyId) async {
+    final String? title = await _showNoteDialog(context, '');
+    if (title == null || title.isEmpty) return;
+
+    try {
+      final userId = Supabase.instance.client.auth.currentUser?.id;
+      if (userId == null) return;
+
+      await Supabase.instance.client.from('research_notes').insert({
+        'user_id': userId,
+        'company_id': companyId,
+        'title': title,
+        'body': '',
+        'note_type': 'general',
+      });
+      _loadNotes(companyId);
+    } catch (e) {
+      debugPrint('[CompanyPage] _createNote: $e');
+    }
+  }
+
+  Future<void> _updateNote(String noteId, String companyId, String newBody) async {
+    try {
+      await Supabase.instance.client
+          .from('research_notes')
+          .update({'body': newBody, 'updated_at': DateTime.now().toIso8601String()})
+          .eq('id', noteId);
+      _loadNotes(companyId);
+    } catch (e) {
+      debugPrint('[CompanyPage] _updateNote: $e');
+    }
+  }
+
+  Future<void> _deleteNote(String noteId, String companyId) async {
+    try {
+      await Supabase.instance.client
+          .from('research_notes')
+          .delete()
+          .eq('id', noteId);
+      _loadNotes(companyId);
+    } catch (e) {
+      debugPrint('[CompanyPage] _deleteNote: $e');
+    }
+  }
+
+  Future<String?> _showNoteDialog(BuildContext context, String currentTitle) async {
+    final controller = TextEditingController(text: currentTitle);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppThemeColors.surface,
+        shape: RoundedRectangleBorder(
+          side: const BorderSide(color: AppThemeColors.border),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        title: const Text('New Note', style: AppTypography.subheading),
+        content: TextField(
+          controller: controller,
+          style: AppTypography.body,
+          decoration: const InputDecoration(
+            hintText: 'Note title...',
+            border: OutlineInputBorder(
+              borderSide: BorderSide(color: AppThemeColors.border),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel', style: AppTypography.caption),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, controller.text),
+            child: Text('Create', style: AppTypography.caption.copyWith(color: AppThemeColors.accent)),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    return result;
+  }
+
   void _showCompanyPicker() {
     showDialog<void>(
       context: context,
@@ -106,6 +209,8 @@ class _CompanyPageState extends State<CompanyPage> {
     _drillDownPeriod.dispose();
     _drillDownType.dispose();
     _isLoadingDrillDown.dispose();
+    _notes.dispose();
+    _isLoadingNotes.dispose();
     super.dispose();
   }
 
@@ -440,7 +545,7 @@ class _CompanyPageState extends State<CompanyPage> {
       title: 'STATEMENT HISTORY',
       subtitle: '${p.statements.length} periods',
       child: DefaultTabController(
-        length: 3,
+        length: 4,
         child: Column(
           children: <Widget>[
             Container(
@@ -459,6 +564,7 @@ class _CompanyPageState extends State<CompanyPage> {
                   Tab(text: 'INCOME'),
                   Tab(text: 'BALANCE'),
                   Tab(text: 'CASH FLOW'),
+                  Tab(text: 'NOTES'),
                 ],
               ),
             ),
@@ -468,6 +574,7 @@ class _CompanyPageState extends State<CompanyPage> {
                   _buildStatementTable(incomeRows, isIncome: true),
                   _buildStatementTable(balanceRows, isBalance: true),
                   _buildStatementTable(cashFlowRows, isCashFlow: true),
+                  _buildNotesTab(p.summary.companyId),
                 ],
               ),
             ),
@@ -658,6 +765,234 @@ class _CompanyPageState extends State<CompanyPage> {
   String _fmtNum(double? v) {
     if (v == null) return '--';
     return v.toStringAsFixed(2);
+  }
+
+  Widget _buildNotesTab(String companyId) {
+    return Column(
+      children: <Widget>[
+        Container(
+          height: 28,
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: AppThemeColors.border)),
+          ),
+          child: Row(
+            children: <Widget>[
+              const Text('NOTES', style: AppTypography.monoSection),
+              const Spacer(),
+              SizedBox(
+                height: 20,
+                child: TextButton.icon(
+                  onPressed: () => _createNote(companyId),
+                  icon: const Icon(Icons.add, size: 12),
+                  label: const Text('New', style: AppTypography.monoTiny),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: Watch((_) {
+            final notes = _notes.value;
+            final isLoading = _isLoadingNotes.value;
+
+            if (isLoading) {
+              return const Center(
+                child: SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 1.5),
+                ),
+              );
+            }
+
+            if (notes.isEmpty) {
+              return Center(
+                child: Text(
+                  'No notes yet',
+                  style: AppTypography.caption.copyWith(
+                    color: AppThemeColors.textTertiary,
+                  ),
+                ),
+              );
+            }
+
+            return ListView.builder(
+              itemCount: notes.length,
+              itemBuilder: (BuildContext context, int index) {
+                final note = notes[index];
+                return _buildNoteRow(note, companyId);
+              },
+            );
+          }),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNoteRow(Map<String, dynamic> note, String companyId) {
+    final title = note['title'] as String? ?? '';
+    final body = note['body'] as String? ?? '';
+    final noteType = note['note_type'] as String? ?? 'general';
+    final updatedAt = note['updated_at'] as String? ?? '';
+    final noteId = note['id'] as String;
+
+    return InkWell(
+      onTap: () async {
+        final newBody = await _showNoteEditorDialog(context, title, body);
+        if (newBody != null) {
+          _updateNote(noteId, companyId, newBody);
+        }
+      },
+      onLongPress: () => _confirmDeleteNote(noteId, companyId),
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.sm,
+        ),
+        decoration: const BoxDecoration(
+          border: Border(
+            bottom: BorderSide(color: AppThemeColors.border, width: 0.5),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    title,
+                    style: AppTypography.body.copyWith(fontSize: 11),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 3,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: AppThemeColors.accent.withAlpha(80),
+                    ),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                  child: Text(
+                    noteType.toUpperCase(),
+                    style: AppTypography.monoTiny.copyWith(
+                      color: AppThemeColors.accent,
+                      fontSize: 8,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (body.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text(
+                  body,
+                  style: AppTypography.monoMeta.copyWith(fontSize: 10),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            if (updatedAt.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text(
+                  updatedAt.substring(0, updatedAt.length > 16 ? 16 : updatedAt.length),
+                  style: AppTypography.monoTiny.copyWith(
+                    color: AppThemeColors.textTertiary,
+                    fontSize: 9,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<String?> _showNoteEditorDialog(
+    BuildContext context,
+    String title,
+    String currentBody,
+  ) async {
+    final controller = TextEditingController(text: currentBody);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppThemeColors.surface,
+        shape: RoundedRectangleBorder(
+          side: const BorderSide(color: AppThemeColors.border),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        title: Text(title, style: AppTypography.subheading),
+        content: SizedBox(
+          width: 500,
+          height: 300,
+          child: TextField(
+            controller: controller,
+            style: AppTypography.monoData.copyWith(fontSize: 11),
+            maxLines: null,
+            expands: true,
+            decoration: const InputDecoration(
+              hintText: 'Write your notes...',
+              border: OutlineInputBorder(
+                borderSide: BorderSide(color: AppThemeColors.border),
+              ),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel', style: AppTypography.caption),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, controller.text),
+            child: Text('Save', style: AppTypography.caption.copyWith(color: AppThemeColors.accent)),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    return result;
+  }
+
+  void _confirmDeleteNote(String noteId, String companyId) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppThemeColors.surface,
+        shape: RoundedRectangleBorder(
+          side: const BorderSide(color: AppThemeColors.border),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        title: const Text('Delete Note', style: AppTypography.subheading),
+        content: const Text('Are you sure?', style: AppTypography.body),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel', style: AppTypography.caption),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _deleteNote(noteId, companyId);
+            },
+            child: Text('Delete', style: AppTypography.caption.copyWith(color: AppThemeColors.bearish)),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildPanel({

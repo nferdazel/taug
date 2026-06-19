@@ -24,4 +24,5 @@ abstract final class AppSchema {
   static const String filingTimeline = 'filing_timeline_v';
   static const String screenerResults = 'screener_results_v';
   static const String savedScreeners = 'saved_screeners';
+  static const String researchNotes = 'research_notes';
 }
