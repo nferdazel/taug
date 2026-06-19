@@ -9,6 +9,10 @@ from pathlib import PurePosixPath
 from ..__init__ import __version__
 from ..sec_client import SecClient
 from ..supabase_rest import SupabaseRestClient
+from ..validators.raw_documents import (
+  DocumentIntegrityFailure,
+  validate_raw_document_integrity,
+)
 
 
 @dataclass(frozen=True)
@@ -64,6 +68,52 @@ def run_fetch_sec_filing_documents(
           document_name=pending.primary_document,
         )
         content_hash = sha256(body).hexdigest()
+        byte_size = len(body)
+        integrity_failures: tuple[DocumentIntegrityFailure, ...] = (
+          validate_raw_document_integrity(
+            body=body,
+            content_hash=content_hash,
+            byte_size=byte_size,
+          )
+        )
+        if integrity_failures:
+          failure_payload: dict[str, object] = {
+            "source": source.code,
+            "worker_version": __version__,
+            "filing_version_id": pending.filing_version_id,
+            "accession_number": pending.accession_number,
+            "primary_document": pending.primary_document,
+            "failure_codes": [failure.code for failure in integrity_failures],
+            "failures": [
+              {
+                "code": failure.code,
+                "message": failure.message,
+                "details": failure.details,
+              }
+              for failure in integrity_failures
+            ],
+          }
+          supabase_client.insert_validation_event(
+            entity_type="filing_version",
+            entity_id=pending.filing_version_id,
+            validation_rule="sec_primary_document_integrity",
+            status="failed",
+            message=integrity_failures[0].message,
+            payload=failure_payload,
+          )
+          supabase_client.insert_audit_event(
+            event_type="raw_document_validation_failed",
+            entity_type="filing_version",
+            entity_id=pending.filing_version_id,
+            severity="error",
+            reference_type="raw_fetch_run",
+            reference_id=fetch_run_id,
+            payload=failure_payload,
+          )
+          raise ValueError(
+            "SEC raw document integrity validation failed: "
+            + ", ".join(failure.code for failure in integrity_failures)
+          )
         suffix = PurePosixPath(pending.primary_document).suffix or ".txt"
         storage_path = (
           f"raw/sec_edgar/{pending.filing_date[:4]}/{pending.filing_date[5:7]}/"
@@ -90,13 +140,29 @@ def run_fetch_sec_filing_documents(
           storage_path=storage_path,
           mime_type=final_mime_type,
           content_hash=content_hash,
-          byte_size=len(body),
+          byte_size=byte_size,
           published_at=f"{pending.filing_date}T00:00:00+00:00",
           metadata={
             "source": source.code,
             "filing_id": pending.filing_id,
             "filing_version_id": pending.filing_version_id,
             "cik": pending.cik,
+            "accession_number": pending.accession_number,
+            "primary_document": pending.primary_document,
+          },
+        )
+        supabase_client.mark_raw_document_verified(raw_document_id=raw_document_id)
+        supabase_client.insert_validation_event(
+          entity_type="raw_document",
+          entity_id=raw_document_id,
+          validation_rule="sec_primary_document_integrity",
+          status="passed",
+          message="Raw SEC filing document passed integrity validation.",
+          payload={
+            "source": source.code,
+            "content_hash": content_hash,
+            "byte_size": byte_size,
+            "filing_version_id": pending.filing_version_id,
             "accession_number": pending.accession_number,
             "primary_document": pending.primary_document,
           },
@@ -122,7 +188,7 @@ def run_fetch_sec_filing_documents(
             "storage_path": storage_path,
             "document_url": document_url,
             "content_hash": content_hash,
-            "byte_size": len(body),
+            "byte_size": byte_size,
           },
         )
         stored_filing_version_ids.append(pending.filing_version_id)
@@ -130,19 +196,21 @@ def run_fetch_sec_filing_documents(
       except Exception as exc:
         failed_count += 1
         failed_filing_version_ids.append(pending.filing_version_id)
-        supabase_client.insert_validation_event(
-          entity_type="filing_version",
-          entity_id=pending.filing_version_id,
-          validation_rule="sec_primary_document_fetch",
-          status="failed",
-          message=str(exc),
-          payload={
-            "source": source.code,
-            "accession_number": pending.accession_number,
-            "primary_document": pending.primary_document,
-            "worker_version": __version__,
-          },
-        )
+        if "SEC raw document integrity validation failed:" not in str(exc):
+          supabase_client.insert_validation_event(
+            entity_type="filing_version",
+            entity_id=pending.filing_version_id,
+            validation_rule="sec_primary_document_fetch",
+            status="failed",
+            message=str(exc),
+            payload={
+              "source": source.code,
+              "accession_number": pending.accession_number,
+              "primary_document": pending.primary_document,
+              "worker_version": __version__,
+              "filing_version_id": pending.filing_version_id,
+            },
+          )
         supabase_client.insert_audit_event(
           event_type="raw_document_ingestion_failed",
           entity_type="filing_version",

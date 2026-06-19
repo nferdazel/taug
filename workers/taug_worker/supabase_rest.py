@@ -570,6 +570,19 @@ class SupabaseRestClient:
     )
     return str(rows[0]["id"])
 
+  def mark_raw_document_verified(
+    self,
+    *,
+    raw_document_id: str,
+  ) -> None:
+    self._request(
+      "PATCH",
+      "raw_documents",
+      query={"id": f"eq.{raw_document_id}"},
+      headers={"Prefer": "return=minimal"},
+      payload={"verified_at": datetime.now(timezone.utc).isoformat()},
+    )
+
   def insert_raw_document_link(
     self,
     *,

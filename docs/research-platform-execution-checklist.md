@@ -266,6 +266,7 @@ Exit criteria:
 - `[done]` validate checkpoint advancement only after successful run
 - `[done]` validate required SEC submissions keys before normalization
 - `[done]` validate SEC submissions payload parse success separately from schema validation
+- `[done]` validate SEC raw document hash and byte size before finalizing storage
 
 Exit criteria:
 
