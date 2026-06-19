@@ -291,7 +291,8 @@ Exit criteria:
 - `[done]` implement SEC companyfacts raw-ingestion job with validation, audit trail, checkpointing, and duplicate detection
 - `[partial]` parse and normalize company facts / statements:
   - SEC companyfacts parser MVP writes core statement rows for curated facts from `10-K` / `10-Q` filings
-  - current write path is row-by-row via Supabase REST and must be optimized before broad-scale backfill
+  - replay path is hardened with bulk active-version lookup, preloaded period/statement caches, and batched statement-item inserts
+  - broad-scale backfill still needs more batching and possibly non-REST write paths before large-universe runs
 - `[todo]` support historical periods and statement versions
 - `[todo]` support restatements
 

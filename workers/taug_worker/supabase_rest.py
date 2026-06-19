@@ -80,6 +80,32 @@ class RawRecord:
   created_at: str
 
 
+@dataclass(frozen=True)
+class FinancialStatementItemKey:
+  financial_statement_id: str
+  lineage_source_type: str
+  lineage_source_id: str
+
+
+@dataclass(frozen=True)
+class ReportingPeriodRecord:
+  id: str
+  company_id: str
+  period_type: str
+  fiscal_year: int
+  fiscal_quarter: int | None
+  period_end: str
+
+
+@dataclass(frozen=True)
+class FinancialStatementRecord:
+  id: str
+  filing_version_id: str
+  statement_type: str
+  period_end: str
+  statement_version: int
+
+
 class SupabaseRestClient:
   def __init__(
     self,
@@ -644,6 +670,46 @@ class SupabaseRestClient:
       status=str(row["status"]),
     )
 
+  def list_active_filing_versions_for_filings(
+    self,
+    *,
+    filing_ids: list[str],
+    limit: int,
+  ) -> list[FilingVersionRecord]:
+    if not filing_ids:
+      return []
+    filing_id_filter: str = ",".join(filing_ids)
+    rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "filing_versions",
+      query={
+        "select": "id,filing_id,raw_record_id,version_number,status",
+        "filing_id": f"in.({filing_id_filter})",
+        "status": "eq.active",
+        "order": "version_number.desc",
+        "limit": str(limit),
+      },
+    )
+    seen_filing_ids: set[str] = set()
+    records: list[FilingVersionRecord] = []
+    for row in rows:
+      filing_id: str = str(row["filing_id"])
+      if filing_id in seen_filing_ids:
+        continue
+      seen_filing_ids.add(filing_id)
+      records.append(
+        FilingVersionRecord(
+          id=str(row["id"]),
+          filing_id=filing_id,
+          raw_record_id=(
+            str(row["raw_record_id"]) if row.get("raw_record_id") is not None else None
+          ),
+          version_number=int(row["version_number"]),
+          status=str(row["status"]),
+        )
+      )
+    return records
+
   def list_pending_sec_filing_documents(self, *, limit: int) -> list[PendingFilingDocument]:
     rows: list[dict[str, Any]] = self._request(
       "GET",
@@ -919,6 +985,35 @@ class SupabaseRestClient:
       raise ValueError("Failed to upsert reporting period")
     return UpsertResult(id=str(rows[0]["id"]), created=True)
 
+  def list_reporting_periods_for_company(
+    self,
+    *,
+    company_id: str,
+    limit: int,
+  ) -> list[ReportingPeriodRecord]:
+    rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "reporting_periods",
+      query={
+        "select": "id,company_id,period_type,fiscal_year,fiscal_quarter,period_end",
+        "company_id": f"eq.{company_id}",
+        "limit": str(limit),
+      },
+    )
+    return [
+      ReportingPeriodRecord(
+        id=str(row["id"]),
+        company_id=str(row["company_id"]),
+        period_type=str(row["period_type"]),
+        fiscal_year=int(row["fiscal_year"]),
+        fiscal_quarter=(
+          int(row["fiscal_quarter"]) if row.get("fiscal_quarter") is not None else None
+        ),
+        period_end=str(row["period_end"]),
+      )
+      for row in rows
+    ]
+
   def upsert_statement_taxonomy_item(
     self,
     *,
@@ -1033,6 +1128,35 @@ class SupabaseRestClient:
       raise ValueError("Failed to upsert financial statement")
     return UpsertResult(id=str(rows[0]["id"]), created=True)
 
+  def list_financial_statements_for_filing_versions(
+    self,
+    *,
+    filing_version_ids: list[str],
+    limit: int,
+  ) -> list[FinancialStatementRecord]:
+    if not filing_version_ids:
+      return []
+    filing_version_filter: str = ",".join(filing_version_ids)
+    rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "financial_statements",
+      query={
+        "select": "id,filing_version_id,statement_type,period_end,statement_version",
+        "filing_version_id": f"in.({filing_version_filter})",
+        "limit": str(limit),
+      },
+    )
+    return [
+      FinancialStatementRecord(
+        id=str(row["id"]),
+        filing_version_id=str(row["filing_version_id"]),
+        statement_type=str(row["statement_type"]),
+        period_end=str(row["period_end"]),
+        statement_version=int(row["statement_version"]),
+      )
+      for row in rows
+    ]
+
   def upsert_financial_statement_item(
     self,
     *,
@@ -1095,6 +1219,65 @@ class SupabaseRestClient:
     if not rows:
       raise ValueError("Failed to upsert financial statement item")
     return UpsertResult(id=str(rows[0]["id"]), created=True)
+
+  def list_financial_statement_item_keys(
+    self,
+    *,
+    financial_statement_ids: list[str],
+    limit: int,
+  ) -> set[FinancialStatementItemKey]:
+    if not financial_statement_ids:
+      return set()
+    statement_id_filter: str = ",".join(financial_statement_ids)
+    rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "financial_statement_items",
+      query={
+        "select": (
+          "financial_statement_id,lineage_source_type,lineage_source_id"
+        ),
+        "financial_statement_id": f"in.({statement_id_filter})",
+        "limit": str(limit),
+      },
+    )
+    keys: set[FinancialStatementItemKey] = set()
+    for row in rows:
+      statement_id: Any = row.get("financial_statement_id")
+      lineage_source_type: Any = row.get("lineage_source_type")
+      lineage_source_id: Any = row.get("lineage_source_id")
+      if (
+        not isinstance(statement_id, str)
+        or not isinstance(lineage_source_type, str)
+        or not isinstance(lineage_source_id, str)
+      ):
+        continue
+      keys.add(
+        FinancialStatementItemKey(
+          financial_statement_id=statement_id,
+          lineage_source_type=lineage_source_type,
+          lineage_source_id=lineage_source_id,
+        )
+      )
+    return keys
+
+  def bulk_insert_financial_statement_items(
+    self,
+    *,
+    rows: list[dict[str, object]],
+  ) -> None:
+    if not rows:
+      return
+    self._request(
+      "POST",
+      "financial_statement_items",
+      query={
+        "on_conflict": (
+          "financial_statement_id,lineage_source_type,lineage_source_id"
+        ),
+      },
+      headers={"Prefer": "resolution=ignore-duplicates,return=minimal"},
+      payload=rows,
+    )
 
   def update_filing_version_supersession(
     self,

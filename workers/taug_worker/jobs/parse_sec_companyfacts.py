@@ -2,14 +2,17 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Iterable
+from typing import Any, Iterable, TypeVar
 
 from ..__init__ import __version__
 from ..supabase_rest import (
   CanonicalSecurity,
+  FinancialStatementRecord,
   FilingRecord,
   FilingVersionRecord,
+  FinancialStatementItemKey,
   RawSource,
+  ReportingPeriodRecord,
   SupabaseRestClient,
   UpsertResult,
 )
@@ -140,6 +143,9 @@ FACT_CATALOG: dict[str, FactMapping] = {
 }
 
 
+ChunkItem = TypeVar("ChunkItem")
+
+
 @dataclass(frozen=True)
 class ParseCompanyfactsSummary:
   fetch_run_id: str
@@ -152,6 +158,21 @@ class ParseCompanyfactsSummary:
   replayed_statements: int
   created_items: int
   replayed_items: int
+
+
+@dataclass(frozen=True)
+class PendingStatementItem:
+  financial_statement_id: str
+  taxonomy_item_id: str | None
+  lineage_source_id: str
+  value_numeric: int | float
+  unit: str
+  scale: int | None
+  decimals: int | None
+  fact_period_start: str | None
+  fact_period_end: str | None
+  fact_instant: str | None
+  metadata: dict[str, object]
 
 
 def run_parse_sec_companyfacts(
@@ -257,16 +278,29 @@ def run_parse_sec_companyfacts(
           raw_source_id=source.id,
           limit=500,
         )
+        existing_reporting_periods = supabase_client.list_reporting_periods_for_company(
+          company_id=canonical_security.company_id,
+          limit=5000,
+        )
         filings_by_key: dict[str, FilingRecord] = {
           filing.filing_key: filing for filing in company_filings
         }
-        active_versions_by_filing_id: dict[str, FilingVersionRecord] = {}
-        for filing in company_filings:
-          active_version = supabase_client.get_active_filing_version_by_filing(
-            filing_id=filing.id,
+        active_versions_by_filing_id: dict[str, FilingVersionRecord] = {
+          filing_version.filing_id: filing_version
+          for filing_version in supabase_client.list_active_filing_versions_for_filings(
+            filing_ids=[filing.id for filing in company_filings],
+            limit=max(len(company_filings) * 4, 1000),
           )
-          if active_version is not None:
-            active_versions_by_filing_id[filing.id] = active_version
+        }
+        existing_statements = supabase_client.list_financial_statements_for_filing_versions(
+          filing_version_ids=list(
+            {
+              filing_version.id
+              for filing_version in active_versions_by_filing_id.values()
+            }
+          ),
+          limit=10000,
+        )
 
         parse_counts = _parse_companyfacts_record(
           raw_record_id=raw_record.id,
@@ -276,6 +310,8 @@ def run_parse_sec_companyfacts(
           security_id=canonical_security.security_id,
           filings_by_key=filings_by_key,
           active_versions_by_filing_id=active_versions_by_filing_id,
+          existing_reporting_periods=existing_reporting_periods,
+          existing_statements=existing_statements,
           currencies_by_code=currencies_by_code,
           supabase_client=supabase_client,
         )
@@ -439,6 +475,8 @@ def _parse_companyfacts_record(
   security_id: str,
   filings_by_key: dict[str, FilingRecord],
   active_versions_by_filing_id: dict[str, FilingVersionRecord],
+  existing_reporting_periods: list[ReportingPeriodRecord],
+  existing_statements: list[FinancialStatementRecord],
   currencies_by_code: dict[str, str],
   supabase_client: SupabaseRestClient,
 ) -> dict[str, int]:
@@ -456,6 +494,30 @@ def _parse_companyfacts_record(
   statement_cache: dict[str, str] = {}
   taxonomy_cache: dict[str, str] = {}
   matched_filing_ids: set[str] = set()
+  pending_items: list[PendingStatementItem] = []
+  preloaded_reporting_period_keys: set[str] = set()
+  for record in existing_reporting_periods:
+    cache_key: str = _reporting_period_cache_key(
+      period_type=record.period_type,
+      fiscal_year=record.fiscal_year,
+      fiscal_quarter=record.fiscal_quarter,
+      period_end=record.period_end,
+    )
+    reporting_period_cache[cache_key] = record.id
+    preloaded_reporting_period_keys.add(cache_key)
+  preloaded_statement_keys: set[str] = set()
+  for record in existing_statements:
+    if record.statement_version != 1:
+      continue
+    cache_key = _statement_cache_key(
+      filing_version_id=record.filing_version_id,
+      statement_type=record.statement_type,
+      period_end=record.period_end,
+    )
+    statement_cache[cache_key] = record.id
+    preloaded_statement_keys.add(cache_key)
+  counted_replayed_reporting_period_keys: set[str] = set()
+  counted_replayed_statement_keys: set[str] = set()
 
   facts_value: object = payload.get("facts")
   if not isinstance(facts_value, dict):
@@ -527,9 +589,11 @@ def _parse_companyfacts_record(
             continue
           matched_filing_ids.add(filing_record.id)
 
-          reporting_period_cache_key: str = (
-            f"{parsed_entry['period_type']}|{parsed_entry['fiscal_year']}|"
-            f"{parsed_entry['fiscal_quarter']}|{parsed_entry['period_end']}"
+          reporting_period_cache_key: str = _reporting_period_cache_key(
+            period_type=parsed_entry["period_type"],
+            fiscal_year=parsed_entry["fiscal_year"],
+            fiscal_quarter=parsed_entry["fiscal_quarter"],
+            period_end=parsed_entry["period_end"],
           )
           reporting_period_id: str | None = reporting_period_cache.get(
             reporting_period_cache_key
@@ -560,9 +624,17 @@ def _parse_companyfacts_record(
               if reporting_period_result.created
               else "replayed_reporting_periods"
             ] += 1
+          elif (
+            reporting_period_cache_key in preloaded_reporting_period_keys
+            and reporting_period_cache_key not in counted_replayed_reporting_period_keys
+          ):
+            counted_replayed_reporting_period_keys.add(reporting_period_cache_key)
+            counts["replayed_reporting_periods"] += 1
 
-          statement_cache_key: str = (
-            f"{active_version.id}|{mapping.statement_type}|{parsed_entry['period_end']}"
+          statement_cache_key: str = _statement_cache_key(
+            filing_version_id=active_version.id,
+            statement_type=mapping.statement_type,
+            period_end=parsed_entry["period_end"],
           )
           financial_statement_id: str | None = statement_cache.get(statement_cache_key)
           if financial_statement_id is None:
@@ -598,6 +670,12 @@ def _parse_companyfacts_record(
               if statement_result.created
               else "replayed_statements"
             ] += 1
+          elif (
+            statement_cache_key in preloaded_statement_keys
+            and statement_cache_key not in counted_replayed_statement_keys
+          ):
+            counted_replayed_statement_keys.add(statement_cache_key)
+            counts["replayed_statements"] += 1
 
           lineage_source_id: str = "|".join(
             (
@@ -612,42 +690,110 @@ def _parse_companyfacts_record(
               parsed_entry["fp"] or "",
             )
           )
-          item_result: UpsertResult = supabase_client.upsert_financial_statement_item(
-            financial_statement_id=financial_statement_id,
-            taxonomy_item_id=taxonomy_item_id,
-            lineage_source_type="xbrl_fact",
-            lineage_source_id=lineage_source_id,
-            value_numeric=parsed_entry["value_numeric"],
-            value_text=None,
-            unit=unit_name,
-            scale=_parse_optional_int(entry.get("scale")),
-            decimals=_parse_optional_int(entry.get("decimals")),
-            fact_period_start=parsed_entry["period_start"],
-            fact_period_end=(
-              parsed_entry["period_end"]
-              if parsed_entry["period_type"] != "instant"
-              else None
-            ),
-            fact_instant=(
-              parsed_entry["period_end"]
-              if parsed_entry["period_type"] == "instant"
-              else None
-            ),
-            is_reported=True,
-            is_calculated=False,
-            confidence_score=1.0,
-            metadata={
-              "source": "sec_edgar",
-              "parser": "sec_companyfacts",
-              "form": parsed_entry["form"],
-              "accession_number": accession_number,
-              "filed": parsed_entry["filed"],
-            },
+          pending_items.append(
+            PendingStatementItem(
+              financial_statement_id=financial_statement_id,
+              taxonomy_item_id=taxonomy_item_id,
+              lineage_source_id=lineage_source_id,
+              value_numeric=parsed_entry["value_numeric"],
+              unit=unit_name,
+              scale=_parse_optional_int(entry.get("scale")),
+              decimals=_parse_optional_int(entry.get("decimals")),
+              fact_period_start=parsed_entry["period_start"],
+              fact_period_end=(
+                parsed_entry["period_end"]
+                if parsed_entry["period_type"] != "instant"
+                else None
+              ),
+              fact_instant=(
+                parsed_entry["period_end"]
+                if parsed_entry["period_type"] == "instant"
+                else None
+              ),
+              metadata={
+                "source": "sec_edgar",
+                "parser": "sec_companyfacts",
+                "form": parsed_entry["form"],
+                "accession_number": accession_number,
+                "filed": parsed_entry["filed"],
+              },
+            )
           )
-          counts["created_items" if item_result.created else "replayed_items"] += 1
 
   counts["matched_filings"] = len(matched_filing_ids)
+  _flush_pending_statement_items(
+    pending_items=pending_items,
+    supabase_client=supabase_client,
+    counts=counts,
+  )
   return counts
+
+
+def _flush_pending_statement_items(
+  *,
+  pending_items: list[PendingStatementItem],
+  supabase_client: SupabaseRestClient,
+  counts: dict[str, int],
+) -> None:
+  if not pending_items:
+    return
+
+  statement_ids: list[str] = sorted(
+    {
+      pending_item.financial_statement_id
+      for pending_item in pending_items
+    }
+  )
+  existing_keys: set[FinancialStatementItemKey] = set()
+  for statement_id_chunk in _chunked(statement_ids, 100):
+    existing_keys.update(
+      supabase_client.list_financial_statement_item_keys(
+        financial_statement_ids=statement_id_chunk,
+        limit=20000,
+      )
+    )
+
+  local_keys: set[FinancialStatementItemKey] = set()
+  rows_to_insert: list[dict[str, object]] = []
+  replayed_items: int = 0
+  created_items: int = 0
+  for pending_item in pending_items:
+    item_key = FinancialStatementItemKey(
+      financial_statement_id=pending_item.financial_statement_id,
+      lineage_source_type="xbrl_fact",
+      lineage_source_id=pending_item.lineage_source_id,
+    )
+    if item_key in existing_keys or item_key in local_keys:
+      replayed_items += 1
+      continue
+    local_keys.add(item_key)
+    created_items += 1
+    rows_to_insert.append(
+      {
+        "financial_statement_id": pending_item.financial_statement_id,
+        "taxonomy_item_id": pending_item.taxonomy_item_id,
+        "lineage_source_type": "xbrl_fact",
+        "lineage_source_id": pending_item.lineage_source_id,
+        "value_numeric": pending_item.value_numeric,
+        "value_text": None,
+        "unit": pending_item.unit,
+        "scale": pending_item.scale,
+        "decimals": pending_item.decimals,
+        "fact_period_start": pending_item.fact_period_start,
+        "fact_period_end": pending_item.fact_period_end,
+        "fact_instant": pending_item.fact_instant,
+        "is_reported": True,
+        "is_calculated": False,
+        "confidence_score": 1.0,
+        "metadata": pending_item.metadata,
+      }
+    )
+
+  for row_chunk in _chunked(rows_to_insert, 500):
+    supabase_client.bulk_insert_financial_statement_items(rows=row_chunk)
+
+  counts["created_items"] += created_items
+  counts["replayed_items"] += replayed_items
 
 
 def _parse_fact_entry(entry: dict[str, Any]) -> dict[str, Any] | None:
@@ -742,6 +888,25 @@ def _resolve_currency_id(
   return currencies_by_code.get(unit_prefix)
 
 
+def _reporting_period_cache_key(
+  *,
+  period_type: str,
+  fiscal_year: int,
+  fiscal_quarter: int | None,
+  period_end: str,
+) -> str:
+  return f"{period_type}|{fiscal_year}|{fiscal_quarter}|{period_end}"
+
+
+def _statement_cache_key(
+  *,
+  filing_version_id: str,
+  statement_type: str,
+  period_end: str,
+) -> str:
+  return f"{filing_version_id}|{statement_type}|{period_end}"
+
+
 def _parse_optional_int(value: object) -> int | None:
   if isinstance(value, int):
     return value
@@ -756,3 +921,12 @@ def _date_to_timestamp(value: str) -> str:
 
 def _iso_now() -> str:
   return datetime.now(timezone.utc).isoformat()
+
+
+def _chunked(items: list[ChunkItem], chunk_size: int) -> list[list[ChunkItem]]:
+  if chunk_size <= 0:
+    raise ValueError("chunk_size must be positive")
+  return [
+    items[index : index + chunk_size]
+    for index in range(0, len(items), chunk_size)
+  ]

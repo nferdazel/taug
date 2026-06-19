@@ -289,7 +289,8 @@ Current status:
 - schema foundation for `statement_taxonomy_items`, `financial_statements`, and `financial_statement_items` is implemented
 - raw `sec_companyfacts` ingestion with validation, audit trail, checkpointing, and duplicate detection is implemented
 - SEC companyfacts parser MVP is implemented for a curated core-fact catalog and official `10-K` / `10-Q` forms
-- parser and taxonomy mapping workflow still need batching and broader coverage before large-scale backfill
+- parser replay path now uses bulk active-version lookup, preloaded period/statement caches, and batched statement-item inserts
+- parser and taxonomy mapping workflow still need broader coverage and possibly non-REST bulk writes before large-scale backfill
 
 Rule:
 
