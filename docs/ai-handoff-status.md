@@ -17,22 +17,11 @@ If this file conflicts with a shallow repo impression, trust this file and then 
 
 ## Current Reality
 
-Taug is not currently being optimized for frontend feature completeness.
+Taug is a financial research platform / investment research workspace.
 
-Taug is intentionally in a foundation-first phase.
-
-That means:
-
-- Flutter product surfaces are intentionally incomplete
-- missing company pages and research screens are expected
-- backend/data work is the current priority
-- absence of research UI is not, by itself, a product defect
-
-Do not misclassify planned-but-unbuilt Flutter surfaces as architectural failure.
+Phase 4–6 of the execution checklist are complete. The data foundation, serving views, metric engine, and core Flutter research pages are implemented.
 
 ## Product Direction
-
-Taug is no longer being treated as a Bloomberg-terminal clone.
 
 Current target:
 
@@ -57,36 +46,37 @@ Not the target:
 
 ## What Already Exists
 
-### Flutter / user workspace
+### Flutter research pages
+
+- company research page (summary, metrics, statement history, quality, notes, theses)
+- screener page (sortable metric table with quality indicators)
+- valuation snapshot page (per-company metric cards)
+- company selector with search dialog
+- statement line items drill-down
+
+### Flutter workspace (preserved from terminal era)
 
 - auth flow
-- compact shell and navigation
+- compact shell and navigation (12 tabs)
 - watchlists
 - portfolios
 - settings
-- compact design system pass
-- startup hardening and UI normalization
+- compact design system
 
-These are preserved, not the current bottleneck.
+### Data foundation
 
-### Data foundation already implemented
+- canonical `companies`, `securities`, `security_identifiers`
+- `currencies`, company-scoped `reporting_periods`
+- immutable raw ingestion spine (`raw_sources`, `raw_documents`, `raw_records`, `raw_fetch_runs`, `raw_document_links`)
+- SEC filing lineage (`filings`, `filing_versions`) with amendment supersession
+- statement layer (`statement_taxonomy_items`, `financial_statements`, `financial_statement_items`)
+- SEC raw companyfacts ingestion + parser (35 XBRL concepts)
+- parser replay hardened (bulk lookup, preloaded caches, batched inserts)
+- audit trail (`audit_events`, `validation_events`, `restatement_events`, `ingestion_checkpoints`)
+- metric engine (`metric_definitions` with 19 metrics, `metric_inputs`, `metric_calculation_runs`, `security_metric_snapshots`, `security_price_snapshots`, `screening_universe_memberships`)
+- research workspace (`research_notes`, `investment_theses`, `saved_screeners`)
 
-- canonical `companies`
-- canonical `securities`
-- `security_identifiers`
-- `currencies`
-- company-scoped `reporting_periods`
-- immutable raw ingestion spine
-- SEC filing lineage
-- filing version restatement chain
-- statement layer schema
-- SEC raw companyfacts ingestion
-- SEC companyfacts parser MVP (35 XBRL concepts)
-- parser replay hardening
-- first research serving views
-- metric engine schema (`metric_definitions` with 19 MVP metrics, `security_metric_snapshots`, `security_price_snapshots`, `screening_universe_memberships`)
-
-### Serving views already implemented
+### Serving views (8 total)
 
 - `company_research_summary_v`
 - `company_latest_statement_facts_v`
@@ -97,48 +87,51 @@ These are preserved, not the current bottleneck.
 - `company_data_quality_v`
 - `screener_results_v`
 
-### What still needs implementation
+### Worker jobs (6 total)
 
-- company page: company selector (currently loads first company only)
-- price data integration into `security_price_snapshots` (enables valuation metrics)
-- screener filter execution in worker (apply user-defined filters on `screener_results_v`)
-- statement explorer page (drill into individual line items)
-- valuation snapshot page
-- screener page
-- Flutter research pages (notes, theses)
+- `sync-sec-submissions` — fetch SEC EDGAR submissions, normalize filings
+- `fetch-sec-filing-documents` — store immutable raw filing documents
+- `sync-sec-companyfacts` — ingest XBRL companyfacts payload
+- `parse-sec-companyfacts` — parse into statements (35 facts)
+- `compute-company-metrics` — compute 19 metrics (tested on AAPL + MSFT)
+- `sync-price-snapshots` — fetch quotes from Twelve Data API
+
+### CI/CD (6 workflows)
+
+- `deploy.yml` — Flutter Web → Vercel (push to main)
+- `sec-submissions-sync.yml` — daily SEC filings sync
+- `sec-filing-documents-sync.yml` — daily SEC document fetch
+- `sec-companyfacts-sync-parse.yml` — daily companyfacts sync + parse
+- `recompute-metrics.yml` — manual metrics recompute
+- `sync-price-snapshots.yml` — weekday price sync
 
 ### Test coverage
 
-- `compute-company-metrics` tested on AAPL and MSFT (full pipeline: sync → companyfacts → parse → compute)
-- 11 statement-only metrics computed correctly for both companies
-- 7 price-dependent metrics correctly marked missing_input (no price data yet)
+- `compute-company-metrics` tested end-to-end on AAPL and MSFT
+- Full pipeline: sync → companyfacts → parse → compute
+- 11 statement-only metrics computed correctly
+- 7 price-dependent metrics correctly marked missing_input
 
-These are the first Flutter-safe read surfaces for research pages.
+## What Is Still Incomplete (Intentionally Deferred)
 
-## What Is Still Incomplete By Design
+### Data/model work
 
-### Flutter research surfaces
+- broader taxonomy mapping (currently 35 facts, full XBRL has thousands)
+- sector/industry normalization tables
+- `raw_financials`, `raw_macro`, `raw_ownership` tables
+- FRED, Bank Indonesia, BPS integrations
+- IDX issuer/reference data
+- home market preference model
+- `coverage_lists` table
+- `recalculation_runs` table
+- data quality scoring model
+- screener filter execution worker
 
-- company page
-- filing timeline page
-- statement explorer page
-- ratio trend page
-- valuation snapshot page
-- screener page
-- freshness / quality surfaces
+### Operational
 
-These are pending because the foundation was being laid first.
-
-### Data/model work still incomplete
-
-- broader taxonomy mapping
-- broader fact catalog coverage
-- live proof for statement-level amendment lineage on suitable periodic amendments
-- valuation read models
-- statement explorer read models
-- quality scoring
-- freshness scoring model
-- screener execution read model implementation
+- price data backfill (API credits need reset)
+- metrics recompute after price data available
+- key rotation, secret scan (pre-launch)
 
 ## Important Interpretation Rule
 
@@ -154,29 +147,20 @@ The correct question is:
 
 - is that gap intentional because backend foundation sequencing is still underway?
 
-For most Flutter research surfaces, the answer is yes.
+For most gaps listed above, the answer is yes — they are intentionally deferred.
 
 ## Recommended Mental Model
 
 Current repo state:
 
-1. Preserve the usable Flutter shell.
-2. Build research-grade data spine.
-3. Build serving/read models.
-4. Only then move Flutter research pages onto those views.
+1. Flutter shell and research pages are built.
+2. Data foundation and serving views are complete.
+3. Metric engine is working.
+4. Remaining gaps are intentionally deferred to later phases.
 
-Do not reverse that order.
+Do not treat deferred items as defects.
 
-## Current Best Next Steps
-
-High priority:
-
-1. statement explorer serving/read model
-2. valuation snapshot serving/read model
-3. quality and freshness read model
-4. only then start Flutter company research pages on top of those surfaces
-
-## Source Docs To Read Next
+## Source Docs
 
 1. `docs/research-platform-execution-checklist.md`
 2. `docs/research-platform-schema-implementation-plan.md`

@@ -372,7 +372,7 @@ Current status:
 
 - all 6 tables implemented
 - `metric_definitions` seeded with 19 MVP metrics across valuation, profitability, leverage, cash flow, scale, and growth categories
-- formula engine worker job still pending
+- formula engine worker job implemented (`compute-company-metrics`)
 - `security_price_snapshots` still empty (price data integration pending)
 
 Critical rule:
