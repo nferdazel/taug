@@ -324,9 +324,16 @@ Examples:
 
 Canonical period dimension.
 
+Important:
+
+- reporting periods should be company-scoped, not globally shared
+- fiscal year and quarter labels are issuer-relative
+- global period labels without company context will create wrong joins later
+
 Suggested columns:
 
 - `id`
+- `company_id`
 - `fiscal_year`
 - `fiscal_quarter`
 - `period_type`

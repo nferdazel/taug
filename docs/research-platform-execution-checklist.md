@@ -103,8 +103,8 @@ Docs discipline for this repo:
 
 - `[done]` `companies`
 - `[done]` `securities`
-- `[todo]` `currencies`
-- `[todo]` `reporting_periods`
+- `[done]` `currencies`
+- `[done]` `reporting_periods`
 - `[todo]` sector and industry normalization tables
 
 ### Raw immutable layer
@@ -120,17 +120,17 @@ Docs discipline for this repo:
 
 - `[done]` `filings`
 - `[done]` `filing_versions`
-- `[todo]` `financial_statements`
-- `[todo]` `financial_statement_items`
+- `[done]` `financial_statements`
+- `[done]` `financial_statement_items`
 - `[todo]` taxonomy mapping strategy
 
 ### Restatement support
 
-- `[todo]` `filing_version`
-- `[todo]` `statement_version`
-- `[todo]` `is_restated`
-- `[todo]` `supersedes`
-- `[todo]` `superseded_by`
+- `[done]` `filing_version`
+- `[done]` `statement_version`
+- `[done]` `is_restated`
+- `[done]` `supersedes`
+- `[done]` `superseded_by`
 
 ### Research workflow layer
 
@@ -281,6 +281,12 @@ Exit criteria:
 
 ### Phase 4: Statement normalization
 
+- `[done]` create statement-layer schema foundation:
+  - `currencies`
+  - company-scoped `reporting_periods`
+  - `statement_taxonomy_items`
+  - `financial_statements`
+  - `financial_statement_items`
 - `[todo]` parse and normalize company facts / statements
 - `[todo]` support historical periods and statement versions
 - `[todo]` support restatements

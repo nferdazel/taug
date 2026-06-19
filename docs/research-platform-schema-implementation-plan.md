@@ -101,6 +101,12 @@ Tables:
 - `industries`
 - `reporting_periods`
 
+Current status:
+
+- `currencies` implemented
+- `reporting_periods` implemented as company-scoped to preserve issuer-relative fiscal calendars
+- `countries`, `sectors`, and `industries` still pending
+
 Changes to existing tables:
 
 - prepare `exchanges` for later normalization
@@ -277,6 +283,11 @@ Dependencies:
 - filing lineage batch complete
 - reporting periods available
 - currencies available
+
+Current status:
+
+- schema foundation for `statement_taxonomy_items`, `financial_statements`, and `financial_statement_items` is implemented
+- parser and taxonomy mapping workflow are still pending
 
 Rule:
 
