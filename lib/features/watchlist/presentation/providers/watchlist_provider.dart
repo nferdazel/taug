@@ -91,6 +91,7 @@ class WatchlistProvider {
       return;
     }
 
+    await _repository.refreshQuoteSnapshots(tickers);
     final result = await _repository.getPricesForSymbols(tickers);
 
     if (result.isSuccess) {

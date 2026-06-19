@@ -33,6 +33,7 @@ class MarketProvider {
     if (movers.value.isEmpty) isLoading.value = true;
     error.value = null;
 
+    await _repository.refreshQuoteSnapshots(limit: 100);
     final result = await _repository.getTopMovers();
 
     if (result.isSuccess) {

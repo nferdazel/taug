@@ -109,6 +109,7 @@ class SymbolRepository {
   Future<Result<int>> insertSymbol(SymbolSearchResult symbol) async {
     try {
       final exchangeId = await _getExchangeId(symbol.exchange);
+      final assetClass = _determineAssetClass(symbol);
       if (exchangeId == null) {
         return const Result.failure(
           ServerFailure(message: 'Exchange not found'),
@@ -121,12 +122,26 @@ class SymbolRepository {
             'exchange_id': exchangeId,
             'ticker': symbol.symbol,
             'name': symbol.name,
-            'asset_class': _determineAssetClass(symbol),
+            'asset_class': assetClass,
           })
           .select('id')
           .single();
 
-      return Result.success(response['id'] as int);
+      final symbolId = response['id'] as int;
+
+      await _client.from(AppSchema.instrumentSources).upsert({
+        'symbol_id': symbolId,
+        'vendor': 'twelve_data',
+        'vendor_symbol': symbol.symbol,
+        'asset_class': assetClass,
+        'latency_class': 'delayed',
+        'is_official': false,
+        'is_primary': true,
+        'is_active': true,
+        'source_url': 'https://api.twelvedata.com/quote',
+      }, onConflict: 'symbol_id,vendor,vendor_symbol');
+
+      return Result.success(symbolId);
     } catch (e) {
       return Result.failure(ServerFailure(message: e.toString()));
     }

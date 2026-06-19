@@ -58,6 +58,7 @@ class PortfolioProvider {
     if (tickers.isEmpty) return;
 
     _isLoadingPrices = true;
+    await _repository.refreshQuoteSnapshots(tickers);
     final result = await _repository.getPrices(tickers);
     if (result.isSuccess) {
       prices.value = result.data!;

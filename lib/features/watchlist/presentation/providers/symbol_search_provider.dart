@@ -83,6 +83,7 @@ class SymbolSearchProvider {
       if (insertedResult.isSuccess) {
         final symbolId = insertedResult.data!;
         await _watchlistRepository.addToWatchlist(watchlistId, symbolId);
+        await _watchlistRepository.refreshQuoteSnapshots([symbol.symbol]);
         isAdding.value = false;
         return symbolId;
       }

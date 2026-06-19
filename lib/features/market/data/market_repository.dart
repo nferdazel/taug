@@ -39,4 +39,17 @@ class MarketRepository {
       return Result.failure(ServerFailure(message: e.toString()));
     }
   }
+
+  Future<Result<void>> refreshQuoteSnapshots({int limit = 100}) async {
+    try {
+      await _client.functions.invoke(
+        'refresh-quote-snapshots',
+        body: {'limit': limit},
+      );
+      return const Result.success(null);
+    } catch (e) {
+      debugPrint('[MarketRepo] refreshQuoteSnapshots: $e');
+      return Result.failure(ServerFailure(message: e.toString()));
+    }
+  }
 }
