@@ -52,7 +52,7 @@ class _SettingsPageState extends State<SettingsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('PROFILE', style: AppTypography.sectionHeader),
+            const Text('PROFILE', style: AppTypography.sectionHeader),
             const SizedBox(height: 8),
             _buildInfoRow('Username', _settingsProvider.username.value),
             const SizedBox(height: 4),
@@ -175,7 +175,7 @@ class _SettingsPageState extends State<SettingsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('ACCOUNT', style: AppTypography.sectionHeader),
+          const Text('ACCOUNT', style: AppTypography.sectionHeader),
           const SizedBox(height: 8),
           SizedBox(
             width: double.infinity,
@@ -183,6 +183,7 @@ class _SettingsPageState extends State<SettingsPage> {
             child: OutlinedButton(
               onPressed: () async {
                 await _authProvider.signOut();
+                if (!mounted) return;
                 if (context.mounted) {
                   Navigator.of(context).popUntil((route) => route.isFirst);
                 }

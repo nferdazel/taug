@@ -27,7 +27,7 @@ class WatchlistRepository {
           .order('sort_order');
 
       final watchlists = response
-          .map((json) => Watchlist.fromJson(json as Map<String, dynamic>))
+          .map((json) => Watchlist.fromJson(json))
           .toList();
 
       return Result.success(watchlists);

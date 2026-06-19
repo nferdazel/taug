@@ -39,7 +39,7 @@ class CalendarRepository {
           .order('event_time', ascending: true);
 
       final events = response
-          .map((json) => EconEvent.fromJson(json as Map<String, dynamic>))
+          .map((json) => EconEvent.fromJson(json))
           .toList();
 
       return Result.success(events);

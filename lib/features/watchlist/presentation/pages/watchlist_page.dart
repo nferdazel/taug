@@ -128,13 +128,13 @@ class _WatchlistPageState extends State<WatchlistPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
+              const Icon(
                 Icons.list_alt,
                 size: 32,
                 color: AppThemeColors.textTertiary,
               ),
               const SizedBox(height: 8),
-              Text(
+              const Text(
                 'No items in watchlist',
                 style: AppTypography.bodySmall,
               ),
@@ -233,14 +233,14 @@ class _WatchlistPageState extends State<WatchlistPage> {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          Expanded(
+          const Expanded(
             flex: 2,
             child: PriceCell(
               value: '0.00',
               textAlign: TextAlign.right,
             ),
           ),
-          Expanded(
+          const Expanded(
             flex: 2,
             child: PriceCell(
               value: '0.00',
@@ -248,7 +248,7 @@ class _WatchlistPageState extends State<WatchlistPage> {
               textAlign: TextAlign.right,
             ),
           ),
-          Expanded(
+          const Expanded(
             flex: 1,
             child: Text(
               '0',

@@ -158,7 +158,7 @@ class _ChartPageState extends State<ChartPage> {
       }
 
       if (candles.isEmpty) {
-        return Center(
+        return const Center(
           child: Text(
             AppStrings.noData,
             style: AppTypography.bodySmall,
@@ -193,9 +193,9 @@ class _ChartPageState extends State<ChartPage> {
               borderWidth: 1,
             ),
           ],
-          primaryXAxis: DateTimeAxis(
-            majorGridLines: const MajorGridLines(width: 0),
-            axisLine: const AxisLine(width: 1, color: AppThemeColors.border),
+          primaryXAxis: const DateTimeAxis(
+            majorGridLines: MajorGridLines(width: 0),
+            axisLine: AxisLine(width: 1, color: AppThemeColors.border),
             labelStyle: AppTypography.monoTiny,
           ),
           primaryYAxis: const NumericAxis(

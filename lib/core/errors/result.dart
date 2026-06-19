@@ -33,12 +33,14 @@ sealed class Result<T> {
 }
 
 final class Success<T> extends Result<T> {
+  @override
   final T data;
 
   const Success(this.data);
 }
 
 final class ResultFailure<T> extends Result<T> {
+  @override
   final Object error;
 
   const ResultFailure(this.error);

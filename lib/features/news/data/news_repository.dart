@@ -21,7 +21,7 @@ class NewsRepository {
           .select();
 
       if (category != null && category != 'all') {
-        query = query.contains('categories', '{${category}}');
+        query = query.contains('categories', '{$category}');
       }
 
       final response = await query
@@ -29,7 +29,7 @@ class NewsRepository {
           .range(offset, offset + limit - 1);
 
       final articles = response
-          .map((json) => NewsArticle.fromJson(json as Map<String, dynamic>))
+          .map((json) => NewsArticle.fromJson(json))
           .toList();
 
       return Result.success(articles);

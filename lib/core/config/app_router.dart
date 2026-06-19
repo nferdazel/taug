@@ -44,32 +44,32 @@ final router = GoRouter(
       routes: [
         GoRoute(
           path: '/watchlist',
-          pageBuilder: (context, state) => NoTransitionPage(
-            child: const WatchlistPage(),
+          pageBuilder: (context, state) => const NoTransitionPage(
+            child: WatchlistPage(),
           ),
         ),
         GoRoute(
           path: '/chart',
-          pageBuilder: (context, state) => NoTransitionPage(
-            child: const ChartPage(),
+          pageBuilder: (context, state) => const NoTransitionPage(
+            child: ChartPage(),
           ),
         ),
         GoRoute(
           path: '/news',
-          pageBuilder: (context, state) => NoTransitionPage(
-            child: const NewsPage(),
+          pageBuilder: (context, state) => const NoTransitionPage(
+            child: NewsPage(),
           ),
         ),
         GoRoute(
           path: '/calendar',
-          pageBuilder: (context, state) => NoTransitionPage(
-            child: const CalendarPage(),
+          pageBuilder: (context, state) => const NoTransitionPage(
+            child: CalendarPage(),
           ),
         ),
         GoRoute(
           path: '/settings',
-          pageBuilder: (context, state) => NoTransitionPage(
-            child: const SettingsPage(),
+          pageBuilder: (context, state) => const NoTransitionPage(
+            child: SettingsPage(),
           ),
         ),
       ],

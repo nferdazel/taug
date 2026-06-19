@@ -108,7 +108,7 @@ class _LoginPageState extends State<LoginPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
+                    const Text(
                       AppStrings.noAccount,
                       style: AppTypography.bodySmall,
                     ),

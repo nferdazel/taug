@@ -121,7 +121,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
+                    const Text(
                       AppStrings.hasAccount,
                       style: AppTypography.bodySmall,
                     ),

@@ -121,7 +121,7 @@ class SectionHeader extends StatelessWidget {
             style: AppTypography.sectionHeader,
           ),
           const Spacer(),
-          if (trailing != null) trailing!,
+          ?trailing,
         ],
       ),
     );

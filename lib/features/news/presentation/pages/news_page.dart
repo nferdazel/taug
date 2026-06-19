@@ -119,7 +119,7 @@ class _NewsPageState extends State<NewsPage> {
       }
 
       if (articles.isEmpty) {
-        return Center(
+        return const Center(
           child: Text(
             AppStrings.noData,
             style: AppTypography.bodySmall,
