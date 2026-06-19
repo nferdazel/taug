@@ -61,9 +61,10 @@ class _SymbolSearchDialogState extends State<SymbolSearchDialog> {
     return Watch((_) {
       final results = _provider.searchResults.value;
       final isSearching = _provider.isSearching.value;
+      final isAdding = _provider.isAdding.value;
       final error = _provider.searchError.value;
 
-      if (isSearching) {
+      if (isSearching || isAdding) {
         return const SizedBox(
           height: 40,
           child: Center(
@@ -77,9 +78,12 @@ class _SymbolSearchDialogState extends State<SymbolSearchDialog> {
       }
 
       if (error != null) {
-        return Text(
-          error,
-          style: AppTypography.bodySmall.copyWith(color: AppThemeColors.bearish),
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Text(
+            error,
+            style: AppTypography.bodySmall.copyWith(color: AppThemeColors.bearish),
+          ),
         );
       }
 
@@ -93,7 +97,7 @@ class _SymbolSearchDialogState extends State<SymbolSearchDialog> {
       }
 
       return SizedBox(
-        height: 200,
+        height: 250,
         child: ListView.builder(
           itemCount: results.length,
           itemBuilder: (context, index) {
@@ -107,11 +111,12 @@ class _SymbolSearchDialogState extends State<SymbolSearchDialog> {
               subtitle: Text(
                 '${result.name} • ${result.exchange}',
                 style: AppTypography.monoTiny,
+                overflow: TextOverflow.ellipsis,
               ),
               trailing: const Icon(Icons.add, size: 14),
               onTap: () async {
-                await _provider.addToWatchlist(widget.watchlistId, result);
-                if (context.mounted) {
+                final symbolId = await _provider.addToWatchlist(widget.watchlistId, result);
+                if (symbolId != null && context.mounted) {
                   Navigator.pop(context);
                 }
               },

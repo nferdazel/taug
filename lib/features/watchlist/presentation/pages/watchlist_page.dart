@@ -3,7 +3,6 @@ import 'package:signals/signals_flutter.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../shared/widgets/price_cell.dart';
 import '../providers/watchlist_provider.dart';
 import 'symbol_search_dialog.dart';
 
@@ -20,9 +19,13 @@ class _WatchlistPageState extends State<WatchlistPage> {
   @override
   void initState() {
     super.initState();
-    _provider.loadWatchlists().then((_) {
-      _provider.loadPrices();
-    });
+    _provider.loadWatchlists();
+  }
+
+  @override
+  void dispose() {
+    _provider.dispose();
+    super.dispose();
   }
 
   @override
@@ -41,14 +44,22 @@ class _WatchlistPageState extends State<WatchlistPage> {
         height: 32,
         padding: const EdgeInsets.symmetric(horizontal: 8),
         decoration: const BoxDecoration(
-          border: Border(
-            bottom: BorderSide(color: AppThemeColors.border),
-          ),
+          border: Border(bottom: BorderSide(color: AppThemeColors.border)),
         ),
         child: Row(
           children: [
             _buildWatchlistSelector(),
             const Spacer(),
+            if (_provider.lastUpdated.value != null)
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Text(
+                  _formatLastUpdated(_provider.lastUpdated.value!),
+                  style: AppTypography.monoTiny.copyWith(
+                    color: AppThemeColors.textTertiary,
+                  ),
+                ),
+              ),
             _buildAddButton(),
             const SizedBox(width: 4),
             _buildRefreshButton(),
@@ -70,10 +81,7 @@ class _WatchlistPageState extends State<WatchlistPage> {
         style: AppTypography.labelMedium,
         isDense: true,
         items: watchlists
-            .map((w) => DropdownMenuItem(
-                  value: w.id,
-                  child: Text(w.name),
-                ))
+            .map((w) => DropdownMenuItem(value: w.id, child: Text(w.name)))
             .toList(),
         onChanged: (id) {
           if (id != null) {
@@ -89,9 +97,9 @@ class _WatchlistPageState extends State<WatchlistPage> {
     return SizedBox(
       height: 24,
       child: TextButton.icon(
-        onPressed: _showAddWatchlistDialog,
+        onPressed: _showAddSymbolDialog,
         icon: const Icon(Icons.add, size: 12),
-        label: const Text('New'),
+        label: const Text('Add'),
         style: TextButton.styleFrom(
           padding: const EdgeInsets.symmetric(horizontal: 8),
         ),
@@ -100,21 +108,31 @@ class _WatchlistPageState extends State<WatchlistPage> {
   }
 
   Widget _buildRefreshButton() {
-    return SizedBox(
-      height: 24,
-      width: 24,
-      child: IconButton(
-        onPressed: () => _provider.loadPrices(),
-        icon: const Icon(Icons.refresh, size: 14),
-        padding: EdgeInsets.zero,
-      ),
-    );
+    return Watch((_) {
+      final isLoading = _provider.isLoading.value;
+      return SizedBox(
+        height: 24,
+        width: 24,
+        child: IconButton(
+          onPressed: isLoading ? null : () => _provider.loadPrices(),
+          icon: isLoading
+              ? const SizedBox(
+                  width: 12,
+                  height: 12,
+                  child: CircularProgressIndicator(strokeWidth: 1.5),
+                )
+              : const Icon(Icons.refresh, size: 14),
+          padding: EdgeInsets.zero,
+        ),
+      );
+    });
   }
 
   Widget _buildContent() {
     return Watch((_) {
       final items = _provider.watchlistItems.value;
       final isLoading = _provider.isLoading.value;
+      final error = _provider.error.value;
 
       if (isLoading && items.isEmpty) {
         return const Center(
@@ -126,21 +144,35 @@ class _WatchlistPageState extends State<WatchlistPage> {
         );
       }
 
+      if (error != null && items.isEmpty) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 32, color: AppThemeColors.bearish),
+              const SizedBox(height: 8),
+              Text(error, style: AppTypography.bodySmall, textAlign: TextAlign.center),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 28,
+                child: ElevatedButton(
+                  onPressed: () => _provider.loadWatchlists(),
+                  child: const Text(AppStrings.retry),
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+
       if (items.isEmpty) {
         return Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.list_alt,
-                size: 32,
-                color: AppThemeColors.textTertiary,
-              ),
+              const Icon(Icons.list_alt, size: 32, color: AppThemeColors.textTertiary),
               const SizedBox(height: 8),
-              const Text(
-                'No items in watchlist',
-                style: AppTypography.bodySmall,
-              ),
+              const Text('No items in watchlist', style: AppTypography.bodySmall),
               const SizedBox(height: 12),
               SizedBox(
                 height: 28,
@@ -164,13 +196,16 @@ class _WatchlistPageState extends State<WatchlistPage> {
       children: [
         _buildTableHeader(),
         Expanded(
-          child: ListView.builder(
-            itemCount: items.length,
-            itemExtent: 28,
-            itemBuilder: (context, index) {
-              final item = items[index];
-              return _buildTableRow(item);
-            },
+          child: RefreshIndicator(
+            onRefresh: () => _provider.loadPrices(),
+            child: ListView.builder(
+              itemCount: items.length,
+              itemExtent: 32,
+              itemBuilder: (context, index) {
+                final item = items[index];
+                return _buildTableRow(item, index);
+              },
+            ),
           ),
         ),
       ],
@@ -183,15 +218,13 @@ class _WatchlistPageState extends State<WatchlistPage> {
       padding: const EdgeInsets.symmetric(horizontal: 6),
       decoration: const BoxDecoration(
         color: AppThemeColors.backgroundLight,
-        border: Border(
-          bottom: BorderSide(color: AppThemeColors.border),
-        ),
+        border: Border(bottom: BorderSide(color: AppThemeColors.border)),
       ),
       child: const Row(
         children: [
-          SizedBox(width: 30, child: Text('#', style: AppTypography.sectionHeader)),
+          SizedBox(width: 24, child: Text('#', style: AppTypography.sectionHeader)),
           Expanded(flex: 2, child: Text('Symbol', style: AppTypography.sectionHeader)),
-          Expanded(flex: 2, child: Text('Name', style: AppTypography.sectionHeader)),
+          Expanded(flex: 3, child: Text('Name', style: AppTypography.sectionHeader)),
           Expanded(flex: 2, child: Text('Price', style: AppTypography.sectionHeader, textAlign: TextAlign.right)),
           Expanded(flex: 2, child: Text('Change', style: AppTypography.sectionHeader, textAlign: TextAlign.right)),
           Expanded(flex: 1, child: Text('Vol', style: AppTypography.sectionHeader, textAlign: TextAlign.right)),
@@ -201,109 +234,107 @@ class _WatchlistPageState extends State<WatchlistPage> {
     );
   }
 
-  Widget _buildTableRow(dynamic item) {
-    return Container(
-      height: 28,
-      padding: const EdgeInsets.symmetric(horizontal: 6),
-      decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: AppThemeColors.border, width: 0.5),
+  Widget _buildTableRow(dynamic item, int index) {
+    return Watch((_) {
+      final price = _provider.getPriceForSymbol(item.ticker ?? '');
+
+      return Container(
+        height: 32,
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        decoration: const BoxDecoration(
+          border: Border(bottom: BorderSide(color: AppThemeColors.border, width: 0.5)),
         ),
-      ),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 30,
-            child: Text(
-              '${item.sortOrder + 1}',
-              style: AppTypography.monoTiny,
+        child: Row(
+          children: [
+            SizedBox(
+              width: 24,
+              child: Text('${index + 1}', style: AppTypography.monoTiny),
             ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Text(
-              item.ticker ?? '',
-              style: AppTypography.monoSmall.copyWith(
-                fontWeight: FontWeight.w600,
+            Expanded(
+              flex: 2,
+              child: Text(
+                item.ticker ?? '',
+                style: AppTypography.monoSmall.copyWith(fontWeight: FontWeight.w600),
               ),
             ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Text(
-              item.name ?? '',
-              style: AppTypography.bodySmall,
-              overflow: TextOverflow.ellipsis,
+            Expanded(
+              flex: 3,
+              child: Text(
+                item.name ?? '',
+                style: AppTypography.bodySmall,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-          ),
-          const Expanded(
-            flex: 2,
-            child: PriceCell(
-              value: '0.00',
-              textAlign: TextAlign.right,
+            Expanded(
+              flex: 2,
+              child: Text(
+                price != null ? _formatPrice(price.price, item.assetClass) : '-',
+                style: AppTypography.monoSmall,
+                textAlign: TextAlign.right,
+              ),
             ),
-          ),
-          const Expanded(
-            flex: 2,
-            child: PriceCell(
-              value: '0.00',
-              change: 0,
-              textAlign: TextAlign.right,
+            Expanded(
+              flex: 2,
+              child: price != null
+                  ? Text(
+                      price.changePercent >= 0
+                          ? '+${price.changePercent.toStringAsFixed(2)}%'
+                          : '${price.changePercent.toStringAsFixed(2)}%',
+                      style: AppTypography.monoSmall.copyWith(
+                        color: price.changePercent >= 0
+                            ? AppThemeColors.bullish
+                            : AppThemeColors.bearish,
+                      ),
+                      textAlign: TextAlign.right,
+                    )
+                  : const Text('-', style: AppTypography.monoSmall, textAlign: TextAlign.right),
             ),
-          ),
-          const Expanded(
-            flex: 1,
-            child: Text(
-              '0',
-              style: AppTypography.monoTiny,
-              textAlign: TextAlign.right,
+            Expanded(
+              flex: 1,
+              child: Text(
+                price != null ? _formatVolume(price.volume) : '-',
+                style: AppTypography.monoTiny,
+                textAlign: TextAlign.right,
+              ),
             ),
-          ),
-          SizedBox(
-            width: 28,
-            child: IconButton(
-              onPressed: () => _provider.removeFromWatchlist(item.id),
-              icon: const Icon(Icons.close, size: 12),
-              padding: EdgeInsets.zero,
-              color: AppThemeColors.textTertiary,
+            SizedBox(
+              width: 28,
+              child: IconButton(
+                onPressed: () => _showDeleteConfirmation(item),
+                icon: const Icon(Icons.close, size: 12),
+                padding: EdgeInsets.zero,
+                color: AppThemeColors.textTertiary,
+              ),
             ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    });
   }
 
-  void _showAddWatchlistDialog() {
-    final controller = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppThemeColors.surface,
-        title: const Text('New Watchlist', style: AppTypography.titleMedium),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            hintText: 'Watchlist name',
-          ),
-          autofocus: true,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(AppStrings.cancel),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (controller.text.isNotEmpty) {
-                _provider.createWatchlist(controller.text);
-                Navigator.pop(context);
-              }
-            },
-            child: const Text(AppStrings.save),
-          ),
-        ],
-      ),
-    );
+  String _formatPrice(double price, String? assetClass) {
+    if (assetClass == 'crypto') {
+      if (price >= 1000) return price.toStringAsFixed(2);
+      if (price >= 1) return price.toStringAsFixed(4);
+      return price.toStringAsFixed(6);
+    }
+    if (price >= 10000) return price.toStringAsFixed(0);
+    return price.toStringAsFixed(2);
+  }
+
+  String _formatVolume(int volume) {
+    if (volume >= 1000000000) return '${(volume / 1000000000).toStringAsFixed(1)}B';
+    if (volume >= 1000000) return '${(volume / 1000000).toStringAsFixed(1)}M';
+    if (volume >= 1000) return '${(volume / 1000).toStringAsFixed(1)}K';
+    return volume.toString();
+  }
+
+  String _formatLastUpdated(DateTime time) {
+    final diff = DateTime.now().difference(time);
+    if (diff.inSeconds < 5) return 'Live';
+    if (diff.inSeconds < 60) return '${diff.inSeconds}s ago';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    return '${time.hour}:${time.minute.toString().padLeft(2, '0')}';
   }
 
   void _showAddSymbolDialog() {
@@ -312,9 +343,39 @@ class _WatchlistPageState extends State<WatchlistPage> {
 
     showDialog(
       context: context,
-      builder: (context) => SymbolSearchDialog(
-        watchlistId: currentWatchlist.id,
+      builder: (context) => SymbolSearchDialog(watchlistId: currentWatchlist.id),
+    ).then((_) {
+      if (_provider.currentWatchlist.value != null) {
+        _provider.loadWatchlistItems(_provider.currentWatchlist.value!.id);
+      }
+    });
+  }
+
+  void _showDeleteConfirmation(dynamic item) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppThemeColors.surface,
+        title: const Text('Remove Symbol', style: AppTypography.titleMedium),
+        content: Text(
+          'Remove ${item.ticker} from watchlist?',
+          style: AppTypography.bodySmall,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(AppStrings.cancel),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              _provider.removeFromWatchlist(item.id);
+              Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppThemeColors.bearish),
+            child: const Text(AppStrings.delete),
+          ),
+        ],
       ),
-    ).then((_) => _provider.loadWatchlistItems(currentWatchlist.id));
+    );
   }
 }

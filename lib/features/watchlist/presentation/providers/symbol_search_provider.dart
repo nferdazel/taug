@@ -44,29 +44,48 @@ class SymbolSearchProvider {
     isSearching.value = false;
   }
 
-  Future<void> addToWatchlist(String watchlistId, SymbolSearchResult symbol) async {
+  Future<int?> addToWatchlist(String watchlistId, SymbolSearchResult symbol) async {
     isAdding.value = true;
+    searchError.value = null;
 
     try {
-      final symbolResponse = await _symbolRepository.searchLocalSymbols(symbol.symbol);
-      if (symbolResponse.isSuccess && symbolResponse.data!.isNotEmpty) {
-        final itemsResult = await _watchlistRepository.getWatchlistItems(watchlistId);
-        if (itemsResult.isSuccess) {
-          final alreadyExists = itemsResult.data!.any(
-            (item) => item.ticker == symbol.symbol,
-          );
-          if (alreadyExists) {
-            searchError.value = 'Symbol already in watchlist';
-            isAdding.value = false;
-            return;
+      final localResult = await _symbolRepository.searchLocalSymbols(symbol.symbol);
+      if (localResult.isSuccess && localResult.data!.isNotEmpty) {
+        final symbolId = await _symbolRepository.getSymbolId(symbol.symbol);
+        if (symbolId != null) {
+          final itemsResult = await _watchlistRepository.getWatchlistItems(watchlistId);
+          if (itemsResult.isSuccess) {
+            final alreadyExists = itemsResult.data!.any(
+              (item) => item.ticker == symbol.symbol,
+            );
+            if (alreadyExists) {
+              searchError.value = 'Already in watchlist';
+              isAdding.value = false;
+              return null;
+            }
           }
+
+          await _watchlistRepository.addToWatchlist(watchlistId, symbolId);
+          isAdding.value = false;
+          return symbolId;
         }
       }
 
+      final insertedResult = await _symbolRepository.insertSymbol(symbol);
+      if (insertedResult.isSuccess) {
+        final symbolId = insertedResult.data!;
+        await _watchlistRepository.addToWatchlist(watchlistId, symbolId);
+        isAdding.value = false;
+        return symbolId;
+      }
+
+      searchError.value = 'Failed to add symbol';
       isAdding.value = false;
+      return null;
     } catch (e) {
       searchError.value = e.toString();
       isAdding.value = false;
+      return null;
     }
   }
 
