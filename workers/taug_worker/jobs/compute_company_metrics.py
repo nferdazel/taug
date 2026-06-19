@@ -169,17 +169,25 @@ def run_compute_company_metrics(
           p for p in periods if not p.is_annual
         ]
 
-        latest_annual: StatementPeriod | None = annual_rows[0] if annual_rows else None
+        latest_annual_income: StatementPeriod | None = _latest_annual_of_type(
+          annual_rows, "income_statement"
+        )
+        latest_annual_cf: StatementPeriod | None = _latest_annual_of_type(
+          annual_rows, "cash_flow"
+        )
+        latest_annual: StatementPeriod | None = (
+          latest_annual_income or latest_annual_cf or (annual_rows[0] if annual_rows else None)
+        )
         latest_quarterly: StatementPeriod | None = (
           quarterly_rows[0] if quarterly_rows else None
         )
         latest_balance: StatementPeriod | None = _latest_balance_sheet(periods)
 
         ttm_income: TTMFigures | None = _compute_ttm_income(
-          annual_rows, quarterly_rows
+          annual_rows, quarterly_rows, periods
         )
         prior_ttm_income: TTMFigures | None = _compute_prior_ttm_income(
-          annual_rows, quarterly_rows
+          annual_rows, quarterly_rows, periods
         )
 
         currency_code: str | None = (
@@ -355,6 +363,16 @@ def _latest_balance_sheet(periods: list[StatementPeriod]) -> StatementPeriod | N
   return None
 
 
+def _latest_annual_of_type(
+  annual_rows: list[StatementPeriod],
+  statement_type: str,
+) -> StatementPeriod | None:
+  for p in annual_rows:
+    if p.statement_type == statement_type:
+      return p
+  return None
+
+
 def _num(row: dict[str, Any], key: str) -> float | None:
   val: Any = row.get(key)
   if isinstance(val, (int, float)):
@@ -365,35 +383,40 @@ def _num(row: dict[str, Any], key: str) -> float | None:
 def _compute_ttm_income(
   annual_rows: list[StatementPeriod],
   quarterly_rows: list[StatementPeriod],
+  all_periods: list[StatementPeriod],
 ) -> TTMFigures | None:
-  if annual_rows:
-    latest: StatementPeriod = annual_rows[0]
+  annual_income = _latest_annual_of_type(annual_rows, "income_statement")
+  annual_cf = _latest_annual_of_type(annual_rows, "cash_flow")
+
+  if annual_income:
     return TTMFigures(
-      revenue=latest.revenue,
-      gross_profit=latest.gross_profit,
-      operating_income=latest.operating_income,
-      net_income=latest.net_income,
-      operating_cash_flow=latest.operating_cash_flow,
-      capex=latest.capex,
-      depreciation_amortization=latest.depreciation_amortization,
-      eps_diluted=latest.eps_diluted,
-      period_end=latest.period_end,
-      published_at=latest.published_at,
+      revenue=annual_income.revenue,
+      gross_profit=annual_income.gross_profit,
+      operating_income=annual_income.operating_income,
+      net_income=annual_income.net_income,
+      operating_cash_flow=annual_cf.operating_cash_flow if annual_cf else None,
+      capex=annual_cf.capex if annual_cf else None,
+      depreciation_amortization=annual_cf.depreciation_amortization if annual_cf else None,
+      eps_diluted=annual_income.eps_diluted,
+      period_end=annual_income.period_end,
+      published_at=annual_income.published_at,
       source_type="annual",
     )
 
-  if len(quarterly_rows) >= 4:
-    q4 = quarterly_rows[:4]
+  income_quarterly = [p for p in quarterly_rows if p.statement_type == "income_statement"]
+  cf_quarterly = [p for p in quarterly_rows if p.statement_type == "cash_flow"]
+
+  if len(income_quarterly) >= 4:
+    q4 = income_quarterly[:4]
+    cf_q4 = cf_quarterly[:4] if len(cf_quarterly) >= 4 else []
     return TTMFigures(
       revenue=_sum_or_none([q.revenue for q in q4]),
       gross_profit=_sum_or_none([q.gross_profit for q in q4]),
       operating_income=_sum_or_none([q.operating_income for q in q4]),
       net_income=_sum_or_none([q.net_income for q in q4]),
-      operating_cash_flow=_sum_or_none([q.operating_cash_flow for q in q4]),
-      capex=_sum_or_none([q.capex for q in q4]),
-      depreciation_amortization=_sum_or_none(
-        [q.depreciation_amortization for q in q4]
-      ),
+      operating_cash_flow=_sum_or_none([q.operating_cash_flow for q in cf_q4]) if cf_q4 else None,
+      capex=_sum_or_none([q.capex for q in cf_q4]) if cf_q4 else None,
+      depreciation_amortization=_sum_or_none([q.depreciation_amortization for q in cf_q4]) if cf_q4 else None,
       eps_diluted=_sum_or_none([q.eps_diluted for q in q4]),
       period_end=q4[0].period_end,
       published_at=q4[0].published_at,
@@ -406,35 +429,52 @@ def _compute_ttm_income(
 def _compute_prior_ttm_income(
   annual_rows: list[StatementPeriod],
   quarterly_rows: list[StatementPeriod],
+  all_periods: list[StatementPeriod],
 ) -> TTMFigures | None:
-  if len(annual_rows) >= 2:
-    prev: StatementPeriod = annual_rows[1]
-    return TTMFigures(
-      revenue=prev.revenue,
-      gross_profit=prev.gross_profit,
-      operating_income=prev.operating_income,
-      net_income=prev.net_income,
-      operating_cash_flow=prev.operating_cash_flow,
-      capex=prev.capex,
-      depreciation_amortization=prev.depreciation_amortization,
-      eps_diluted=prev.eps_diluted,
-      period_end=prev.period_end,
-      published_at=prev.published_at,
-      source_type="annual",
-    )
+  annual_income = _latest_annual_of_type(annual_rows, "income_statement")
+  annual_cf = _latest_annual_of_type(annual_rows, "cash_flow")
 
-  if len(quarterly_rows) >= 8:
-    q8 = quarterly_rows[4:8]
+  if len(annual_rows) >= 2:
+    prev_income = None
+    prev_cf = None
+    for p in annual_rows:
+      if p.statement_type == "income_statement" and p != annual_income:
+        prev_income = p
+        break
+    for p in annual_rows:
+      if p.statement_type == "cash_flow" and p != annual_cf:
+        prev_cf = p
+        break
+    prev = prev_income or prev_cf
+    if prev:
+      return TTMFigures(
+        revenue=prev_income.revenue if prev_income else None,
+        gross_profit=prev_income.gross_profit if prev_income else None,
+        operating_income=prev_income.operating_income if prev_income else None,
+        net_income=prev_income.net_income if prev_income else None,
+        operating_cash_flow=prev_cf.operating_cash_flow if prev_cf else None,
+        capex=prev_cf.capex if prev_cf else None,
+        depreciation_amortization=prev_cf.depreciation_amortization if prev_cf else None,
+        eps_diluted=prev_income.eps_diluted if prev_income else None,
+        period_end=prev.period_end,
+        published_at=prev.published_at,
+        source_type="annual",
+      )
+
+  income_quarterly = [p for p in quarterly_rows if p.statement_type == "income_statement"]
+  cf_quarterly = [p for p in quarterly_rows if p.statement_type == "cash_flow"]
+
+  if len(income_quarterly) >= 8:
+    q8 = income_quarterly[4:8]
+    cf_q8 = cf_quarterly[4:8] if len(cf_quarterly) >= 8 else []
     return TTMFigures(
       revenue=_sum_or_none([q.revenue for q in q8]),
       gross_profit=_sum_or_none([q.gross_profit for q in q8]),
       operating_income=_sum_or_none([q.operating_income for q in q8]),
       net_income=_sum_or_none([q.net_income for q in q8]),
-      operating_cash_flow=_sum_or_none([q.operating_cash_flow for q in q8]),
-      capex=_sum_or_none([q.capex for q in q8]),
-      depreciation_amortization=_sum_or_none(
-        [q.depreciation_amortization for q in q8]
-      ),
+      operating_cash_flow=_sum_or_none([q.operating_cash_flow for q in cf_q8]) if cf_q8 else None,
+      capex=_sum_or_none([q.capex for q in cf_q8]) if cf_q8 else None,
+      depreciation_amortization=_sum_or_none([q.depreciation_amortization for q in cf_q8]) if cf_q8 else None,
       eps_diluted=_sum_or_none([q.eps_diluted for q in q8]),
       period_end=q8[0].period_end,
       published_at=q8[0].published_at,
@@ -624,8 +664,8 @@ def _balance_result(
   )
 
 
-def _safe_div(numerator: float, denominator: float) -> float | None:
-  if denominator == 0:
+def _safe_div(numerator: float | None, denominator: float | None) -> float | None:
+  if numerator is None or denominator is None or denominator == 0:
     return None
   return numerator / denominator
 
