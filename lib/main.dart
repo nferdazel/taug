@@ -1,5 +1,5 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:signals/signals.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/config/app_env.dart';
 import 'core/config/app_router.dart';
@@ -9,15 +9,11 @@ import 'package:google_fonts/google_fonts.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  debugPrintRebuildDirtyWidgets = false;
-  debugDefaultTargetPlatformOverride = null;
+  SignalsObserver.instance = null;
 
   await Supabase.initialize(
     url: AppEnv.supabaseUrl,
     anonKey: AppEnv.supabaseAnonKey,
-    realtimeClientOptions: const RealtimeClientOptions(
-      logLevel: RealtimeLogLevel.info,
-    ),
   );
 
   GoogleFonts.config.allowRuntimeFetching = true;
