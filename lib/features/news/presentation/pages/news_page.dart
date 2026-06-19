@@ -7,8 +7,10 @@ import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/models/data_origin.dart';
 import '../../../../shared/models/news_article.dart';
+import '../../../../shared/models/policy_event.dart';
 import '../../../../shared/widgets/data_status_badge.dart';
 import '../../data/news_repository.dart';
+import '../../../policy/data/policy_repository.dart';
 
 class NewsPage extends StatefulWidget {
   const NewsPage({super.key});
@@ -19,17 +21,25 @@ class NewsPage extends StatefulWidget {
 
 class _NewsPageState extends State<NewsPage> {
   final _repository = NewsRepository();
+  final _policyRepository = PolicyRepository();
   final _articles = Signal<List<NewsArticle>>([]);
+  final _policyEvents = Signal<List<PolicyEvent>>([]);
   final _selectedCategory = Signal<String>('all');
   final _policyOnly = Signal<bool>(false);
   final _isLoading = Signal<bool>(false);
+  final _isPolicyLoading = Signal<bool>(false);
   final _error = Signal<String?>(null);
+  final _policyError = Signal<String?>(null);
   final _lastUpdated = Signal<DateTime?>(null);
 
   @override
   void initState() {
     super.initState();
-    _loadNews();
+    _loadPage();
+  }
+
+  Future<void> _loadPage() async {
+    await Future.wait([_loadNews(), _loadPolicyHighlights()]);
   }
 
   Future<void> _loadNews() async {
@@ -51,9 +61,30 @@ class _NewsPageState extends State<NewsPage> {
     _isLoading.value = false;
   }
 
+  Future<void> _loadPolicyHighlights() async {
+    _isPolicyLoading.value = true;
+    _policyError.value = null;
+
+    final result = await _policyRepository.getPolicyEvents(
+      minImportance: 2,
+      limit: 6,
+    );
+
+    if (result.isSuccess) {
+      _policyEvents.value = result.data!;
+    } else {
+      _policyError.value = result.error.toString();
+    }
+
+    _isPolicyLoading.value = false;
+  }
+
   Future<void> _refreshNews() async {
-    await _repository.refreshNews();
-    await _loadNews();
+    await Future.wait([
+      _repository.refreshNews(),
+      _policyRepository.refreshPolicyEvents(),
+    ]);
+    await _loadPage();
   }
 
   @override
@@ -61,9 +92,125 @@ class _NewsPageState extends State<NewsPage> {
     return Column(
       children: [
         _buildToolbar(),
+        _buildPolicyHighlights(),
         Expanded(child: _buildContent()),
       ],
     );
+  }
+
+  Widget _buildPolicyHighlights() {
+    return Watch((_) {
+      final events = _policyEvents.value;
+      final isLoading = _isPolicyLoading.value;
+
+      if (isLoading && events.isEmpty) {
+        return const SizedBox(height: 0);
+      }
+
+      if (events.isEmpty) {
+        return const SizedBox(height: 0);
+      }
+
+      return RepaintBoundary(
+        child: Container(
+          height: 104,
+          decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: AppThemeColors.border)),
+          ),
+          child: Column(
+            children: [
+              Container(
+                height: 24,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                decoration: const BoxDecoration(
+                  color: AppThemeColors.backgroundLight,
+                  border: Border(
+                    bottom: BorderSide(color: AppThemeColors.border),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Text(
+                      'OFFICIAL POLICY',
+                      style: AppTypography.monoSection,
+                    ),
+                    const SizedBox(width: 8),
+                    const DataStatusBadge(origin: _policyOrigin),
+                    const Spacer(),
+                    if (_policyError.value != null)
+                      Text(
+                        'Feed degraded',
+                        style: AppTypography.monoTiny.copyWith(
+                          color: AppThemeColors.warning,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: events.length > 3 ? 3 : events.length,
+                  itemExtent: 26,
+                  itemBuilder: (context, index) {
+                    final event = events[index];
+                    return InkWell(
+                      onTap: () => _launchUrl(event.url),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        decoration: const BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(
+                              color: AppThemeColors.border,
+                              width: 0.5,
+                            ),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 96,
+                              child: Text(
+                                event.agency.toUpperCase(),
+                                style: AppTypography.monoTiny.copyWith(
+                                  color: _importanceColor(event.importance),
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                event.title,
+                                style: AppTypography.monoTiny.copyWith(
+                                  color: AppThemeColors.textPrimary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            SizedBox(
+                              width: 56,
+                              child: Text(
+                                _formatTime(event.publishedAt),
+                                style: AppTypography.monoTiny.copyWith(
+                                  color: AppThemeColors.textTertiary,
+                                ),
+                                textAlign: TextAlign.right,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    });
   }
 
   Widget _buildToolbar() {
@@ -272,103 +419,113 @@ class _NewsPageState extends State<NewsPage> {
   }
 
   Widget _buildNewsItem(NewsArticle article) {
-    return InkWell(
-      onTap: () => _launchUrl(article.url),
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: const BoxDecoration(
-          border: Border(
-            bottom: BorderSide(color: AppThemeColors.border, width: 0.5),
+    return RepaintBoundary(
+      child: InkWell(
+        onTap: () => _launchUrl(article.url),
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: const BoxDecoration(
+            border: Border(
+              bottom: BorderSide(color: AppThemeColors.border, width: 0.5),
+            ),
           ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                if (article.isBreaking) ...[
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 4,
-                      vertical: 1,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppThemeColors.bearish,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                    child: const Text(
-                      'BREAKING',
-                      style: TextStyle(
-                        fontSize: 8,
-                        fontWeight: FontWeight.w700,
-                        color: AppThemeColors.textPrimary,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  if (article.isBreaking) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 1,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppThemeColors.bearish,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                      child: const Text(
+                        'BREAKING',
+                        style: TextStyle(
+                          fontSize: 8,
+                          fontWeight: FontWeight.w700,
+                          color: AppThemeColors.textPrimary,
+                        ),
                       ),
                     ),
+                    const SizedBox(width: 6),
+                  ],
+                  Text(
+                    article.source.toUpperCase(),
+                    style: AppTypography.monoTiny.copyWith(
+                      color: AppThemeColors.textTertiary,
+                    ),
                   ),
-                  const SizedBox(width: 6),
+                  const Spacer(),
+                  Text(
+                    _formatTime(article.publishedAt),
+                    style: AppTypography.monoTiny.copyWith(
+                      color: AppThemeColors.textTertiary,
+                    ),
+                  ),
                 ],
-                Text(
-                  article.source.toUpperCase(),
-                  style: AppTypography.monoTiny.copyWith(
-                    color: AppThemeColors.textTertiary,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  _formatTime(article.publishedAt),
-                  style: AppTypography.monoTiny.copyWith(
-                    color: AppThemeColors.textTertiary,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              article.title,
-              style: AppTypography.bodyMedium.copyWith(
-                fontWeight: FontWeight.w500,
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            if (article.summary != null && article.summary!.isNotEmpty) ...[
               const SizedBox(height: 4),
               Text(
-                article.summary!,
-                style: AppTypography.bodySmall,
+                article.title,
+                style: AppTypography.bodyMedium.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-            ],
-            if (article.categories.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Wrap(
-                spacing: 4,
-                children: article.categories.take(3).map((cat) {
-                  return Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 4,
-                      vertical: 1,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppThemeColors.backgroundLight,
-                      borderRadius: BorderRadius.circular(2),
-                      border: Border.all(color: AppThemeColors.border),
-                    ),
-                    child: Text(
-                      cat.toUpperCase(),
-                      style: AppTypography.monoTiny.copyWith(
-                        color: AppThemeColors.textSecondary,
+              if (article.summary != null && article.summary!.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  article.summary!,
+                  style: AppTypography.bodySmall,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+              if (article.categories.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Wrap(
+                  spacing: 4,
+                  children: article.categories.take(3).map((cat) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 1,
                       ),
-                    ),
-                  );
-                }).toList(),
-              ),
+                      decoration: BoxDecoration(
+                        color: AppThemeColors.backgroundLight,
+                        borderRadius: BorderRadius.circular(2),
+                        border: Border.all(color: AppThemeColors.border),
+                      ),
+                      child: Text(
+                        cat.toUpperCase(),
+                        style: AppTypography.monoTiny.copyWith(
+                          color: AppThemeColors.textSecondary,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
+  }
+
+  Color _importanceColor(int importance) {
+    return switch (importance) {
+      3 => AppThemeColors.bearish,
+      2 => AppThemeColors.warning,
+      _ => AppThemeColors.accent,
+    };
   }
 
   String _formatTime(DateTime time) {
@@ -394,5 +551,12 @@ const DataOrigin _newsOrigin = DataOrigin(
   sourceLabel: 'RSS Feeds',
   latencyClass: DataLatencyClass.syndicated,
   isOfficial: false,
+  isSynthetic: false,
+);
+
+const DataOrigin _policyOrigin = DataOrigin(
+  sourceLabel: 'Official RSS',
+  latencyClass: DataLatencyClass.syndicated,
+  isOfficial: true,
   isSynthetic: false,
 );
