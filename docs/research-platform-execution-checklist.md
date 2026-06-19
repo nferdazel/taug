@@ -1,6 +1,6 @@
 # Taug Research Platform Execution Checklist
 
-Last updated: 2026-06-19
+Last updated: 2026-06-20
 
 ## Purpose
 
@@ -140,9 +140,9 @@ Docs discipline for this repo:
 
 ### Research workflow layer
 
-- `[todo]` `research_notes`
-- `[todo]` `investment_theses`
-- `[todo]` `saved_screeners`
+- `[done]` `research_notes`
+- `[done]` `investment_theses`
+- `[done]` `saved_screeners`
 - `[todo]` `coverage_lists`
 
 ### Audit and quality layer
@@ -169,7 +169,7 @@ Docs discipline for this repo:
 ### Priority foundation sources
 
 - `[done]` source strategy and ingestion priority documented
-- `[todo]` SEC EDGAR ingestion worker
+- `[done]` SEC EDGAR ingestion worker
 - `[todo]` FRED integration
 - `[todo]` Bank Indonesia integration
 - `[todo]` BPS integration
@@ -362,10 +362,12 @@ Exit criteria:
 
 ### Phase 6: Research workspace
 
-- `[todo]` research notes
-- `[todo]` thesis tracking
-- `[todo]` company workspace UI
-- `[todo]` quality/freshness indicator
+- `[done]` research notes (CRUD in company page, RLS protected)
+- `[done]` thesis tracking (CRUD with stance tracking, RLS protected)
+- `[done]` company workspace UI (summary, metrics, statement history, quality, notes, theses)
+- `[done]` quality/freshness indicator (company_data_quality_v serving view + UI panel)
+- `[done]` valuation snapshot page (per-company metric cards with category sections)
+- `[done]` screener page (sortable metric table with quality indicators)
 
 Exit criteria:
 
