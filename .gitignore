@@ -8,7 +8,6 @@
 .build/
 .buildlog/
 .history
-.svn/
 .swiftpm/
 migrate_working_dir/
 
@@ -23,7 +22,6 @@ migrate_working_dir/
 
 # Flutter/Dart/Pub related
 **/doc/api/
-**/ios/Flutter/.last_build_id
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
@@ -38,11 +36,6 @@ app.*.symbols
 # Obfuscation related
 app.*.map.json
 
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
-
 # Environment files (NEVER commit)
 .env
 .env.local
@@ -52,9 +45,6 @@ lib/core/config/app_env.g.dart
 
 # Coverage
 coverage/
-
-# Platform specific
-/android/local.properties
 
 # DevTools
 devtools_options.yaml
