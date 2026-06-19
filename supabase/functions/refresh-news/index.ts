@@ -13,9 +13,35 @@ interface RssItem {
   description: string;
   pubDate: string;
   source: string;
+  sourceUrl: string;
+  isOfficial: boolean;
 }
 
-function parseRss(xml: string, source: string): RssItem[] {
+interface FeedConfig {
+  url: string;
+  source: string;
+  sourceUrl: string;
+  isOfficial: boolean;
+}
+
+function stripHtml(text: string): string {
+  return text.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+}
+
+function canonicalizeUrl(url: string): string {
+  try {
+    const normalized = new URL(url.trim());
+    normalized.hash = "";
+    if (normalized.pathname.endsWith("/")) {
+      normalized.pathname = normalized.pathname.slice(0, -1);
+    }
+    return normalized.toString();
+  } catch {
+    return url.trim();
+  }
+}
+
+function parseRss(xml: string, feed: FeedConfig): RssItem[] {
   const items: RssItem[] = [];
   const itemRegex = /<item>([\s\S]*?)<\/item>/g;
   let match;
@@ -33,11 +59,13 @@ function parseRss(xml: string, source: string): RssItem[] {
 
     if (title && link) {
       items.push({
-        title: title.replace(/<[^>]*>/g, "").trim(),
-        link,
-        description: description.replace(/<[^>]*>/g, "").trim().slice(0, 500),
+        title: stripHtml(title),
+        link: canonicalizeUrl(link),
+        description: stripHtml(description).slice(0, 500),
         pubDate: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString(),
-        source,
+        source: feed.source,
+        sourceUrl: feed.sourceUrl,
+        isOfficial: feed.isOfficial,
       });
     }
   }
@@ -45,13 +73,43 @@ function parseRss(xml: string, source: string): RssItem[] {
   return items;
 }
 
-const RSS_FEEDS = [
-  { url: "https://www.cnbc.com/id/15839135/device/rss/rss.html", source: "CNBC Markets" },
-  { url: "https://www.cnbc.com/id/100003114/device/rss/rss.html", source: "CNBC Top News" },
-  { url: "https://feeds.marketwatch.com/marketwatch/topstories/", source: "MarketWatch" },
-  { url: "https://feeds.marketwatch.com/marketwatch/marketpulse/", source: "MarketWatch Pulse" },
-  { url: "https://www.reuters.com/arc/outboundfeeds/rss/v3/all/markets/", source: "Reuters Markets" },
-  { url: "https://www.antaranews.com/rss/ekonomi", source: "Antara Economy" },
+const RSS_FEEDS: FeedConfig[] = [
+  {
+    url: "https://www.cnbc.com/id/15839135/device/rss/rss.html",
+    source: "CNBC Markets",
+    sourceUrl: "https://www.cnbc.com/markets/",
+    isOfficial: false,
+  },
+  {
+    url: "https://www.cnbc.com/id/100003114/device/rss/rss.html",
+    source: "CNBC Top News",
+    sourceUrl: "https://www.cnbc.com/",
+    isOfficial: false,
+  },
+  {
+    url: "https://feeds.marketwatch.com/marketwatch/topstories/",
+    source: "MarketWatch",
+    sourceUrl: "https://www.marketwatch.com/",
+    isOfficial: false,
+  },
+  {
+    url: "https://feeds.marketwatch.com/marketwatch/marketpulse/",
+    source: "MarketWatch Pulse",
+    sourceUrl: "https://www.marketwatch.com/marketpulse",
+    isOfficial: false,
+  },
+  {
+    url: "https://www.reuters.com/arc/outboundfeeds/rss/v3/all/markets/",
+    source: "Reuters Markets",
+    sourceUrl: "https://www.reuters.com/markets/",
+    isOfficial: false,
+  },
+  {
+    url: "https://www.antaranews.com/rss/ekonomi",
+    source: "Antara Economy",
+    sourceUrl: "https://www.antaranews.com/ekonomi",
+    isOfficial: false,
+  },
 ];
 
 Deno.serve(async (req) => {
@@ -80,7 +138,7 @@ Deno.serve(async (req) => {
 
         if (response.ok) {
           const xml = await response.text();
-          return parseRss(xml, feed.source);
+          return parseRss(xml, feed);
         }
       } catch {
         return [];
@@ -97,18 +155,37 @@ Deno.serve(async (req) => {
       new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime()
     );
 
-    const limitedItems = allItems.slice(0, 100);
+    const uniqueItems = new Map<string, RssItem>();
+    for (const item of allItems) {
+      uniqueItems.set(item.link, item);
+    }
 
-    const insertData = limitedItems.map((item) => ({
-      external_id: item.link,
-      title: item.title,
-      summary: item.description,
-      url: item.link,
-      source: item.source,
-      published_at: item.pubDate,
-      categories: determineCategories(item.title + " " + item.description),
-      is_breaking: isBreaking(item.title),
-    }));
+    const limitedItems = Array.from(uniqueItems.values()).slice(0, 100);
+
+    const insertData = limitedItems.map((item) => {
+      const combinedText = `${item.title} ${item.description}`;
+      return {
+        external_id: item.link,
+        title: item.title,
+        summary: item.description,
+        url: item.link,
+        source: item.source,
+        source_label: item.source,
+        published_at: item.pubDate,
+        categories: determineCategories(combinedText),
+        is_breaking: isBreaking(item.title),
+        source_url: item.sourceUrl,
+        latency_class: "syndicated",
+        is_official: item.isOfficial,
+        is_synthetic: false,
+        fetched_at: new Date().toISOString(),
+        as_of: item.pubDate,
+        metadata: {
+          importance: determineImportance(combinedText),
+          policy_relevant: isPolicyRelevant(combinedText),
+        },
+      };
+    });
 
     if (insertData.length > 0) {
       const { error } = await supabase
@@ -148,6 +225,9 @@ function determineCategories(text: string): string[] {
   if (lower.match(/war|conflict|sanction|geopolit|military|attack|missile|invasion/)) {
     categories.push("geopolitics");
   }
+  if (lower.match(/president|white house|treasury|sec|congress|senate|executive order|regulator|policy/)) {
+    categories.push("policy");
+  }
   if (lower.match(/earthquake|tsunami|typhoon|hurricane|flood|disaster|volcano/)) {
     categories.push("disaster");
   }
@@ -179,4 +259,20 @@ function determineCategories(text: string): string[] {
 function isBreaking(title: string): boolean {
   const lower = title.toLowerCase();
   return lower.match(/breaking|urgent|alert|flash|just in|developing/) !== null;
+}
+
+function determineImportance(text: string): number {
+  const lower = text.toLowerCase();
+  if (lower.match(/war|sanction|fed|ecb|boe|treasury|white house|sec|executive order|rate decision/)) {
+    return 3;
+  }
+  if (lower.match(/inflation|jobs|payroll|earnings|congress|senate|policy|regulation/)) {
+    return 2;
+  }
+  return 1;
+}
+
+function isPolicyRelevant(text: string): boolean {
+  const lower = text.toLowerCase();
+  return lower.match(/white house|treasury|sec|congress|senate|executive order|sanction|regulation|policy/) !== null;
 }

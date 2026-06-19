@@ -10,27 +10,31 @@ class NewsRepository {
   final SupabaseClient _client;
 
   NewsRepository({SupabaseClient? client})
-      : _client = client ?? Supabase.instance.client;
+    : _client = client ?? Supabase.instance.client;
 
   Future<Result<List<NewsArticle>>> getNews({
     String? category,
+    bool policyRelevantOnly = false,
     int limit = 50,
     int offset = 0,
   }) async {
     try {
-      var query = _client
-          .from(AppSchema.newsArticles)
-          .select();
+      var query = _client.from(AppSchema.newsArticles).select();
 
       if (category != null && category != 'all') {
         query = query.contains('categories', '{$category}');
+      }
+      if (policyRelevantOnly) {
+        query = query.contains('categories', '{policy}');
       }
 
       final response = await query
           .order('published_at', ascending: false)
           .range(offset, offset + limit - 1);
 
-      final articles = response.map((json) => NewsArticle.fromJson(json)).toList();
+      final articles = response
+          .map((json) => NewsArticle.fromJson(json))
+          .toList();
       return Result.success(articles);
     } catch (e) {
       debugPrint('[NewsRepo] getNews: $e');

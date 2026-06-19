@@ -21,6 +21,7 @@ class _NewsPageState extends State<NewsPage> {
   final _repository = NewsRepository();
   final _articles = Signal<List<NewsArticle>>([]);
   final _selectedCategory = Signal<String>('all');
+  final _policyOnly = Signal<bool>(false);
   final _isLoading = Signal<bool>(false);
   final _error = Signal<String?>(null);
   final _lastUpdated = Signal<DateTime?>(null);
@@ -35,7 +36,10 @@ class _NewsPageState extends State<NewsPage> {
     _isLoading.value = true;
     _error.value = null;
 
-    final result = await _repository.getNews(category: _selectedCategory.value);
+    final result = await _repository.getNews(
+      category: _selectedCategory.value,
+      policyRelevantOnly: _policyOnly.value,
+    );
 
     if (result.isSuccess) {
       _articles.value = result.data!;
@@ -73,6 +77,8 @@ class _NewsPageState extends State<NewsPage> {
         children: [
           _buildCategoryFilter(),
           const SizedBox(width: 8),
+          _buildPolicyToggle(),
+          const SizedBox(width: 8),
           const DataStatusBadge(origin: _newsOrigin),
           const Spacer(),
           if (_lastUpdated.value != null)
@@ -99,6 +105,7 @@ class _NewsPageState extends State<NewsPage> {
         'economy',
         'geopolitics',
         'earnings',
+        'policy',
       ];
       final current = _selectedCategory.value;
 
@@ -135,6 +142,36 @@ class _NewsPageState extends State<NewsPage> {
             ),
           );
         }).toList(),
+      );
+    });
+  }
+
+  Widget _buildPolicyToggle() {
+    return Watch((_) {
+      final selected = _policyOnly.value;
+      return SizedBox(
+        height: 24,
+        child: TextButton(
+          onPressed: () {
+            _policyOnly.value = !selected;
+            _loadNews();
+          },
+          style: TextButton.styleFrom(
+            backgroundColor: selected
+                ? AppThemeColors.warning
+                : AppThemeColors.backgroundLight,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            minimumSize: Size.zero,
+          ),
+          child: Text(
+            'Policy Lens',
+            style: AppTypography.labelSmall.copyWith(
+              color: selected
+                  ? AppThemeColors.textPrimary
+                  : AppThemeColors.textSecondary,
+            ),
+          ),
+        ),
       );
     });
   }
