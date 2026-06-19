@@ -1524,6 +1524,73 @@ class SupabaseRestClient:
       ],
     )
 
+  def list_securities_with_tickers(
+    self,
+    *,
+    limit: int,
+  ) -> list[tuple[str, str]]:
+    query: dict[str, str] = {
+      "select": "id,ticker",
+      "status": "eq.active",
+      "ticker": "not.is.null",
+      "limit": "1000" if limit <= 0 else str(limit),
+    }
+    rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "securities",
+      query=query,
+    )
+    results: list[tuple[str, str]] = []
+    for row in rows:
+      sec_id = row.get("id")
+      ticker = row.get("ticker")
+      if isinstance(sec_id, str) and isinstance(ticker, str) and ticker.strip():
+        results.append((sec_id, ticker.strip()))
+    return results
+
+  def upsert_price_snapshot(
+    self,
+    *,
+    security_id: str,
+    ticker: str,
+    close_price: float | None,
+    market_cap: float | None,
+    enterprise_value: float | None,
+    shares_outstanding: float | None,
+    price_date: str,
+  ) -> UpsertResult:
+    existing_rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "security_price_snapshots",
+      query={
+        "select": "id",
+        "security_id": f"eq.{security_id}",
+        "price_date": f"eq.{price_date}",
+        "limit": "1",
+      },
+    )
+    if existing_rows:
+      return UpsertResult(id=str(existing_rows[0]["id"]), created=False)
+
+    snap_payload: dict[str, object] = {
+      "security_id": security_id,
+      "price_date": price_date,
+      "close_price": close_price,
+      "market_cap": market_cap,
+      "enterprise_value": enterprise_value,
+      "shares_outstanding": shares_outstanding,
+      "last_fetched_at": datetime.now(timezone.utc).isoformat(),
+    }
+    rows: list[dict[str, Any]] = self._request(
+      "POST",
+      "security_price_snapshots",
+      headers={"Prefer": "return=representation"},
+      payload=[snap_payload],
+    )
+    if not rows:
+      raise ValueError("Failed to upsert price snapshot")
+    return UpsertResult(id=str(rows[0]["id"]), created=True)
+
   def _request(
     self,
     method: str,

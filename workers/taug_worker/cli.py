@@ -10,6 +10,7 @@ from .jobs.parse_sec_companyfacts import run_parse_sec_companyfacts
 from .jobs.sync_sec_companyfacts import run_sync_sec_companyfacts
 from .jobs.fetch_sec_filing_documents import run_fetch_sec_filing_documents
 from .jobs.compute_company_metrics import run_compute_company_metrics
+from .jobs.sync_price_snapshots import run_sync_price_snapshots
 from .jobs.sync_sec_submissions import run_sync_sec_submissions
 from .sec_client import SecClient
 from .supabase_rest import SupabaseRestClient
@@ -69,6 +70,13 @@ def main() -> int:
   metrics_parser.add_argument(
     "--company-ids",
     help="Comma-separated company UUIDs to compute metrics for.",
+  )
+  price_parser = subparsers.add_parser("sync-price-snapshots")
+  price_parser.add_argument(
+    "--limit",
+    type=int,
+    default=0,
+    help="Maximum number of securities to fetch prices for (0 = all).",
   )
 
   args = parser.parse_args()
@@ -234,6 +242,37 @@ def main() -> int:
           "skipped_snapshots": summary.skipped_snapshots,
           "successful_company_ids": summary.successful_company_ids,
           "failed_company_ids": summary.failed_company_ids,
+        },
+        ensure_ascii=True,
+        sort_keys=True,
+      )
+    )
+    return 0
+
+  if args.command == "sync-price-snapshots":
+    if not config.twelve_data_api_key:
+      raise ValueError("TWELVE_DATA_API_KEY is required for sync-price-snapshots")
+
+    http_client = HttpClient()
+    supabase_client = SupabaseRestClient(
+      http_client=http_client,
+      supabase_url=config.supabase_url,
+      service_role_key=config.supabase_service_role_key,
+    )
+    summary = run_sync_price_snapshots(
+      supabase_client=supabase_client,
+      http_client=http_client,
+      twelve_data_api_key=config.twelve_data_api_key,
+      limit=args.limit,
+    )
+    print(
+      json.dumps(
+        {
+          "processed_securities": summary.processed_securities,
+          "succeeded": summary.succeeded,
+          "failed": summary.failed,
+          "inserted": summary.inserted,
+          "failed_tickers": summary.failed_tickers,
         },
         ensure_ascii=True,
         sort_keys=True,

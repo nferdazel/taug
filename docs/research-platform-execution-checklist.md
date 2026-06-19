@@ -225,8 +225,10 @@ Docs discipline for this repo:
 - `[done]` screener page (sortable metric table with quality indicators)
 - `[done]` research notes (CRUD in company page, RLS protected)
 - `[done]` investment theses (CRUD with stance tracking, RLS protected)
+- `[done]` price data integration: `sync-price-snapshots` worker job (Twelve Data API, rate-limit aware)
 - `[done]` valuation snapshot page (per-company metric cards with category sections)
-- `[done]` price data integration pending — valuation metrics show "missing" until `security_price_snapshots` populated
+- `[todo]` price data backfill (wait for API credits reset)
+- `[todo]` recompute metrics after price data available
 
 ## L. Recommended Phase Order
 
