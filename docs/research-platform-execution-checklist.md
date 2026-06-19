@@ -16,6 +16,11 @@ It records:
 
 Use this file as the first source of truth before planning or implementing anything.
 
+Docs discipline for this repo:
+
+- before every commit, sync the relevant `docs/` artifact first
+- if status changed, update this checklist before committing
+
 ## Status Legend
 
 - `[done]` implemented and committed
@@ -221,12 +226,14 @@ Exit criteria:
 
 - `[done]` design target research schema
 - `[done]` define raw / normalized / derived / research layers
-- `[todo]` define home-market preference model
+- `[done]` define home-market preference model
+- `[done]` define schema implementation plan
 
 Exit criteria:
 
 - schema review approved
 - schema v2 document exists
+- schema implementation plan exists
 
 ### Phase 2: Ingestion topology
 
@@ -289,5 +296,8 @@ Before any new implementation, the agent must ask:
 3. Can the value be traced to a source and version?
 4. Does this belong in Supabase, or in worker ETL?
 5. Am I accidentally expanding the old terminal roadmap?
+6. Have I synced the relevant `docs/` artifact before committing?
 
 If the answer to question 5 is yes, stop and reassess.
+
+If the answer to question 6 is no, sync docs first.

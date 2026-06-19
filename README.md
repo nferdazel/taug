@@ -71,6 +71,7 @@ feature/
 - [Research Platform Execution Checklist](docs/research-platform-execution-checklist.md)
 - [Research Platform Schema V2](docs/research-platform-schema-v2.md)
 - [Research Platform Ingestion Topology](docs/research-platform-ingestion-topology.md)
+- [Research Platform Schema Implementation Plan](docs/research-platform-schema-implementation-plan.md)
 
 ## Data Sources
 
