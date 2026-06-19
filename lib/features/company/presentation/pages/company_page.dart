@@ -101,7 +101,7 @@ class _CompanyPageState extends State<CompanyPage> {
           .from('research_notes')
           .select()
           .eq('company_id', companyId)
-          .order('is_posted', ascending: false)
+          .order('is_pinned', ascending: false)
           .order('updated_at', ascending: false);
       _notes.value = List<Map<String, dynamic>>.from(response);
     } catch (e) {
