@@ -11,13 +11,15 @@ class PortfolioRepository {
   final SupabaseClient _client;
 
   PortfolioRepository({SupabaseClient? client})
-      : _client = client ?? Supabase.instance.client;
+    : _client = client ?? Supabase.instance.client;
 
   Future<Result<List<PortfolioHolding>>> getHoldings() async {
     try {
       final userId = _client.auth.currentUser?.id;
       if (userId == null) {
-        return const Result.failure(AuthFailure(message: 'User not authenticated'));
+        return const Result.failure(
+          AuthFailure(message: 'User not authenticated'),
+        );
       }
 
       final response = await _client
@@ -61,7 +63,9 @@ class PortfolioRepository {
     try {
       final userId = _client.auth.currentUser?.id;
       if (userId == null) {
-        return const Result.failure(AuthFailure(message: 'User not authenticated'));
+        return const Result.failure(
+          AuthFailure(message: 'User not authenticated'),
+        );
       }
 
       final response = await _client
@@ -120,27 +124,22 @@ class PortfolioRepository {
 
   Future<Result<Map<String, PriceData>>> getPrices(List<String> tickers) async {
     try {
-      final Map<String, PriceData> priceMap = {};
+      final response = await _client
+          .from(AppSchema.symbols)
+          .select('ticker, quote_snapshots(*)')
+          .inFilter('ticker', tickers);
 
-      final futures = tickers.map((ticker) async {
-        try {
-          final response = await _client.functions.invoke(
-            'get-price',
-            body: {'symbol': ticker},
-          );
-          if (response.data != null) {
-            return MapEntry(ticker, PriceData.fromJson(response.data as Map<String, dynamic>));
-          }
-        } catch (e) {
-          debugPrint('[PortfolioRepo] getPrices[$ticker]: $e');
-        }
-        return null;
-      });
+      final Map<String, PriceData> priceMap = <String, PriceData>{};
+      for (final row in response) {
+        final Map<String, dynamic> symbolRow = Map<String, dynamic>.from(row);
+        final String? ticker = symbolRow['ticker'] as String?;
+        final Map<String, dynamic>? snapshot = _extractSnapshot(symbolRow);
 
-      final results = await Future.wait(futures);
-      for (final result in results) {
-        if (result != null) {
-          priceMap[result.key] = result.value;
+        if (ticker != null && snapshot != null) {
+          priceMap[ticker] = PriceData.fromJson({
+            'symbol': ticker,
+            ...snapshot,
+          });
         }
       }
 
@@ -149,5 +148,16 @@ class PortfolioRepository {
       debugPrint('[PortfolioRepo] getPrices: $e');
       return Result.failure(ServerFailure(message: e.toString()));
     }
+  }
+
+  Map<String, dynamic>? _extractSnapshot(Map<String, dynamic> row) {
+    final Object? relation = row[AppSchema.quoteSnapshots];
+    if (relation is Map<String, dynamic>) {
+      return relation;
+    }
+    if (relation is List && relation.isNotEmpty && relation.first is Map) {
+      return Map<String, dynamic>.from(relation.first as Map);
+    }
+    return null;
   }
 }

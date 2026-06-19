@@ -12,17 +12,21 @@ class PortfolioProvider {
   final isLoading = Signal<bool>(false);
   final error = Signal<String?>(null);
   final lastUpdated = Signal<DateTime?>(null);
+  bool _isLoadingPrices = false;
 
   Timer? _refreshTimer;
 
   PortfolioProvider({PortfolioRepository? repository})
-      : _repository = repository ?? PortfolioRepository();
+    : _repository = repository ?? PortfolioRepository();
 
   void dispose() => _refreshTimer?.cancel();
 
   void startAutoRefresh() {
     _refreshTimer?.cancel();
-    _refreshTimer = Timer.periodic(const Duration(seconds: 10), (_) => loadPrices());
+    _refreshTimer = Timer.periodic(
+      const Duration(seconds: 10),
+      (_) => loadPrices(),
+    );
   }
 
   Future<void> loadHoldings() async {
@@ -43,6 +47,7 @@ class PortfolioProvider {
   }
 
   Future<void> loadPrices() async {
+    if (_isLoadingPrices) return;
     if (holdings.value.isEmpty) return;
 
     final tickers = holdings.value
@@ -52,14 +57,20 @@ class PortfolioProvider {
 
     if (tickers.isEmpty) return;
 
+    _isLoadingPrices = true;
     final result = await _repository.getPrices(tickers);
     if (result.isSuccess) {
       prices.value = result.data!;
       lastUpdated.value = DateTime.now();
     }
+    _isLoadingPrices = false;
   }
 
-  Future<void> addHolding(int symbolId, double quantity, double avgPrice) async {
+  Future<void> addHolding(
+    int symbolId,
+    double quantity,
+    double avgPrice,
+  ) async {
     final result = await _repository.addHolding(
       symbolId: symbolId,
       quantity: quantity,
@@ -71,7 +82,11 @@ class PortfolioProvider {
     }
   }
 
-  Future<void> updateHolding(String holdingId, double quantity, double avgPrice) async {
+  Future<void> updateHolding(
+    String holdingId,
+    double quantity,
+    double avgPrice,
+  ) async {
     final result = await _repository.updateHolding(
       holdingId: holdingId,
       quantity: quantity,
@@ -90,20 +105,16 @@ class PortfolioProvider {
     }
   }
 
-  double get totalValue => holdings.value.fold(
-    0,
-    (sum, h) {
-      final price = prices.value[h.ticker]?.price ?? 0;
-      return sum + (h.quantity * price);
-    },
-  );
+  double get totalValue => holdings.value.fold(0, (sum, h) {
+    final price = prices.value[h.ticker]?.price ?? 0;
+    return sum + (h.quantity * price);
+  });
 
-  double get totalCost => holdings.value.fold(
-    0,
-    (sum, h) => sum + (h.quantity * h.avgPrice),
-  );
+  double get totalCost =>
+      holdings.value.fold(0, (sum, h) => sum + (h.quantity * h.avgPrice));
 
   double get totalPnL => totalValue - totalCost;
 
-  double get totalPnLPercent => totalCost > 0 ? (totalPnL / totalCost) * 100 : 0;
+  double get totalPnLPercent =>
+      totalCost > 0 ? (totalPnL / totalCost) * 100 : 0;
 }
