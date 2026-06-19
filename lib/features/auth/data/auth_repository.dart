@@ -51,7 +51,10 @@ class AuthRepository {
       final response = await _client.auth.signUp(
         email: email,
         password: password,
-        data: {'username': username},
+        data: {
+          'username': username,
+          'app': 'taug',
+        },
       );
 
       if (response.user != null) {
