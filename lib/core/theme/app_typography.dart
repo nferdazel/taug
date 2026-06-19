@@ -2,156 +2,127 @@ import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
 
+/// Typography system for Taug Financial Terminal
+///
+/// Scale (harmonious, tight range 10-15px):
+///   15 - heading
+///   14 - price/display
+///   13 - subheading
+///   12 - body/data
+///   11 - caption/label
+///   10 - micro/meta
+///
+/// Sans: UI text, labels, buttons
+/// Mono: Financial data, prices, numbers, code
 abstract final class AppTypography {
-  // Font Families
   static const String mono = 'IBM Plex Mono';
   static const String sans = 'IBM Plex Sans';
 
-  // Display
-  static const TextStyle displayLarge = TextStyle(
-    fontFamily: sans,
-    fontSize: 24,
-    fontWeight: FontWeight.w700,
-    color: Color(AppColors.textPrimary),
-  );
+  // ── Sans Scale ──
 
-  static const TextStyle displayMedium = TextStyle(
+  /// 15px — Page titles, dialog headers
+  static const TextStyle heading = TextStyle(
     fontFamily: sans,
-    fontSize: 20,
+    fontSize: 15,
     fontWeight: FontWeight.w600,
     color: Color(AppColors.textPrimary),
   );
 
-  // Title
-  static const TextStyle titleLarge = TextStyle(
-    fontFamily: sans,
-    fontSize: 16,
-    fontWeight: FontWeight.w600,
-    color: Color(AppColors.textPrimary),
-  );
-
-  static const TextStyle titleMedium = TextStyle(
-    fontFamily: sans,
-    fontSize: 14,
-    fontWeight: FontWeight.w600,
-    color: Color(AppColors.textPrimary),
-  );
-
-  static const TextStyle titleSmall = TextStyle(
+  /// 13px — Section titles, card headers
+  static const TextStyle subheading = TextStyle(
     fontFamily: sans,
     fontSize: 13,
     fontWeight: FontWeight.w600,
     color: Color(AppColors.textPrimary),
   );
 
-  // Body
-  static const TextStyle bodyLarge = TextStyle(
-    fontFamily: sans,
-    fontSize: 14,
-    fontWeight: FontWeight.w400,
-    color: Color(AppColors.textPrimary),
-  );
-
-  static const TextStyle bodyMedium = TextStyle(
-    fontFamily: sans,
-    fontSize: 13,
-    fontWeight: FontWeight.w400,
-    color: Color(AppColors.textPrimary),
-  );
-
-  static const TextStyle bodySmall = TextStyle(
-    fontFamily: sans,
-    fontSize: 11,
-    fontWeight: FontWeight.w400,
-    color: Color(AppColors.textSecondary),
-  );
-
-  // Label
-  static const TextStyle labelLarge = TextStyle(
+  /// 12px — Primary body text, button labels
+  static const TextStyle body = TextStyle(
     fontFamily: sans,
     fontSize: 12,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.w400,
     color: Color(AppColors.textPrimary),
   );
 
-  static const TextStyle labelMedium = TextStyle(
+  /// 11px — Secondary text, descriptions
+  static const TextStyle caption = TextStyle(
     fontFamily: sans,
     fontSize: 11,
-    fontWeight: FontWeight.w500,
+    fontWeight: FontWeight.w400,
     color: Color(AppColors.textSecondary),
   );
 
-  static const TextStyle labelSmall = TextStyle(
+  /// 10px — Labels, hints, metadata
+  static const TextStyle micro = TextStyle(
     fontFamily: sans,
-    fontSize: 9,
+    fontSize: 10,
     fontWeight: FontWeight.w500,
     color: Color(AppColors.textTertiary),
   );
 
-  // Mono (financial data)
-  static const TextStyle monoLarge = TextStyle(
+  // ── Mono Scale ──
+
+  /// 14px — Main price display, large numbers
+  static const TextStyle monoPrice = TextStyle(
     fontFamily: mono,
     fontSize: 14,
     fontWeight: FontWeight.w600,
     color: Color(AppColors.textPrimary),
   );
 
-  static const TextStyle monoMedium = TextStyle(
+  /// 12px — Table data, chart values, secondary numbers
+  static const TextStyle monoData = TextStyle(
     fontFamily: mono,
     fontSize: 12,
     fontWeight: FontWeight.w500,
     color: Color(AppColors.textPrimary),
   );
 
-  static const TextStyle monoSmall = TextStyle(
+  /// 11px — Column headers, field labels, inline numbers
+  static const TextStyle monoLabel = TextStyle(
     fontFamily: mono,
     fontSize: 11,
-    fontWeight: FontWeight.w400,
-    color: Color(AppColors.textPrimary),
-  );
-
-  static const TextStyle monoTiny = TextStyle(
-    fontFamily: mono,
-    fontSize: 9,
-    fontWeight: FontWeight.w400,
-    color: Color(AppColors.textSecondary),
-  );
-
-  // Section Headers (ALL CAPS)
-  static const TextStyle sectionHeader = TextStyle(
-    fontFamily: mono,
-    fontSize: 10,
-    fontWeight: FontWeight.w600,
-    color: Color(AppColors.textSecondary),
-    letterSpacing: 1.2,
-  );
-
-  // Compact Mode Variants
-  static const TextStyle compactTitle = TextStyle(
-    fontFamily: sans,
-    fontSize: 13,
-    fontWeight: FontWeight.w600,
-    color: Color(AppColors.textPrimary),
-  );
-
-  static const TextStyle compactBody = TextStyle(
-    fontFamily: sans,
-    fontSize: 11,
-    fontWeight: FontWeight.w400,
-    color: Color(AppColors.textPrimary),
-  );
-
-  static const TextStyle compactCaption = TextStyle(
-    fontFamily: sans,
-    fontSize: 9,
-    fontWeight: FontWeight.w400,
-    color: Color(AppColors.textSecondary),
-  );
-
-  static const TextStyle compactMono = TextStyle(
-    fontFamily: mono,
-    fontSize: 10,
     fontWeight: FontWeight.w500,
-    color: Color(AppColors.textPrimary),
+    color: Color(AppColors.textSecondary),
   );
+
+  /// 10px — Timestamps, metadata, tiny numbers
+  static const TextStyle monoMeta = TextStyle(
+    fontFamily: mono,
+    fontSize: 10,
+    fontWeight: FontWeight.w400,
+    color: Color(AppColors.textSecondary),
+  );
+
+  /// 10px — Table section headers (ALL CAPS)
+  static const TextStyle monoSection = TextStyle(
+    fontFamily: mono,
+    fontSize: 10,
+    fontWeight: FontWeight.w600,
+    color: Color(AppColors.textTertiary),
+    letterSpacing: 1.0,
+  );
+
+  // ── Semantic Aliases (backward compat) ──
+
+  static const TextStyle displayLarge = heading;
+  static const TextStyle displayMedium = subheading;
+  static const TextStyle titleLarge = heading;
+  static const TextStyle titleMedium = subheading;
+  static const TextStyle titleSmall = subheading;
+  static const TextStyle bodyLarge = body;
+  static const TextStyle bodyMedium = body;
+  static const TextStyle bodySmall = caption;
+  static const TextStyle labelLarge = subheading;
+  static const TextStyle labelMedium = caption;
+  static const TextStyle labelSmall = micro;
+  static const TextStyle monoLarge = monoPrice;
+  static const TextStyle monoMedium = monoData;
+  static const TextStyle monoSmall = monoLabel;
+  static const TextStyle monoTiny = monoMeta;
+  static const TextStyle sectionHeader = monoSection;
+  static const TextStyle compactTitle = subheading;
+  static const TextStyle compactBody = caption;
+  static const TextStyle compactCaption = micro;
+  static const TextStyle compactMono = monoLabel;
 }
