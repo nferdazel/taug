@@ -113,6 +113,8 @@ Not the target:
 - 11 statement-only metrics computed correctly
 - 7 price-dependent metrics correctly marked missing_input
 - Pipeline re-verified on 2026-06-20: all SEC jobs idempotent, metrics engine working
+- 73 unit tests (pytest): validators, metrics computation, screener filter builder
+- Test suite: `python -m pytest workers/tests/ -v`
 
 ### Known operational issue
 
