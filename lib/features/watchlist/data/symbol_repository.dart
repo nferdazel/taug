@@ -70,7 +70,7 @@ class SymbolRepository {
   ) async {
     try {
       final response = await _client
-          .from('${AppSchema.name}.${AppSchema.symbols}')
+          .from(AppSchema.symbols)
           .select('ticker, name, exchanges!inner(code)')
           .or('ticker.ilike.%$query%,name.ilike.%$query%')
           .limit(20);
@@ -93,7 +93,7 @@ class SymbolRepository {
   Future<int?> getSymbolId(String ticker) async {
     try {
       final response = await _client
-          .from('${AppSchema.name}.${AppSchema.symbols}')
+          .from(AppSchema.symbols)
           .select('id')
           .eq('ticker', ticker)
           .maybeSingle();
@@ -115,7 +115,7 @@ class SymbolRepository {
       }
 
       final response = await _client
-          .from('${AppSchema.name}.${AppSchema.symbols}')
+          .from(AppSchema.symbols)
           .insert({
             'exchange_id': exchangeId,
             'ticker': symbol.symbol,
@@ -134,7 +134,7 @@ class SymbolRepository {
   Future<int?> _getExchangeId(String exchangeCode) async {
     try {
       final response = await _client
-          .from('${AppSchema.name}.${AppSchema.exchanges}')
+          .from(AppSchema.exchanges)
           .select('id')
           .eq('code', exchangeCode)
           .maybeSingle();

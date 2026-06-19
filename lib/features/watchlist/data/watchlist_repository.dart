@@ -21,7 +21,7 @@ class WatchlistRepository {
       }
 
       final response = await _client
-          .from('${AppSchema.name}.${AppSchema.watchlists}')
+          .from(AppSchema.watchlists)
           .select()
           .eq('user_id', userId)
           .order('sort_order');
@@ -42,7 +42,7 @@ class WatchlistRepository {
       }
 
       final response = await _client
-          .from('${AppSchema.name}.${AppSchema.watchlists}')
+          .from(AppSchema.watchlists)
           .insert({'user_id': userId, 'name': name})
           .select()
           .single();
@@ -57,7 +57,7 @@ class WatchlistRepository {
   Future<Result<void>> deleteWatchlist(String watchlistId) async {
     try {
       await _client
-          .from('${AppSchema.name}.${AppSchema.watchlists}')
+          .from(AppSchema.watchlists)
           .delete()
           .eq('id', watchlistId);
       return const Result.success(null);
@@ -70,7 +70,7 @@ class WatchlistRepository {
   Future<Result<List<WatchlistItem>>> getWatchlistItems(String watchlistId) async {
     try {
       final response = await _client
-          .from('${AppSchema.name}.${AppSchema.watchlistItems}')
+          .from(AppSchema.watchlistItems)
           .select('''
             *,
             symbols!inner(id, ticker, name, asset_class, exchanges!inner(code))
@@ -105,7 +105,7 @@ class WatchlistRepository {
   Future<Result<WatchlistItem>> addToWatchlist(String watchlistId, int symbolId) async {
     try {
       final response = await _client
-          .from('${AppSchema.name}.${AppSchema.watchlistItems}')
+          .from(AppSchema.watchlistItems)
           .insert({'watchlist_id': watchlistId, 'symbol_id': symbolId})
           .select()
           .single();
@@ -119,7 +119,7 @@ class WatchlistRepository {
   Future<Result<void>> removeFromWatchlist(String itemId) async {
     try {
       await _client
-          .from('${AppSchema.name}.${AppSchema.watchlistItems}')
+          .from(AppSchema.watchlistItems)
           .delete()
           .eq('id', itemId);
       return const Result.success(null);

@@ -19,7 +19,7 @@ class SettingsRepository {
       }
 
       final response = await _client
-          .from('${AppSchema.name}.${AppSchema.userSettings}')
+          .from(AppSchema.userSettings)
           .select()
           .eq('user_id', userId)
           .single();
@@ -39,7 +39,7 @@ class SettingsRepository {
       }
 
       await _client
-          .from('${AppSchema.name}.${AppSchema.userSettings}')
+          .from(AppSchema.userSettings)
           .update(updates)
           .eq('user_id', userId);
 
@@ -58,7 +58,7 @@ class SettingsRepository {
       }
 
       final response = await _client
-          .from('${AppSchema.name}.${AppSchema.profiles}')
+          .from(AppSchema.profiles)
           .select()
           .eq('id', userId)
           .single();
@@ -78,7 +78,7 @@ class SettingsRepository {
       }
 
       await _client
-          .from('${AppSchema.name}.${AppSchema.profiles}')
+          .from(AppSchema.profiles)
           .update(updates)
           .eq('id', userId);
 

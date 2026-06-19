@@ -19,7 +19,7 @@ class NewsRepository {
   }) async {
     try {
       var query = _client
-          .from('${AppSchema.name}.${AppSchema.newsArticles}')
+          .from(AppSchema.newsArticles)
           .select();
 
       if (category != null && category != 'all') {

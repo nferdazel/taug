@@ -14,6 +14,7 @@ void main() async {
   await Supabase.initialize(
     url: AppEnv.supabaseUrl,
     anonKey: AppEnv.supabaseAnonKey,
+    postgrestOptions: const PostgrestClientOptions(schema: 'taug'),
   );
 
   GoogleFonts.config.allowRuntimeFetching = true;

@@ -19,7 +19,7 @@ class CalendarRepository {
   }) async {
     try {
       var query = _client
-          .from('${AppSchema.name}.${AppSchema.econEvents}')
+          .from(AppSchema.econEvents)
           .select();
 
       if (date != null) {
