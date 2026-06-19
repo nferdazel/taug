@@ -143,13 +143,33 @@ supabase functions deploy refresh-calendar
 supabase secrets set TWELVE_DATA_API_KEY=<your-key>
 ```
 
+### SEC Worker Setup
+
+The first research worker runs as a scheduled GitHub Actions job:
+
+- Workflow: `.github/workflows/sec-submissions-sync.yml`
+- Entry point: `python -m workers.taug_worker.cli sync-sec-submissions`
+
+Required GitHub secrets:
+
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `SEC_USER_AGENT`
+
+Recommended GitHub variable:
+
+- `SEC_TARGET_CIKS`
+
 ### Environment Variables
 
 | Variable | Description |
 |---|---|
 | `SUPABASE_URL` | Your Supabase project URL |
 | `SUPABASE_ANON_KEY` | Your Supabase anon key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service-role key for batch workers |
 | `TWELVE_DATA_API_KEY` | Twelve Data API key (free tier) |
+| `SEC_USER_AGENT` | SEC-compliant user agent string for EDGAR requests |
+| `SEC_TARGET_CIKS` | Default comma-separated SEC CIK list for worker runs |
 
 ## Project Structure
 

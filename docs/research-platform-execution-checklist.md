@@ -185,6 +185,7 @@ Docs discipline for this repo:
   - Python preferred for filings and financial parsing
   - scheduled execution platform
 - `[done]` define ingestion scheduler
+- `[done]` choose GitHub Actions as MVP scheduler host
 - `[done]` define raw payload retention rules
 - `[done]` define parser versioning
 - `[done]` define validation pipeline
@@ -253,6 +254,7 @@ Exit criteria:
 - `[done]` document source strategy and priority order
 - `[done]` define SEC filings foundation implementation checklist
 - `[done]` create raw spine and audit spine migration
+- `[done]` scaffold Python worker and GitHub Actions SEC submissions workflow
 - `[todo]` ingest SEC submissions
 - `[todo]` store raw documents immutably
 - `[todo]` build filing and filing_version model

@@ -97,20 +97,29 @@ Use one external worker service and one scheduler.
 Suggested MVP stack:
 
 - Python worker app
-- scheduled execution on Cloud Run Jobs, Railway cron, Fly.io machines, or VPS cron
+- scheduled execution on GitHub Actions
 - Supabase Postgres as system of record
 - Supabase Storage for raw documents initially
+
+Current repo decision:
+
+- MVP worker runs on scheduled or manually dispatched GitHub Actions workflows
+- this is a transitional execution platform, not the preferred long-term worker host
 
 ### Preferred sequence
 
 1. Start with a single Python worker codebase
-2. Run it on scheduled jobs
+2. Run it on GitHub Actions scheduled jobs first
 3. Keep job types explicit
 4. Split services only after volume or runtime requires it
 
 Avoid early microservices.
 
 The project does not need them yet.
+
+Also avoid pretending GitHub Actions is the final batch platform.
+
+It is acceptable for MVP execution, not for infinite scale.
 
 ## Job Categories
 

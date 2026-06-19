@@ -68,6 +68,10 @@ There are four workstreams:
 3. SEC fetch and storage
 4. Filing lineage validation
 
+Current execution host choice:
+
+- Python worker runs on GitHub Actions for MVP scheduling
+
 ## A. SQL Foundation Checklist
 
 ### A1. Raw ingestion tables
@@ -139,15 +143,15 @@ Exit criteria:
 
 ### B1. Worker project bootstrap
 
-- `[todo]` create Python worker project
-- `[todo]` define module layout:
+- `[done]` create Python worker project
+- `[done]` define module layout:
   - `sources/sec/`
   - `jobs/`
   - `storage/`
   - `validators/`
   - `audit/`
-- `[todo]` define environment variable contract
-- `[todo]` define worker versioning convention
+- `[done]` define environment variable contract
+- `[done]` define worker versioning convention
 
 Exit criteria:
 
@@ -155,10 +159,10 @@ Exit criteria:
 
 ### B2. Job registry and scheduler contract
 
-- `[todo]` define `filing_discovery` job
+- `[done]` define `filing_discovery` job
 - `[todo]` define `document_fetch` job
-- `[todo]` define retry policy
-- `[todo]` define checkpoint storage approach
+- `[done]` define retry policy
+- `[done]` define checkpoint storage approach
 
 Checkpoint examples:
 
@@ -172,10 +176,10 @@ Exit criteria:
 
 ### B3. Supabase integration contract
 
-- `[todo]` define write path from worker to Postgres
+- `[done]` define write path from worker to Postgres
 - `[todo]` define write path from worker to Storage
-- `[todo]` define service-role credential handling
-- `[todo]` define timeout and retry behavior for DB/storage writes
+- `[done]` define service-role credential handling
+- `[done]` define timeout and retry behavior for DB/storage writes
 
 Exit criteria:
 
