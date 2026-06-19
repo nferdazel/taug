@@ -332,9 +332,12 @@ Exit criteria:
   - `security_price_snapshots`
   - `screening_universe_memberships`
 - `[done]` implement formula engine worker job (`compute-company-metrics`)
-  - TTM aggregation for income/cash flow metrics
+  - TTM aggregation for income/cash flow metrics (annual or sum-of-4-quarters)
   - Balance sheet metrics from latest period
   - Price-dependent metrics marked as missing_input (price data pending)
+  - Tested end-to-end on Apple (AAPL) and Microsoft (MSFT)
+  - Handles non-standard fiscal calendars (250-day threshold)
+  - Handles superseded filing versions during replay
 - `[todo]` implement metric snapshot read model (serving view)
 - `[todo]` implement saved screener support
 

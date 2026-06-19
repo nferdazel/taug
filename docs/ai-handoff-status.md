@@ -101,6 +101,12 @@ These are preserved, not the current bottleneck.
 - quality and freshness read model
 - Flutter company research pages (deferred until serving views exist)
 
+### Test coverage
+
+- `compute-company-metrics` tested on AAPL and MSFT (full pipeline: sync → companyfacts → parse → compute)
+- 11 statement-only metrics computed correctly for both companies
+- 7 price-dependent metrics correctly marked missing_input (no price data yet)
+
 These are the first Flutter-safe read surfaces for research pages.
 
 ## What Is Still Incomplete By Design
