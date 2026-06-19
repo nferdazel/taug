@@ -267,6 +267,7 @@ Exit criteria:
 - `[done]` validate required SEC submissions keys before normalization
 - `[done]` validate SEC submissions payload parse success separately from schema validation
 - `[done]` validate SEC raw document hash and byte size before finalizing storage
+- `[done]` validate duplicate detection rules for raw payload and raw document reuse
 
 Exit criteria:
 

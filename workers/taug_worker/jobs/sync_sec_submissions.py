@@ -110,6 +110,37 @@ def run_sync_sec_submissions(
           created_raw_records += 1
         else:
           replayed_raw_records += 1
+          supabase_client.insert_validation_event(
+            entity_type="raw_record",
+            entity_id=raw_record.id,
+            validation_rule="sec_submissions_duplicate_detection",
+            status="passed",
+            message=(
+              "Duplicate SEC submissions payload detected by "
+              "source_record_key and payload_hash; reused existing raw_record."
+            ),
+            payload={
+              "source": source.code,
+              "worker_version": __version__,
+              "cik": cik,
+              "source_record_key": source_record_key,
+              "payload_hash": payload_hash,
+            },
+          )
+          supabase_client.insert_audit_event(
+            event_type="raw_record_duplicate_detected",
+            entity_type="raw_record",
+            entity_id=raw_record.id,
+            severity="info",
+            reference_type="raw_fetch_run",
+            reference_id=fetch_run_id,
+            payload={
+              "source": source.code,
+              "cik": cik,
+              "source_record_key": source_record_key,
+              "payload_hash": payload_hash,
+            },
+          )
         payload_validation_failures: tuple[ValidationFailure, ...] = (
           validate_sec_submissions_payload(payload)
         )

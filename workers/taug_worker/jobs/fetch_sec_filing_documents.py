@@ -8,7 +8,7 @@ from pathlib import PurePosixPath
 
 from ..__init__ import __version__
 from ..sec_client import SecClient
-from ..supabase_rest import SupabaseRestClient
+from ..supabase_rest import SupabaseRestClient, UpsertResult
 from ..validators.raw_documents import (
   DocumentIntegrityFailure,
   validate_raw_document_integrity,
@@ -132,7 +132,7 @@ def run_fetch_sec_filing_documents(
           f"{int(pending.cik)}/{pending.accession_number.replace('-', '')}/"
           f"{pending.primary_document}"
         )
-        raw_document_id = supabase_client.insert_raw_document(
+        raw_document: UpsertResult = supabase_client.insert_raw_document(
           raw_source_id=source.id,
           fetch_run_id=fetch_run_id,
           document_type="sec_primary_filing_document",
@@ -151,10 +151,45 @@ def run_fetch_sec_filing_documents(
             "primary_document": pending.primary_document,
           },
         )
-        supabase_client.mark_raw_document_verified(raw_document_id=raw_document_id)
+        if not raw_document.created:
+          supabase_client.insert_validation_event(
+            entity_type="raw_document",
+            entity_id=raw_document.id,
+            validation_rule="sec_primary_document_duplicate_detection",
+            status="passed",
+            message=(
+              "Duplicate raw SEC filing document detected by content_hash; "
+              "reused existing raw_document."
+            ),
+            payload={
+              "source": source.code,
+              "content_hash": content_hash,
+              "byte_size": byte_size,
+              "filing_version_id": pending.filing_version_id,
+              "accession_number": pending.accession_number,
+              "primary_document": pending.primary_document,
+            },
+          )
+          supabase_client.insert_audit_event(
+            event_type="raw_document_duplicate_detected",
+            entity_type="raw_document",
+            entity_id=raw_document.id,
+            severity="info",
+            reference_type="raw_fetch_run",
+            reference_id=fetch_run_id,
+            payload={
+              "source": source.code,
+              "content_hash": content_hash,
+              "byte_size": byte_size,
+              "filing_version_id": pending.filing_version_id,
+              "accession_number": pending.accession_number,
+              "primary_document": pending.primary_document,
+            },
+          )
+        supabase_client.mark_raw_document_verified(raw_document_id=raw_document.id)
         supabase_client.insert_validation_event(
           entity_type="raw_document",
-          entity_id=raw_document_id,
+          entity_id=raw_document.id,
           validation_rule="sec_primary_document_integrity",
           status="passed",
           message="Raw SEC filing document passed integrity validation.",
@@ -169,12 +204,12 @@ def run_fetch_sec_filing_documents(
         )
         supabase_client.insert_raw_document_link(
           raw_record_id=pending.raw_record_id,
-          raw_document_id=raw_document_id,
+          raw_document_id=raw_document.id,
           link_type="primary_filing_document",
         )
         supabase_client.update_filing_version_document(
           filing_version_id=pending.filing_version_id,
-          raw_document_id=raw_document_id,
+          raw_document_id=raw_document.id,
         )
         supabase_client.insert_audit_event(
           event_type="raw_document_ingested",

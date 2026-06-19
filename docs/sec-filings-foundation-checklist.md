@@ -284,7 +284,7 @@ Exit criteria:
 - `[done]` validate payload parse success
 - `[done]` validate required SEC keys exist
 - `[done]` validate fetched document hash and byte size
-- `[todo]` validate duplicate detection rules
+- `[done]` validate duplicate detection rules
 
 ### E2. Normalization validation
 
@@ -311,6 +311,7 @@ Validation note:
 - local SEC-key validation on `2026-06-19` confirmed invalid synthetic payloads emit deterministic failure codes and valid live `0000320193` submissions still complete successfully
 - local parse validation on `2026-06-19` confirmed synthetic bad-JSON payloads emit `sec_submissions_payload_json_parse_failed`, synthetic wrong-root payloads emit `sec_submissions_payload_root_type_invalid`, and live `0000320193` submissions still complete successfully
 - local raw-document integrity validation on `2026-06-19` confirmed synthetic invalid bodies emit deterministic integrity failure codes and live fetched documents store `content_hash`, `byte_size`, `verified_at`, and `sec_primary_document_integrity=passed`
+- local duplicate-detection validation on `2026-06-19` confirmed live submissions reruns emit `sec_submissions_duplicate_detection=passed` and direct duplicate `raw_document` insertion returns the existing row with `created=False`
 
 ## F. Storage Convention Checklist
 

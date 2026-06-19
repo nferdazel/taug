@@ -548,7 +548,20 @@ class SupabaseRestClient:
     byte_size: int,
     published_at: str | None,
     metadata: dict[str, object],
-  ) -> str:
+  ) -> UpsertResult:
+    existing_rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "raw_documents",
+      query={
+        "select": "id",
+        "raw_source_id": f"eq.{raw_source_id}",
+        "content_hash": f"eq.{content_hash}",
+        "limit": "1",
+      },
+    )
+    if existing_rows:
+      return UpsertResult(id=str(existing_rows[0]["id"]), created=False)
+
     rows: list[dict[str, Any]] = self._request(
       "POST",
       "raw_documents",
@@ -568,7 +581,9 @@ class SupabaseRestClient:
         },
       ],
     )
-    return str(rows[0]["id"])
+    if not rows:
+      raise ValueError("Failed to insert raw document")
+    return UpsertResult(id=str(rows[0]["id"]), created=True)
 
   def mark_raw_document_verified(
     self,
