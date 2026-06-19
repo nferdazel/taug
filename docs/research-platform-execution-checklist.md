@@ -150,6 +150,7 @@ Use this file as the first source of truth before planning or implementing anyth
 - `[todo]` add separate `preferred_exchanges`
 - `[todo]` add `base_currency`
 - `[todo]` add dashboard/news/screener defaults tied to home market
+- `[done]` home-market preference model documented in schema v2 design
 
 ## H. Data Source Plan
 
@@ -218,13 +219,14 @@ Exit criteria:
 
 ### Phase 1: Schema v2 design
 
-- `[todo]` design target research schema
-- `[todo]` define raw / normalized / derived / research layers
+- `[done]` design target research schema
+- `[done]` define raw / normalized / derived / research layers
 - `[todo]` define home-market preference model
 
 Exit criteria:
 
 - schema review approved
+- schema v2 document exists
 
 ### Phase 2: Ingestion topology
 
