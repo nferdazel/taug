@@ -36,6 +36,8 @@ class FactMapping:
 
 
 FACT_CATALOG: dict[str, FactMapping] = {
+  # === INCOME STATEMENT ===
+  # Revenue variants
   "RevenueFromContractWithCustomerExcludingAssessedTax": FactMapping(
     statement_type=STATEMENT_TYPE_INCOME,
     unit_type="monetary",
@@ -48,7 +50,53 @@ FACT_CATALOG: dict[str, FactMapping] = {
     statement_type=STATEMENT_TYPE_INCOME,
     unit_type="monetary",
   ),
+  "SalesRevenueGoodsNet": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "SalesRevenueServicesNet": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "RevenueFromContractWithCustomerIncludingAssessedTax": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "SubscriptionRevenue": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "LicenseRevenue": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "AdvertisingRevenue": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  # Cost and gross profit
   "GrossProfit": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "CostOfGoodsAndServicesSold": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "CostOfRevenue": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "CostOfGoodsSold": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "CostOfServices": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  # Operating expenses
+  "OperatingExpenses": FactMapping(
     statement_type=STATEMENT_TYPE_INCOME,
     unit_type="monetary",
   ),
@@ -56,10 +104,105 @@ FACT_CATALOG: dict[str, FactMapping] = {
     statement_type=STATEMENT_TYPE_INCOME,
     unit_type="monetary",
   ),
+  "ResearchAndDevelopmentExpense": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "SellingGeneralAndAdministrativeExpense": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "SellingAndMarketingExpense": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "GeneralAndAdministrativeExpense": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "DepreciationAndAmortization": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "AmortizationOfIntangibleAssets": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "RestructuringCharges": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "GoodwillImpairmentLoss": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "AssetImpairmentCharges": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  # Non-operating income/expense
+  "InterestIncomeExpenseNonoperatingNet": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "InvestmentIncomeNet": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "InterestAndDebtExpense": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "InterestExpense": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "InterestIncome": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "OtherNonoperatingIncomeExpense": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "GainLossOnInvestments": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "ForeignCurrencyTransactionGainLossBeforeTax": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  # Tax and net income
+  "IncomeTaxExpenseBenefit": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "IncomeTaxExpenseBenefitContinuingOperations": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
   "NetIncomeLoss": FactMapping(
     statement_type=STATEMENT_TYPE_INCOME,
     unit_type="monetary",
   ),
+  "NetIncomeLossAttributableToNoncontrollingInterest": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "NetIncomeLossAvailableToCommonStockholdersBasic": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "ProfitLoss": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "ComprehensiveIncomeNetOfTax": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  # Per-share
   "EarningsPerShareBasic": FactMapping(
     statement_type=STATEMENT_TYPE_INCOME,
     unit_type="ratio",
@@ -68,14 +211,34 @@ FACT_CATALOG: dict[str, FactMapping] = {
     statement_type=STATEMENT_TYPE_INCOME,
     unit_type="ratio",
   ),
-  "WeightedAverageNumberOfSharesOutstandingBasic": FactMapping(
-    statement_type=STATEMENT_TYPE_EQUITY,
-    unit_type="shares",
+  "DividendsPerShare": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="ratio",
   ),
-  "WeightedAverageNumberOfDilutedSharesOutstanding": FactMapping(
-    statement_type=STATEMENT_TYPE_EQUITY,
-    unit_type="shares",
+  "DividendsCommonStockCash": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
   ),
+  "DividendsPreferredStockCash": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  # EBITDA / EBIT
+  "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "IncomeLossFromContinuingOperations": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+  "IncomeLossFromDiscontinuedOperationsNetOfTax": FactMapping(
+    statement_type=STATEMENT_TYPE_INCOME,
+    unit_type="monetary",
+  ),
+
+  # === BALANCE SHEET ===
+  # Assets
   "Assets": FactMapping(
     statement_type=STATEMENT_TYPE_BALANCE,
     unit_type="monetary",
@@ -92,6 +255,67 @@ FACT_CATALOG: dict[str, FactMapping] = {
     statement_type=STATEMENT_TYPE_BALANCE,
     unit_type="monetary",
   ),
+  "ShortTermInvestments": FactMapping(
+    statement_type=STATEMENT_TYPE_BALANCE,
+    unit_type="monetary",
+  ),
+  "AccountsReceivableNetCurrent": FactMapping(
+    statement_type=STATEMENT_TYPE_BALANCE,
+    unit_type="monetary",
+  ),
+  "AccountsReceivableGrossCurrent": FactMapping(
+    statement_type=STATEMENT_TYPE_BALANCE,
+    unit_type="monetary",
+  ),
+  "InventoryNet": FactMapping(
+    statement_type=STATEMENT_TYPE_BALANCE,
+    unit_type="monetary",
+  ),
+  "PrepaidExpenseAndOtherAssetsCurrent": FactMapping(
+    statement_type=STATEMENT_TYPE_BALANCE,
+    unit_type="monetary",
+  ),
+  "AssetsNoncurrent": FactMapping(
+    statement_type=STATEMENT_TYPE_BALANCE,
+    unit_type="monetary",
+  ),
+  "PropertyPlantAndEquipmentNet": FactMapping(
+    statement_type=STATEMENT_TYPE_BALANCE,
+    unit_type="monetary",
+  ),
+  "Goodwill": FactMapping(
+    statement_type=STATEMENT_TYPE_BALANCE,
+    unit_type="monetary",
+  ),
+  "IntangibleAssetsNetExcludingGoodwill": FactMapping(
+    statement_type=STATEMENT_TYPE_BALANCE,
+    unit_type="monetary",
+  ),
+  "IntangibleAssetsNetIncludingGoodwill": FactMapping(
+    statement_type=STATEMENT_TYPE_BALANCE,
+    unit_type="monetary",
+  ),
+  "LongTermInvestments": FactMapping(
+    statement_type=STATEMENT_TYPE_BALANCE,
+    unit_type="monetary",
+  ),
+  "OperatingLeaseRightOfUseAsset": FactMapping(
+    statement_type=STATEMENT_TYPE_BALANCE,
+    unit_type="monetary",
+  ),
+  "FinanceLeaseRightOfUseAsset": FactMapping(
+    statement_type=STATEMENT_TYPE_BALANCE,
+    unit_type="monetary",
+  ),
+  "DeferredIncomeTaxAssetsNet": FactMapping(
+    statement_type=STATEMENT_TYPE_BALANCE,
+    unit_type="monetary",
+  ),
+  "OtherAssetsNoncurrent": FactMapping(
+    statement_type=STATEMENT_TYPE_BALANCE,
+    unit_type="monetary",
+  ),
+  # Liabilities
   "Liabilities": FactMapping(
     statement_type=STATEMENT_TYPE_BALANCE,
     unit_type="monetary",
@@ -100,7 +324,19 @@ FACT_CATALOG: dict[str, FactMapping] = {
     statement_type=STATEMENT_TYPE_BALANCE,
     unit_type="monetary",
   ),
-  "StockholdersEquity": FactMapping(
+  "AccountsPayableCurrent": FactMapping(
+    statement_type=STATEMENT_TYPE_BALANCE,
+    unit_type="monetary",
+  ),
+  "AccruedLiabilitiesCurrent": FactMapping(
+    statement_type=STATEMENT_TYPE_BALANCE,
+    unit_type="monetary",
+  ),
+  "DeferredRevenueCurrent": FactMapping(
+    statement_type=STATEMENT_TYPE_BALANCE,
+    unit_type="monetary",
+  ),
+  "DeferredRevenueNoncurrent": FactMapping(
     statement_type=STATEMENT_TYPE_BALANCE,
     unit_type="monetary",
   ),
@@ -112,76 +348,61 @@ FACT_CATALOG: dict[str, FactMapping] = {
     statement_type=STATEMENT_TYPE_BALANCE,
     unit_type="monetary",
   ),
-  "NetCashProvidedByUsedInOperatingActivities": FactMapping(
-    statement_type=STATEMENT_TYPE_CASH_FLOW,
-    unit_type="monetary",
-  ),
-  "PaymentsToAcquirePropertyPlantAndEquipment": FactMapping(
-    statement_type=STATEMENT_TYPE_CASH_FLOW,
-    unit_type="monetary",
-  ),
-  "DepreciationDepletionAndAmortization": FactMapping(
-    statement_type=STATEMENT_TYPE_CASH_FLOW,
-    unit_type="monetary",
-  ),
-  "NetCashProvidedByUsedInInvestingActivities": FactMapping(
-    statement_type=STATEMENT_TYPE_CASH_FLOW,
-    unit_type="monetary",
-  ),
-  "NetCashProvidedByUsedInFinancingActivities": FactMapping(
-    statement_type=STATEMENT_TYPE_CASH_FLOW,
-    unit_type="monetary",
-  ),
-  "PaymentsToRepurchaseCommonStock": FactMapping(
-    statement_type=STATEMENT_TYPE_CASH_FLOW,
-    unit_type="monetary",
-  ),
-  "EntityCommonStockSharesOutstanding": FactMapping(
-    statement_type=STATEMENT_TYPE_EQUITY,
-    unit_type="shares",
-  ),
-  "OperatingExpenses": FactMapping(
-    statement_type=STATEMENT_TYPE_INCOME,
-    unit_type="monetary",
-  ),
-  "CostOfGoodsAndServicesSold": FactMapping(
-    statement_type=STATEMENT_TYPE_INCOME,
-    unit_type="monetary",
-  ),
-  "CostOfRevenue": FactMapping(
-    statement_type=STATEMENT_TYPE_INCOME,
-    unit_type="monetary",
-  ),
-  "ResearchAndDevelopmentExpense": FactMapping(
-    statement_type=STATEMENT_TYPE_INCOME,
-    unit_type="monetary",
-  ),
-  "SellingGeneralAndAdministrativeExpense": FactMapping(
-    statement_type=STATEMENT_TYPE_INCOME,
-    unit_type="monetary",
-  ),
-  "InterestIncomeExpenseNonoperatingNet": FactMapping(
-    statement_type=STATEMENT_TYPE_INCOME,
-    unit_type="monetary",
-  ),
-  "IncomeTaxExpenseBenefit": FactMapping(
-    statement_type=STATEMENT_TYPE_INCOME,
-    unit_type="monetary",
-  ),
-  "CostOfGoodsSold": FactMapping(
-    statement_type=STATEMENT_TYPE_INCOME,
-    unit_type="monetary",
-  ),
-  "OperatingLeaseRightOfUseAsset": FactMapping(
+  "LongTermDebtAndCapitalLeaseObligations": FactMapping(
     statement_type=STATEMENT_TYPE_BALANCE,
     unit_type="monetary",
   ),
-  "FinanceLeaseRightOfUseAsset": FactMapping(
+  "ShortTermBorrowings": FactMapping(
+    statement_type=STATEMENT_TYPE_BALANCE,
+    unit_type="monetary",
+  ),
+  "CommercialPaper": FactMapping(
     statement_type=STATEMENT_TYPE_BALANCE,
     unit_type="monetary",
   ),
   "LiabilitiesNoncurrent": FactMapping(
     statement_type=STATEMENT_TYPE_BALANCE,
+    unit_type="monetary",
+  ),
+  "DeferredIncomeTaxLiabilitiesNet": FactMapping(
+    statement_type=STATEMENT_TYPE_BALANCE,
+    unit_type="monetary",
+  ),
+  "LongTermOperatingLeaseLiability": FactMapping(
+    statement_type=STATEMENT_TYPE_BALANCE,
+    unit_type="monetary",
+  ),
+  "OtherLiabilitiesNoncurrent": FactMapping(
+    statement_type=STATEMENT_TYPE_BALANCE,
+    unit_type="monetary",
+  ),
+  "EmployeeRelatedLiabilitiesCurrent": FactMapping(
+    statement_type=STATEMENT_TYPE_BALANCE,
+    unit_type="monetary",
+  ),
+  "IncomeTaxesPayable": FactMapping(
+    statement_type=STATEMENT_TYPE_BALANCE,
+    unit_type="monetary",
+  ),
+  # Equity
+  "StockholdersEquity": FactMapping(
+    statement_type=STATEMENT_TYPE_BALANCE,
+    unit_type="monetary",
+  ),
+  "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": FactMapping(
+    statement_type=STATEMENT_TYPE_BALANCE,
+    unit_type="monetary",
+  ),
+  "CommonStockValue": FactMapping(
+    statement_type=STATEMENT_TYPE_EQUITY,
+    unit_type="monetary",
+  ),
+  "AdditionalPaidInCapitalCommonStock": FactMapping(
+    statement_type=STATEMENT_TYPE_EQUITY,
+    unit_type="monetary",
+  ),
+  "CommonStocksIncludingAdditionalPaidInCapital": FactMapping(
+    statement_type=STATEMENT_TYPE_EQUITY,
     unit_type="monetary",
   ),
   "RetainedEarningsAccumulatedDeficit": FactMapping(
@@ -196,8 +417,135 @@ FACT_CATALOG: dict[str, FactMapping] = {
     statement_type=STATEMENT_TYPE_EQUITY,
     unit_type="monetary",
   ),
-  "CommonStocksIncludingAdditionalPaidInCapital": FactMapping(
+  "TreasuryStockValue": FactMapping(
     statement_type=STATEMENT_TYPE_EQUITY,
+    unit_type="monetary",
+  ),
+  "NoncontrollingInterest": FactMapping(
+    statement_type=STATEMENT_TYPE_EQUITY,
+    unit_type="monetary",
+  ),
+  # Shares
+  "WeightedAverageNumberOfSharesOutstandingBasic": FactMapping(
+    statement_type=STATEMENT_TYPE_EQUITY,
+    unit_type="shares",
+  ),
+  "WeightedAverageNumberOfDilutedSharesOutstanding": FactMapping(
+    statement_type=STATEMENT_TYPE_EQUITY,
+    unit_type="shares",
+  ),
+  "EntityCommonStockSharesOutstanding": FactMapping(
+    statement_type=STATEMENT_TYPE_EQUITY,
+    unit_type="shares",
+  ),
+  "CommonStockSharesAuthorized": FactMapping(
+    statement_type=STATEMENT_TYPE_EQUITY,
+    unit_type="shares",
+  ),
+  "CommonStockSharesIssued": FactMapping(
+    statement_type=STATEMENT_TYPE_EQUITY,
+    unit_type="shares",
+  ),
+  "CommonStockParOrStatedValuePerShare": FactMapping(
+    statement_type=STATEMENT_TYPE_EQUITY,
+    unit_type="ratio",
+  ),
+
+  # === CASH FLOW ===
+  "NetCashProvidedByUsedInOperatingActivities": FactMapping(
+    statement_type=STATEMENT_TYPE_CASH_FLOW,
+    unit_type="monetary",
+  ),
+  "NetCashProvidedByUsedInInvestingActivities": FactMapping(
+    statement_type=STATEMENT_TYPE_CASH_FLOW,
+    unit_type="monetary",
+  ),
+  "NetCashProvidedByUsedInFinancingActivities": FactMapping(
+    statement_type=STATEMENT_TYPE_CASH_FLOW,
+    unit_type="monetary",
+  ),
+  "PaymentsToAcquirePropertyPlantAndEquipment": FactMapping(
+    statement_type=STATEMENT_TYPE_CASH_FLOW,
+    unit_type="monetary",
+  ),
+  "DepreciationDepletionAndAmortization": FactMapping(
+    statement_type=STATEMENT_TYPE_CASH_FLOW,
+    unit_type="monetary",
+  ),
+  "PaymentsToRepurchaseCommonStock": FactMapping(
+    statement_type=STATEMENT_TYPE_CASH_FLOW,
+    unit_type="monetary",
+  ),
+  "ProceedsFromIssuanceOfLongTermDebt": FactMapping(
+    statement_type=STATEMENT_TYPE_CASH_FLOW,
+    unit_type="monetary",
+  ),
+  "RepaymentsOfLongTermDebt": FactMapping(
+    statement_type=STATEMENT_TYPE_CASH_FLOW,
+    unit_type="monetary",
+  ),
+  "ProceedsFromIssuanceOfCommonStock": FactMapping(
+    statement_type=STATEMENT_TYPE_CASH_FLOW,
+    unit_type="monetary",
+  ),
+  "PaymentsOfDividends": FactMapping(
+    statement_type=STATEMENT_TYPE_CASH_FLOW,
+    unit_type="monetary",
+  ),
+  "PaymentsOfDividendsCommonStock": FactMapping(
+    statement_type=STATEMENT_TYPE_CASH_FLOW,
+    unit_type="monetary",
+  ),
+  "PaymentsToAcquireBusinessesNetOfCashAcquired": FactMapping(
+    statement_type=STATEMENT_TYPE_CASH_FLOW,
+    unit_type="monetary",
+  ),
+  "ProceedsFromDivestitureOfBusinesses": FactMapping(
+    statement_type=STATEMENT_TYPE_CASH_FLOW,
+    unit_type="monetary",
+  ),
+  "PaymentsToAcquireIntangibleAssets": FactMapping(
+    statement_type=STATEMENT_TYPE_CASH_FLOW,
+    unit_type="monetary",
+  ),
+  "PaymentsForProceedsFromOtherInvestingActivities": FactMapping(
+    statement_type=STATEMENT_TYPE_CASH_FLOW,
+    unit_type="monetary",
+  ),
+  "EffectOfExchangeRateOnCashAndCashEquivalents": FactMapping(
+    statement_type=STATEMENT_TYPE_CASH_FLOW,
+    unit_type="monetary",
+  ),
+  "CashAndCashEquivalentsPeriodIncreaseDecrease": FactMapping(
+    statement_type=STATEMENT_TYPE_CASH_FLOW,
+    unit_type="monetary",
+  ),
+  "ShareBasedCompensation": FactMapping(
+    statement_type=STATEMENT_TYPE_CASH_FLOW,
+    unit_type="monetary",
+  ),
+  "DeferredIncomeTaxExpenseBenefit": FactMapping(
+    statement_type=STATEMENT_TYPE_CASH_FLOW,
+    unit_type="monetary",
+  ),
+  "IncreaseDecreaseInAccountsReceivable": FactMapping(
+    statement_type=STATEMENT_TYPE_CASH_FLOW,
+    unit_type="monetary",
+  ),
+  "IncreaseDecreaseInInventories": FactMapping(
+    statement_type=STATEMENT_TYPE_CASH_FLOW,
+    unit_type="monetary",
+  ),
+  "IncreaseDecreaseInAccountsPayable": FactMapping(
+    statement_type=STATEMENT_TYPE_CASH_FLOW,
+    unit_type="monetary",
+  ),
+  "IncreaseDecreaseInAccruedLiabilities": FactMapping(
+    statement_type=STATEMENT_TYPE_CASH_FLOW,
+    unit_type="monetary",
+  ),
+  "IncreaseDecreaseInDeferredRevenue": FactMapping(
+    statement_type=STATEMENT_TYPE_CASH_FLOW,
     unit_type="monetary",
   ),
 }
