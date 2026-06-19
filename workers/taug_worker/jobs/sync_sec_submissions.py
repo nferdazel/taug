@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from hashlib import sha256
 from typing import Iterable
 
@@ -760,11 +760,11 @@ def _validate_filing_temporal_sanity(
             details={"acceptance_datetime": acceptance_datetime},
           )
         )
-      elif parsed_acceptance_datetime.date() < parsed_filing_date:
+      elif parsed_acceptance_datetime.date() < parsed_filing_date - timedelta(days=3):
         failures.append(
           FilingSanityFailure(
             code="acceptance_before_filing_date",
-            message="Acceptance datetime occurs before filing_date.",
+            message="Acceptance datetime occurs more than 3 days before filing_date.",
             details={
               "filing_date": filing_date,
               "acceptance_datetime": acceptance_datetime,
@@ -782,11 +782,11 @@ def _validate_filing_temporal_sanity(
           details={"report_date": report_date},
         )
       )
-    elif parsed_report_date > parsed_filing_date:
+    elif parsed_report_date > parsed_filing_date + timedelta(days=365):
       failures.append(
         FilingSanityFailure(
-          code="report_date_after_filing_date",
-          message="Report date occurs after filing_date.",
+          code="report_date_far_future",
+          message="Report date is more than 1 year after filing_date.",
           details={
             "report_date": report_date,
             "filing_date": filing_date,
