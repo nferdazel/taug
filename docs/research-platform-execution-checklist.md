@@ -205,6 +205,10 @@ Docs discipline for this repo:
 
 ## K. Frontend Product Surfaces Needed Later
 
+- `[done]` first v2-serving read surfaces:
+  - `company_research_summary_v`
+  - `company_latest_statement_facts_v`
+  - `filing_timeline_v`
 - `[todo]` company page
 - `[todo]` security master page
 - `[todo]` filings timeline page
@@ -294,6 +298,10 @@ Exit criteria:
   - replay path is hardened with bulk active-version lookup, preloaded period/statement caches, and batched statement-item inserts
   - statement-level amendment supersession logic exists for matched `10-K/A` / `10-Q/A` lineage, but current live narrow-universe data has not yet exercised that path
   - broad-scale backfill still needs more batching and possibly non-REST write paths before large-universe runs
+- `[done]` expose first research serving views for Flutter-safe reads:
+  - company summary
+  - latest statement fact snapshot
+  - filing timeline
 - `[todo]` support historical periods and statement versions
 - `[todo]` support restatements
 

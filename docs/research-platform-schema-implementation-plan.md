@@ -443,6 +443,13 @@ Expected outputs:
 - screener read views
 - freshness and quality views
 
+Current status:
+
+- `company_research_summary_v` implemented
+- `company_latest_statement_facts_v` implemented
+- `filing_timeline_v` implemented
+- statement explorer / valuation / quality read models still pending
+
 Rule:
 
 - UI should read serving views or RPC read endpoints
