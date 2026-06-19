@@ -102,6 +102,40 @@ class CompanyRepository {
     }
   }
 
+  Future<Result<List<StatementItem>>> getStatementItems({
+    required String companyId,
+    String? statementType,
+    String? periodEnd,
+    int limit = 50,
+  }) async {
+    try {
+      var query = _client
+          .from(AppSchema.companyStatementItems)
+          .select()
+          .eq('company_id', companyId);
+
+      if (statementType != null) {
+        query = query.eq('statement_type', statementType);
+      }
+      if (periodEnd != null) {
+        query = query.eq('period_end', periodEnd);
+      }
+
+      final response = await query
+          .order('taxonomy_code')
+          .limit(limit);
+
+      final rows = (response as List<dynamic>)
+          .map((row) => StatementItem.fromMap(
+              Map<String, dynamic>.from(row as Map)))
+          .toList();
+      return Result.success(rows);
+    } catch (e) {
+      debugPrint('[CompanyRepo] getStatementItems: $e');
+      return Result.failure(ServerFailure(message: e.toString()));
+    }
+  }
+
   Future<Result<CompanyFullProfile>> getFullProfile({
     required String companyId,
   }) async {

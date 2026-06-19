@@ -220,8 +220,8 @@ Docs discipline for this repo:
   - `company_data_quality_v`
   - `screener_results_v`
 - `[done]` company research page (summary, metrics, statement history, quality)
-- `[todo]` company page: company selector (currently loads first company)
-- `[todo]` statement explorer page
+- `[done]` company page: company selector with search dialog
+- `[done]` company page: statement line items drill-down
 - `[todo]` valuation snapshot page
 - `[todo]` screener page
 - `[todo]` research notes page

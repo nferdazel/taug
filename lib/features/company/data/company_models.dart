@@ -237,6 +237,50 @@ class CompanyDataQuality {
   }
 }
 
+class StatementItem {
+  final String itemId;
+  final String statementType;
+  final String periodEnd;
+  final String? periodStart;
+  final String? taxonomyCode;
+  final String? taxonomyName;
+  final String? unitType;
+  final String? signConvention;
+  final double? valueNumeric;
+  final String? unit;
+  final String? currencyCode;
+
+  const StatementItem({
+    required this.itemId,
+    required this.statementType,
+    required this.periodEnd,
+    this.periodStart,
+    this.taxonomyCode,
+    this.taxonomyName,
+    this.unitType,
+    this.signConvention,
+    this.valueNumeric,
+    this.unit,
+    this.currencyCode,
+  });
+
+  factory StatementItem.fromMap(Map<String, dynamic> map) {
+    return StatementItem(
+      itemId: map['item_id'] as String? ?? '',
+      statementType: map['statement_type'] as String? ?? '',
+      periodEnd: map['period_end'] as String? ?? '',
+      periodStart: map['period_start'] as String?,
+      taxonomyCode: map['taxonomy_code'] as String?,
+      taxonomyName: map['taxonomy_name'] as String?,
+      unitType: map['unit_type'] as String?,
+      signConvention: map['sign_convention'] as String?,
+      valueNumeric: _toDouble(map['value_numeric']),
+      unit: map['unit'] as String?,
+      currencyCode: map['currency_code'] as String?,
+    );
+  }
+}
+
 double? _toDouble(dynamic value) {
   if (value is num) return value.toDouble();
   if (value is String) return double.tryParse(value);

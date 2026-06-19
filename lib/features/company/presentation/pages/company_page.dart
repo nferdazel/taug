@@ -19,30 +19,93 @@ class CompanyPage extends StatefulWidget {
 
 class _CompanyPageState extends State<CompanyPage> {
   late final CompanyProvider _provider;
+  final Signal<List<Map<String, dynamic>>> _companies = Signal<List<Map<String, dynamic>>>([]);
+  final Signal<String> _searchQuery = Signal<String>('');
+  final Signal<List<StatementItem>> _drillDownItems = Signal<List<StatementItem>>([]);
+  final Signal<String?> _drillDownPeriod = Signal<String?>(null);
+  final Signal<String?> _drillDownType = Signal<String?>(null);
+  final Signal<bool> _isLoadingDrillDown = Signal<bool>(false);
 
   @override
   void initState() {
     super.initState();
     _provider = CompanyProvider();
-    _loadFirstCompany();
+    _loadCompanies();
   }
 
-  Future<void> _loadFirstCompany() async {
+  Future<void> _loadCompanies() async {
     final client = Supabase.instance.client;
     final response = await client
         .from('company_research_summary_v')
-        .select('company_id')
-        .limit(1)
-        .maybeSingle();
-    if (response != null && mounted) {
-      final companyId = response['company_id'] as String;
-      _provider.loadCompany(companyId);
+        .select('company_id, display_name, primary_ticker, cik')
+        .order('display_name');
+    if (response.isNotEmpty && mounted) {
+      _companies.value = List<Map<String, dynamic>>.from(response);
+      _provider.loadCompany(response[0]['company_id'] as String);
     }
+  }
+
+  void _selectCompany(Map<String, dynamic> company) {
+    _provider.loadCompany(company['company_id'] as String);
+    _searchQuery.value = '';
+    _drillDownItems.value = [];
+    _drillDownPeriod.value = null;
+    _drillDownType.value = null;
+  }
+
+  Future<void> _loadStatementItems({
+    required String statementType,
+    required String periodEnd,
+  }) async {
+    _drillDownType.value = statementType;
+    _drillDownPeriod.value = periodEnd;
+    _isLoadingDrillDown.value = true;
+
+    final companyId = _provider.selectedCompanyId.value;
+    if (companyId == null) {
+      _isLoadingDrillDown.value = false;
+      return;
+    }
+
+    final result = await CompanyRepository().getStatementItems(
+      companyId: companyId,
+      statementType: statementType,
+      periodEnd: periodEnd,
+    );
+
+    if (result.isSuccess) {
+      _drillDownItems.value = result.data!;
+    }
+    _isLoadingDrillDown.value = false;
+  }
+
+  void _clearDrillDown() {
+    _drillDownItems.value = [];
+    _drillDownPeriod.value = null;
+    _drillDownType.value = null;
+  }
+
+  void _showCompanyPicker() {
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return _CompanyPickerDialog(
+          companies: _companies.value,
+          onSelect: _selectCompany,
+        );
+      },
+    );
   }
 
   @override
   void dispose() {
     _provider.dispose();
+    _companies.dispose();
+    _searchQuery.dispose();
+    _drillDownItems.dispose();
+    _drillDownPeriod.dispose();
+    _drillDownType.dispose();
+    _isLoadingDrillDown.dispose();
     super.dispose();
   }
 
@@ -71,25 +134,44 @@ class _CompanyPageState extends State<CompanyPage> {
           children: <Widget>[
             const Text('COMPANY RESEARCH', style: AppTypography.monoSection),
             const SizedBox(width: AppSpacing.lg),
-            if (p != null) ...<Widget>[
-              Text(
-                p.summary.primaryTicker ?? '',
-                style: AppTypography.monoData.copyWith(
-                  color: AppThemeColors.accent,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Text(p.summary.displayName, style: AppTypography.subheading),
-              if (p.summary.cik != null) ...<Widget>[
-                const SizedBox(width: AppSpacing.md),
-                Text(
-                  'CIK ${p.summary.cik}',
-                  style: AppTypography.monoTiny.copyWith(
+            InkWell(
+              onTap: _showCompanyPicker,
+              child: Row(
+                children: <Widget>[
+                  if (p != null) ...<Widget>[
+                    Text(
+                      p.summary.primaryTicker ?? '',
+                      style: AppTypography.monoData.copyWith(
+                        color: AppThemeColors.accent,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Text(p.summary.displayName, style: AppTypography.subheading),
+                    if (p.summary.cik != null) ...<Widget>[
+                      const SizedBox(width: AppSpacing.md),
+                      Text(
+                        'CIK ${p.summary.cik}',
+                        style: AppTypography.monoTiny.copyWith(
+                          color: AppThemeColors.textTertiary,
+                        ),
+                      ),
+                    ],
+                  ] else
+                    Text(
+                      'Select company',
+                      style: AppTypography.caption.copyWith(
+                        color: AppThemeColors.textTertiary,
+                      ),
+                    ),
+                  const SizedBox(width: AppSpacing.sm),
+                  const Icon(
+                    Icons.unfold_more,
+                    size: 12,
                     color: AppThemeColors.textTertiary,
                   ),
-                ),
-              ],
-            ],
+                ],
+              ),
+            ),
             const Spacer(),
             if (isLoading)
               const SizedBox(
@@ -143,21 +225,40 @@ class _CompanyPageState extends State<CompanyPage> {
   }
 
   Widget _buildDesktopLayout(CompanyFullProfile p) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Column(
       children: <Widget>[
-        SizedBox(
-          width: 360,
-          child: Column(
+        Expanded(
+          flex: 3,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              Expanded(child: _buildMetricsPanel(p)),
-              const SizedBox(height: 1),
-              SizedBox(height: 180, child: _buildQualityPanel(p)),
+              SizedBox(
+                width: 360,
+                child: Column(
+                  children: <Widget>[
+                    Expanded(child: _buildMetricsPanel(p)),
+                    const SizedBox(height: 1),
+                    SizedBox(height: 180, child: _buildQualityPanel(p)),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 1),
+              Expanded(child: _buildStatementsPanel(p)),
             ],
           ),
         ),
-        const SizedBox(width: 1),
-        Expanded(child: _buildStatementsPanel(p)),
+        Watch((_) {
+          final items = _drillDownItems.value;
+          final period = _drillDownPeriod.value;
+          final type = _drillDownType.value;
+          if (items.isEmpty || period == null || type == null) {
+            return const SizedBox.shrink();
+          }
+          return SizedBox(
+            height: 220,
+            child: _buildDrillDownPanel(items, period, type),
+          );
+        }),
       ],
     );
   }
@@ -469,41 +570,47 @@ class _CompanyPageState extends State<CompanyPage> {
   }) {
     final String periodLabel = _formatPeriod(row);
     return RepaintBoundary(
-      child: Container(
-        height: 28,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-        decoration: const BoxDecoration(
-          border: Border(
-            bottom: BorderSide(color: AppThemeColors.border, width: 0.5),
-          ),
+      child: InkWell(
+        onTap: () => _loadStatementItems(
+          statementType: row.statementType,
+          periodEnd: row.periodEnd,
         ),
-        child: Row(
-          children: <Widget>[
-            _buildDataCell(periodLabel, 100, isBold: true),
-            if (isIncome) ...<Widget>[
-              _buildDataCell(_fmtMoney(row.revenue), 80),
-              _buildDataCell(_fmtMoney(row.grossProfit), 80),
-              _buildDataCell(_fmtMoney(row.operatingIncome), 80),
-              _buildDataCell(_fmtMoney(row.netIncome), 80),
-              _buildDataCell(_fmtNum(row.epsDiluted), 60),
+        child: Container(
+          height: 28,
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          decoration: const BoxDecoration(
+            border: Border(
+              bottom: BorderSide(color: AppThemeColors.border, width: 0.5),
+            ),
+          ),
+          child: Row(
+            children: <Widget>[
+              _buildDataCell(periodLabel, 100, isBold: true),
+              if (isIncome) ...<Widget>[
+                _buildDataCell(_fmtMoney(row.revenue), 80),
+                _buildDataCell(_fmtMoney(row.grossProfit), 80),
+                _buildDataCell(_fmtMoney(row.operatingIncome), 80),
+                _buildDataCell(_fmtMoney(row.netIncome), 80),
+                _buildDataCell(_fmtNum(row.epsDiluted), 60),
+              ],
+              if (isBalance) ...<Widget>[
+                _buildDataCell(_fmtMoney(row.totalAssets), 80),
+                _buildDataCell(_fmtMoney(row.stockholdersEquity), 80),
+                _buildDataCell(_fmtMoney(row.longTermDebt), 80),
+                _buildDataCell(_fmtMoney(row.cashAndEquivalents), 80),
+              ],
+              if (isCashFlow) ...<Widget>[
+                _buildDataCell(_fmtMoney(row.operatingCashFlow), 80),
+                _buildDataCell(_fmtMoney(row.capex), 80),
+                _buildDataCell(
+                  row.operatingCashFlow != null && row.capex != null
+                      ? _fmtMoney(row.operatingCashFlow! - row.capex!.abs())
+                      : '--',
+                  80,
+                ),
+              ],
             ],
-            if (isBalance) ...<Widget>[
-              _buildDataCell(_fmtMoney(row.totalAssets), 80),
-              _buildDataCell(_fmtMoney(row.stockholdersEquity), 80),
-              _buildDataCell(_fmtMoney(row.longTermDebt), 80),
-              _buildDataCell(_fmtMoney(row.cashAndEquivalents), 80),
-            ],
-            if (isCashFlow) ...<Widget>[
-              _buildDataCell(_fmtMoney(row.operatingCashFlow), 80),
-              _buildDataCell(_fmtMoney(row.capex), 80),
-              _buildDataCell(
-                row.operatingCashFlow != null && row.capex != null
-                    ? _fmtMoney(row.operatingCashFlow! - row.capex!.abs())
-                    : '--',
-                80,
-              ),
-            ],
-          ],
+          ),
         ),
       ),
     );
@@ -587,6 +694,266 @@ class _CompanyPageState extends State<CompanyPage> {
           ),
           Expanded(child: child),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDrillDownPanel(
+    List<StatementItem> items,
+    String periodEnd,
+    String statementType,
+  ) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: AppThemeColors.surface,
+        border: Border.all(color: AppThemeColors.border),
+      ),
+      child: Column(
+        children: <Widget>[
+          Container(
+            height: 28,
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            decoration: const BoxDecoration(
+              color: AppThemeColors.backgroundLight,
+              border: Border(bottom: BorderSide(color: AppThemeColors.border)),
+            ),
+            child: Row(
+              children: <Widget>[
+                const Text('LINE ITEMS', style: AppTypography.monoSection),
+                const SizedBox(width: AppSpacing.lg),
+                Text(
+                  '$statementType — $periodEnd — ${items.length} items',
+                  style: AppTypography.monoTiny.copyWith(
+                    color: AppThemeColors.textTertiary,
+                  ),
+                ),
+                const Spacer(),
+                InkWell(
+                  onTap: _clearDrillDown,
+                  child: const Icon(Icons.close, size: 12),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: items.length,
+              itemExtent: 24,
+              itemBuilder: (BuildContext context, int index) {
+                final item = items[index];
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                  decoration: const BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: AppThemeColors.border,
+                        width: 0.5,
+                      ),
+                    ),
+                  ),
+                  child: Row(
+                    children: <Widget>[
+                      Expanded(
+                        flex: 3,
+                        child: Text(
+                          item.taxonomyName ?? item.taxonomyCode ?? '',
+                          style: AppTypography.caption,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          item.valueNumeric != null
+                              ? _fmtMoney(item.valueNumeric)
+                              : '--',
+                          textAlign: TextAlign.right,
+                          style: AppTypography.monoData,
+                        ),
+                      ),
+                      SizedBox(
+                        width: 50,
+                        child: Text(
+                          item.unit ?? '',
+                          textAlign: TextAlign.right,
+                          style: AppTypography.monoMeta,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CompanyPickerDialog extends StatefulWidget {
+  final List<Map<String, dynamic>> companies;
+  final ValueChanged<Map<String, dynamic>> onSelect;
+
+  const _CompanyPickerDialog({
+    required this.companies,
+    required this.onSelect,
+  });
+
+  @override
+  State<_CompanyPickerDialog> createState() => _CompanyPickerDialogState();
+}
+
+class _CompanyPickerDialogState extends State<_CompanyPickerDialog> {
+  final TextEditingController _searchController = TextEditingController();
+  List<Map<String, dynamic>> _filtered = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _filtered = widget.companies;
+  }
+
+  void _onSearch(String query) {
+    final q = query.toLowerCase();
+    setState(() {
+      _filtered = widget.companies.where((c) {
+        final name = (c['display_name'] as String? ?? '').toLowerCase();
+        final ticker = (c['primary_ticker'] as String? ?? '').toLowerCase();
+        final cik = (c['cik'] as String? ?? '').toLowerCase();
+        return name.contains(q) || ticker.contains(q) || cik.contains(q);
+      }).toList();
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: AppThemeColors.surface,
+      shape: RoundedRectangleBorder(
+        side: const BorderSide(color: AppThemeColors.border),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: SizedBox(
+        width: 400,
+        height: 500,
+        child: Column(
+          children: <Widget>[
+            Container(
+              height: 36,
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              decoration: const BoxDecoration(
+                border: Border(bottom: BorderSide(color: AppThemeColors.border)),
+              ),
+              child: Row(
+                children: <Widget>[
+                  const Text('SELECT COMPANY', style: AppTypography.monoSection),
+                  const Spacer(),
+                  IconButton(
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    icon: const Icon(Icons.close, size: 14),
+                    color: AppThemeColors.textTertiary,
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              height: 36,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: AppSpacing.sm,
+              ),
+              child: TextField(
+                controller: _searchController,
+                onChanged: _onSearch,
+                style: AppTypography.monoData,
+                decoration: const InputDecoration(
+                  hintText: 'Search by name, ticker, or CIK...',
+                  hintStyle: AppTypography.monoMeta,
+                  prefixIcon: Icon(Icons.search, size: 14),
+                  prefixIconColor: AppThemeColors.textTertiary,
+                  isDense: true,
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.sm,
+                  ),
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide(color: AppThemeColors.border),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: AppThemeColors.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: AppThemeColors.accent),
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                itemCount: _filtered.length,
+                itemExtent: 32,
+                itemBuilder: (BuildContext context, int index) {
+                  final company = _filtered[index];
+                  final name = company['display_name'] as String? ?? '';
+                  final ticker = company['primary_ticker'] as String? ?? '';
+                  final cik = company['cik'] as String? ?? '';
+                  return InkWell(
+                    onTap: () {
+                      widget.onSelect(company);
+                      Navigator.of(context).pop();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.lg,
+                      ),
+                      decoration: const BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: AppThemeColors.border,
+                            width: 0.5,
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        children: <Widget>[
+                          SizedBox(
+                            width: 60,
+                            child: Text(
+                              ticker,
+                              style: AppTypography.monoData.copyWith(
+                                color: AppThemeColors.accent,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(
+                              name,
+                              style: AppTypography.body,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Text(
+                            cik,
+                            style: AppTypography.monoMeta,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
