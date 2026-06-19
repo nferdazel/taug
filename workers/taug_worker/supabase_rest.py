@@ -54,6 +54,12 @@ class FilingRecord:
   id: str
   company_id: str
   filing_key: str
+  raw_source_id: int
+  filing_type: str
+  filing_date: str
+  report_date: str | None
+  acceptance_datetime: str | None
+  is_amendment: bool
 
 
 @dataclass(frozen=True)
@@ -507,6 +513,35 @@ class SupabaseRestClient:
       status=str(row["status"]),
     )
 
+  def get_active_filing_version_by_filing(
+    self,
+    *,
+    filing_id: str,
+  ) -> FilingVersionRecord | None:
+    rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "filing_versions",
+      query={
+        "select": "id,filing_id,raw_record_id,version_number,status",
+        "filing_id": f"eq.{filing_id}",
+        "status": "eq.active",
+        "order": "version_number.desc",
+        "limit": "1",
+      },
+    )
+    if not rows:
+      return None
+    row: dict[str, Any] = rows[0]
+    return FilingVersionRecord(
+      id=str(row["id"]),
+      filing_id=str(row["filing_id"]),
+      raw_record_id=(
+        str(row["raw_record_id"]) if row.get("raw_record_id") is not None else None
+      ),
+      version_number=int(row["version_number"]),
+      status=str(row["status"]),
+    )
+
   def list_pending_sec_filing_documents(self, *, limit: int) -> list[PendingFilingDocument]:
     rows: list[dict[str, Any]] = self._request(
       "GET",
@@ -637,7 +672,10 @@ class SupabaseRestClient:
       "GET",
       "filings",
       query={
-        "select": "id,company_id,filing_key",
+        "select": (
+          "id,company_id,filing_key,raw_source_id,filing_type,"
+          "filing_date,report_date,acceptance_datetime,is_amendment"
+        ),
         "id": f"eq.{filing_id}",
         "limit": "1",
       },
@@ -649,6 +687,120 @@ class SupabaseRestClient:
       id=str(row["id"]),
       company_id=str(row["company_id"]),
       filing_key=str(row["filing_key"]),
+      raw_source_id=int(row["raw_source_id"]),
+      filing_type=str(row["filing_type"]),
+      filing_date=str(row["filing_date"]),
+      report_date=(
+        str(row["report_date"]) if row.get("report_date") is not None else None
+      ),
+      acceptance_datetime=(
+        str(row["acceptance_datetime"])
+        if row.get("acceptance_datetime") is not None
+        else None
+      ),
+      is_amendment=bool(row["is_amendment"]),
+    )
+
+  def list_filing_candidates(
+    self,
+    *,
+    company_id: str,
+    raw_source_id: int,
+    filing_date_lte: str,
+    exclude_filing_id: str,
+    limit: int,
+  ) -> list[FilingRecord]:
+    rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "filings",
+      query={
+        "select": (
+          "id,company_id,filing_key,raw_source_id,filing_type,"
+          "filing_date,report_date,acceptance_datetime,is_amendment"
+        ),
+        "company_id": f"eq.{company_id}",
+        "raw_source_id": f"eq.{raw_source_id}",
+        "filing_date": f"lte.{filing_date_lte}",
+        "id": f"neq.{exclude_filing_id}",
+        "order": "filing_date.desc,created_at.desc",
+        "limit": str(limit),
+      },
+    )
+    return [
+      FilingRecord(
+        id=str(row["id"]),
+        company_id=str(row["company_id"]),
+        filing_key=str(row["filing_key"]),
+        raw_source_id=int(row["raw_source_id"]),
+        filing_type=str(row["filing_type"]),
+        filing_date=str(row["filing_date"]),
+        report_date=(
+          str(row["report_date"]) if row.get("report_date") is not None else None
+        ),
+        acceptance_datetime=(
+          str(row["acceptance_datetime"])
+          if row.get("acceptance_datetime") is not None
+          else None
+        ),
+        is_amendment=bool(row["is_amendment"]),
+      )
+      for row in rows
+    ]
+
+  def update_filing_version_supersession(
+    self,
+    *,
+    filing_version_id: str,
+    supersedes_filing_version_id: str | None = None,
+    superseded_by_filing_version_id: str | None = None,
+    status: str | None = None,
+    is_restated: bool | None = None,
+  ) -> None:
+    payload: dict[str, object] = {}
+    if supersedes_filing_version_id is not None:
+      payload["supersedes_filing_version_id"] = supersedes_filing_version_id
+    if superseded_by_filing_version_id is not None:
+      payload["superseded_by_filing_version_id"] = superseded_by_filing_version_id
+    if status is not None:
+      payload["status"] = status
+    if is_restated is not None:
+      payload["is_restated"] = is_restated
+    if not payload:
+      return
+    self._request(
+      "PATCH",
+      "filing_versions",
+      query={"id": f"eq.{filing_version_id}"},
+      headers={"Prefer": "return=minimal"},
+      payload=payload,
+    )
+
+  def insert_restatement_event(
+    self,
+    *,
+    entity_type: str,
+    entity_id: str,
+    prior_reference_id: str | None,
+    new_reference_id: str | None,
+    detection_method: str,
+    status: str,
+    payload: dict[str, object],
+  ) -> None:
+    self._request(
+      "POST",
+      "restatement_events",
+      headers={"Prefer": "return=minimal"},
+      payload=[
+        {
+          "entity_type": entity_type,
+          "entity_id": entity_id,
+          "prior_reference_id": prior_reference_id,
+          "new_reference_id": new_reference_id,
+          "detection_method": detection_method,
+          "status": status,
+          "payload": payload,
+        },
+      ],
     )
 
   def mark_raw_document_verified(

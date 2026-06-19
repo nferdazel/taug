@@ -683,6 +683,12 @@ def _normalize_filing_discovery(
         "status": filing_version_record.status,
       },
     )
+    _maybe_link_amendment_version(
+      filing_record=filing_record,
+      filing_version_record=filing_version_record,
+      cik=cik,
+      supabase_client=supabase_client,
+    )
     if filing_version_result.created:
       created_filing_versions += 1
     else:
@@ -803,6 +809,103 @@ def _parse_iso_datetime(value: str) -> datetime | None:
     return datetime.fromisoformat(value.replace("Z", "+00:00"))
   except ValueError:
     return None
+
+
+def _maybe_link_amendment_version(
+  *,
+  filing_record: FilingRecord,
+  filing_version_record: FilingVersionRecord,
+  cik: str,
+  supabase_client: SupabaseRestClient,
+) -> None:
+  if not filing_record.is_amendment:
+    return
+
+  base_filing_type: str = _base_filing_type(filing_record.filing_type)
+  candidates = supabase_client.list_filing_candidates(
+    company_id=filing_record.company_id,
+    raw_source_id=filing_record.raw_source_id,
+    filing_date_lte=filing_record.filing_date,
+    exclude_filing_id=filing_record.id,
+    limit=200,
+  )
+
+  prior_filing = None
+  for candidate in candidates:
+    if _base_filing_type(candidate.filing_type) != base_filing_type:
+      continue
+    if filing_record.report_date is not None:
+      if candidate.report_date != filing_record.report_date:
+        continue
+    elif candidate.report_date is not None:
+      continue
+    prior_filing = candidate
+    break
+
+  if prior_filing is None:
+    return
+
+  prior_active_version = supabase_client.get_active_filing_version_by_filing(
+    filing_id=prior_filing.id,
+  )
+  if prior_active_version is None:
+    return
+  if prior_active_version.id == filing_version_record.id:
+    return
+
+  supabase_client.update_filing_version_supersession(
+    filing_version_id=filing_version_record.id,
+    supersedes_filing_version_id=prior_active_version.id,
+    is_restated=True,
+    status="active",
+  )
+  supabase_client.update_filing_version_supersession(
+    filing_version_id=prior_active_version.id,
+    superseded_by_filing_version_id=filing_version_record.id,
+    status="superseded",
+  )
+  supabase_client.insert_restatement_event(
+    entity_type="filing_version",
+    entity_id=filing_version_record.id,
+    prior_reference_id=prior_active_version.id,
+    new_reference_id=filing_version_record.id,
+    detection_method="sec_amendment_form",
+    status="validated",
+    payload={
+      "source": "sec_edgar",
+      "cik": cik,
+      "base_filing_type": base_filing_type,
+      "amendment_filing_id": filing_record.id,
+      "prior_filing_id": prior_filing.id,
+    },
+  )
+  supabase_client.insert_audit_event(
+    event_type="filing_version_amendment_linked",
+    entity_type="filing_version",
+    entity_id=filing_version_record.id,
+    severity="info",
+    payload={
+      "source": "sec_edgar",
+      "cik": cik,
+      "base_filing_type": base_filing_type,
+      "supersedes_filing_version_id": prior_active_version.id,
+      "prior_filing_id": prior_filing.id,
+      "amendment_filing_id": filing_record.id,
+    },
+  )
+
+
+def _base_filing_type(filing_type: str) -> str:
+  normalized: str = filing_type.strip().upper()
+  if normalized.endswith("/A"):
+    normalized = normalized[:-2].strip()
+  if normalized.endswith("-A"):
+    normalized = normalized[:-2].strip()
+  normalized = normalized.replace("SCHEDULE 13G", "13G")
+  normalized = normalized.replace("SC 13G", "13G")
+  normalized = normalized.replace("SCHEDULE 13D", "13D")
+  normalized = normalized.replace("SC 13D", "13D")
+  return normalized
 
 
 def _normalize_sec_acceptance_datetime(value: str | None) -> str | None:

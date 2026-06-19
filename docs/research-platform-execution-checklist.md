@@ -271,6 +271,7 @@ Exit criteria:
 - `[done]` validate filing-to-canonical-company mapping during filing normalization
 - `[done]` validate filing date and acceptance datetime sanity during filing normalization
 - `[done]` validate filing-version linkage integrity during filing normalization
+- `[done]` implement amendment supersession linking and restatement event emission for matched SEC filing candidates
 
 Exit criteria:
 
