@@ -1841,3 +1841,195 @@ class SupabaseRestClient:
     if not rows:
       raise ValueError("Failed to upsert security metric snapshot")
     return UpsertResult(id=str(rows[0]["id"]), created=True)
+
+  # --- Macro / FRED methods ---
+
+  def ensure_raw_source(
+    self,
+    *,
+    code: str,
+    name: str,
+    source_type: str,
+    region: str,
+    is_official: bool,
+    access_method: str = "https_api",
+  ) -> RawSource:
+    payload: list[dict[str, object]] = [
+      {
+        "code": code,
+        "name": name,
+        "source_type": source_type,
+        "region": region,
+        "is_official": is_official,
+        "access_method": access_method,
+        "default_latency_class": "official_delayed",
+      },
+    ]
+    self._request(
+      "POST",
+      "raw_sources",
+      query={"on_conflict": "code"},
+      headers={"Prefer": "resolution=merge-duplicates,return=minimal"},
+      payload=payload,
+    )
+    rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "raw_sources",
+      query={"select": "id,code", "code": f"eq.{code}", "limit": "1"},
+    )
+    if not rows:
+      raise ValueError(f"Failed to ensure raw source: {code}")
+    return RawSource(id=int(rows[0]["id"]), code=str(rows[0]["code"]))
+
+  def find_raw_record_by_key(
+    self,
+    *,
+    source_record_key: str,
+  ) -> tuple[str, str] | None:
+    rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "raw_records",
+      query={
+        "select": "id,payload_hash",
+        "source_record_key": f"eq.{source_record_key}",
+        "limit": "1",
+      },
+    )
+    if not rows:
+      return None
+    return (str(rows[0]["id"]), str(rows[0].get("payload_hash", "")))
+
+  def insert_raw_record_simple(
+    self,
+    *,
+    raw_source_id: int,
+    record_type: str,
+    source_record_key: str,
+    source_entity_key: str,
+    payload_json: dict[str, object],
+    payload_hash: str,
+    schema_version: str = "1",
+  ) -> UpsertResult:
+    rows: list[dict[str, Any]] = self._request(
+      "POST",
+      "raw_records",
+      query={"on_conflict": "raw_source_id,record_type,source_record_key,payload_hash"},
+      headers={"Prefer": "resolution=ignore-duplicates,return=representation"},
+      payload=[{
+        "raw_source_id": raw_source_id,
+        "record_type": record_type,
+        "source_record_key": source_record_key,
+        "source_entity_key": source_entity_key,
+        "payload_json": payload_json,
+        "payload_hash": payload_hash,
+        "schema_version": schema_version,
+      }],
+    )
+    if rows:
+      return UpsertResult(id=str(rows[0]["id"]), created=True)
+    existing: list[dict[str, Any]] = self._request(
+      "GET",
+      "raw_records",
+      query={
+        "select": "id",
+        "raw_source_id": f"eq.{raw_source_id}",
+        "record_type": f"eq.{record_type}",
+        "source_record_key": f"eq.{source_record_key}",
+        "payload_hash": f"eq.{payload_hash}",
+        "limit": "1",
+      },
+    )
+    if not existing:
+      raise ValueError("Failed to resolve raw record after insert")
+    return UpsertResult(id=str(existing[0]["id"]), created=False)
+
+  def update_raw_record_payload(
+    self,
+    *,
+    record_id: str,
+    payload_json: dict[str, object],
+    payload_hash: str,
+  ) -> None:
+    self._request(
+      "PATCH",
+      "raw_records",
+      query={"id": f"eq.{record_id}"},
+      headers={"Prefer": "return=minimal"},
+      payload={
+        "payload_json": payload_json,
+        "payload_hash": payload_hash,
+      },
+    )
+
+  def upsert_macro_series(
+    self,
+    *,
+    series_id: str,
+    title: str,
+    category: str,
+    frequency: str,
+    units: str,
+  ) -> None:
+    self._request(
+      "POST",
+      "macro_series",
+      query={"on_conflict": "series_id"},
+      headers={"Prefer": "resolution=merge-duplicates,return=minimal"},
+      payload=[{
+        "series_id": series_id,
+        "title": title,
+        "category": category,
+        "frequency": frequency,
+        "units": units,
+      }],
+    )
+
+  def upsert_macro_observation(
+    self,
+    *,
+    series_id: str,
+    observation_date: str,
+    value_numeric: float | None,
+  ) -> UpsertResult:
+    existing: list[dict[str, Any]] = self._request(
+      "GET",
+      "macro_observations",
+      query={
+        "select": "id",
+        "series_id": f"eq.{series_id}",
+        "observation_date": f"eq.{observation_date}",
+        "limit": "1",
+      },
+    )
+    if existing:
+      return UpsertResult(id=str(existing[0]["id"]), created=False)
+
+    rows: list[dict[str, Any]] = self._request(
+      "POST",
+      "macro_observations",
+      headers={"Prefer": "return=representation"},
+      payload=[{
+        "series_id": series_id,
+        "observation_date": observation_date,
+        "value_numeric": value_numeric,
+      }],
+    )
+    if not rows:
+      raise ValueError("Failed to insert macro observation")
+    return UpsertResult(id=str(rows[0]["id"]), created=True)
+
+  def update_macro_series_fetched(
+    self,
+    series_id: str,
+  ) -> None:
+    now: str = datetime.now(timezone.utc).isoformat()
+    self._request(
+      "PATCH",
+      "macro_series",
+      query={"series_id": f"eq.{series_id}"},
+      headers={"Prefer": "return=minimal"},
+      payload={
+        "last_fetched_at": now,
+        "updated_at": now,
+      },
+    )
