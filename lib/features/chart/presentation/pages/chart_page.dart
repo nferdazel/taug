@@ -6,7 +6,7 @@ import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/models/price_data.dart';
 import '../../../../shared/widgets/price_cell.dart';
-import '../providers/chart_provider.dart';
+import '../../data/chart_repository.dart';
 
 class ChartPage extends StatefulWidget {
   const ChartPage({super.key});
@@ -16,13 +16,41 @@ class ChartPage extends StatefulWidget {
 }
 
 class _ChartPageState extends State<ChartPage> {
-  final _provider = ChartProvider();
+  final _repository = ChartRepository();
+  final _candles = Signal<List<CandleData>>([]);
+  final _currentPrice = Signal<PriceData?>(null);
+  final _isLoading = Signal<bool>(false);
+  final _error = Signal<String?>(null);
+  final _selectedSymbol = Signal<String>('AAPL');
+  final _selectedInterval = Signal<String>('1d');
 
   @override
   void initState() {
     super.initState();
-    _provider.loadChartData();
-    _provider.loadCurrentPrice();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    _isLoading.value = true;
+    _error.value = null;
+
+    final priceResult = await _repository.getCurrentPrice(_selectedSymbol.value);
+    if (priceResult.isSuccess) {
+      _currentPrice.value = priceResult.data;
+    }
+
+    final chartResult = await _repository.getChartData(
+      symbol: _selectedSymbol.value,
+      interval: _selectedInterval.value,
+    );
+
+    if (chartResult.isSuccess) {
+      _candles.value = chartResult.data!;
+    } else {
+      _error.value = chartResult.error.toString();
+    }
+
+    _isLoading.value = false;
   }
 
   @override
@@ -37,26 +65,22 @@ class _ChartPageState extends State<ChartPage> {
   }
 
   Widget _buildToolbar() {
-    return Watch((_) {
-      return Container(
-        height: 36,
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        decoration: const BoxDecoration(
-          border: Border(
-            bottom: BorderSide(color: AppThemeColors.border),
-          ),
-        ),
-        child: Row(
-          children: [
-            _buildSymbolSelector(),
-            const SizedBox(width: 12),
-            _buildIntervalButtons(),
-            const Spacer(),
-            _buildPriceInfo(),
-          ],
-        ),
-      );
-    });
+    return Container(
+      height: 36,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: AppThemeColors.border)),
+      ),
+      child: Row(
+        children: [
+          _buildSymbolSelector(),
+          const SizedBox(width: 12),
+          _buildIntervalButtons(),
+          const Spacer(),
+          _buildPriceInfo(),
+        ],
+      ),
+    );
   }
 
   Widget _buildSymbolSelector() {
@@ -69,20 +93,28 @@ class _ChartPageState extends State<ChartPage> {
           border: Border.all(color: AppThemeColors.border),
         ),
         child: DropdownButton<String>(
-          value: _provider.selectedSymbol.value,
+          value: _selectedSymbol.value,
           underline: const SizedBox(),
           dropdownColor: AppThemeColors.surface,
           style: AppTypography.monoSmall,
           isDense: true,
           items: const [
-            DropdownMenuItem(value: 'BBCA.JK', child: Text('BBCA')),
-            DropdownMenuItem(value: 'TLKM.JK', child: Text('TLKM')),
             DropdownMenuItem(value: 'AAPL', child: Text('AAPL')),
             DropdownMenuItem(value: 'MSFT', child: Text('MSFT')),
+            DropdownMenuItem(value: 'GOOGL', child: Text('GOOGL')),
+            DropdownMenuItem(value: 'AMZN', child: Text('AMZN')),
+            DropdownMenuItem(value: 'NVDA', child: Text('NVDA')),
+            DropdownMenuItem(value: 'BBCA.JK', child: Text('BBCA')),
+            DropdownMenuItem(value: 'TLKM.JK', child: Text('TLKM')),
             DropdownMenuItem(value: 'BTC/USDT', child: Text('BTC')),
+            DropdownMenuItem(value: 'ETH/USDT', child: Text('ETH')),
+            DropdownMenuItem(value: 'XAU/USD', child: Text('GOLD')),
           ],
           onChanged: (value) {
-            if (value != null) _provider.selectSymbol(value);
+            if (value != null) {
+              _selectedSymbol.value = value;
+              _loadData();
+            }
           },
         ),
       );
@@ -94,13 +126,16 @@ class _ChartPageState extends State<ChartPage> {
       final intervals = ['1m', '5m', '15m', '1h', '1d', '1w', '1M'];
       return Row(
         children: intervals.map((interval) {
-          final isSelected = _provider.selectedInterval.value == interval;
+          final isSelected = _selectedInterval.value == interval;
           return Padding(
             padding: const EdgeInsets.only(right: 2),
             child: SizedBox(
               height: 24,
               child: TextButton(
-                onPressed: () => _provider.selectInterval(interval),
+                onPressed: () {
+                  _selectedInterval.value = interval;
+                  _loadData();
+                },
                 style: TextButton.styleFrom(
                   backgroundColor: isSelected
                       ? AppThemeColors.accent
@@ -126,15 +161,12 @@ class _ChartPageState extends State<ChartPage> {
 
   Widget _buildPriceInfo() {
     return Watch((_) {
-      final price = _provider.currentPrice.value;
+      final price = _currentPrice.value;
       if (price == null) return const SizedBox();
 
       return Row(
         children: [
-          Text(
-            price.price.toStringAsFixed(2),
-            style: AppTypography.monoLarge,
-          ),
+          Text(price.price.toStringAsFixed(2), style: AppTypography.monoLarge),
           const SizedBox(width: 8),
           ChangeCell(value: price.changePercent),
         ],
@@ -144,8 +176,9 @@ class _ChartPageState extends State<ChartPage> {
 
   Widget _buildChart() {
     return Watch((_) {
-      final candles = _provider.candles.value;
-      final isLoading = _provider.isLoading.value;
+      final candles = _candles.value;
+      final isLoading = _isLoading.value;
+      final error = _error.value;
 
       if (isLoading) {
         return const Center(
@@ -157,12 +190,24 @@ class _ChartPageState extends State<ChartPage> {
         );
       }
 
+      if (error != null) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 32, color: AppThemeColors.bearish),
+              const SizedBox(height: 8),
+              Text(error, style: AppTypography.bodySmall, textAlign: TextAlign.center),
+              const SizedBox(height: 12),
+              ElevatedButton(onPressed: _loadData, child: const Text(AppStrings.retry)),
+            ],
+          ),
+        );
+      }
+
       if (candles.isEmpty) {
         return const Center(
-          child: Text(
-            AppStrings.noData,
-            style: AppTypography.bodySmall,
-          ),
+          child: Text(AppStrings.noData, style: AppTypography.bodySmall),
         );
       }
 
@@ -176,10 +221,7 @@ class _ChartPageState extends State<ChartPage> {
             lineWidth: 1,
             tooltipDisplayMode: TrackballDisplayMode.floatAllPoints,
           ),
-          zoomPanBehavior: ZoomPanBehavior(
-            enablePanning: true,
-            enablePinching: true,
-          ),
+          zoomPanBehavior: ZoomPanBehavior(enablePanning: true, enablePinching: true),
           series: <CandleSeries<CandleData, DateTime>>[
             CandleSeries<CandleData, DateTime>(
               dataSource: candles,
@@ -199,10 +241,7 @@ class _ChartPageState extends State<ChartPage> {
             labelStyle: AppTypography.monoTiny,
           ),
           primaryYAxis: const NumericAxis(
-            majorGridLines: MajorGridLines(
-              width: 0.5,
-              color: AppThemeColors.border,
-            ),
+            majorGridLines: MajorGridLines(width: 0.5, color: AppThemeColors.border),
             axisLine: AxisLine(width: 0),
             labelStyle: AppTypography.monoTiny,
           ),
@@ -213,16 +252,14 @@ class _ChartPageState extends State<ChartPage> {
 
   Widget _buildInfoPanel() {
     return Watch((_) {
-      final price = _provider.currentPrice.value;
+      final price = _currentPrice.value;
       if (price == null) return const SizedBox();
 
       return Container(
         height: 80,
         padding: const EdgeInsets.all(8),
         decoration: const BoxDecoration(
-          border: Border(
-            top: BorderSide(color: AppThemeColors.border),
-          ),
+          border: Border(top: BorderSide(color: AppThemeColors.border)),
         ),
         child: Row(
           children: [
@@ -252,13 +289,9 @@ class _ChartPageState extends State<ChartPage> {
   }
 
   String _formatVolume(int volume) {
-    if (volume >= 1000000000) {
-      return '${(volume / 1000000000).toStringAsFixed(1)}B';
-    } else if (volume >= 1000000) {
-      return '${(volume / 1000000).toStringAsFixed(1)}M';
-    } else if (volume >= 1000) {
-      return '${(volume / 1000).toStringAsFixed(1)}K';
-    }
+    if (volume >= 1000000000) return '${(volume / 1000000000).toStringAsFixed(1)}B';
+    if (volume >= 1000000) return '${(volume / 1000000).toStringAsFixed(1)}M';
+    if (volume >= 1000) return '${(volume / 1000).toStringAsFixed(1)}K';
     return volume.toString();
   }
 }

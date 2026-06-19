@@ -17,11 +17,7 @@ class ChartRepository {
     try {
       final response = await _client.functions.invoke(
         'get-chart-data',
-        body: {
-          'symbol': symbol,
-          'interval': interval,
-          'limit': limit,
-        },
+        body: {'symbol': symbol, 'interval': interval, 'limit': limit},
       );
 
       if (response.data != null) {
@@ -34,12 +30,7 @@ class ChartRepository {
 
       return const Result.success([]);
     } catch (e) {
-      return Result.failure(
-        DataSourceFailure(
-          message: e.toString(),
-          source: 'twelve_data',
-        ),
-      );
+      return Result.failure(DataSourceFailure(message: e.toString(), source: 'twelve_data'));
     }
   }
 
@@ -56,19 +47,9 @@ class ChartRepository {
         );
       }
 
-      return const Result.failure(
-        DataSourceFailure(
-          message: 'No price data',
-          source: 'twelve_data',
-        ),
-      );
+      return const Result.failure(DataSourceFailure(message: 'No price data', source: 'twelve_data'));
     } catch (e) {
-      return Result.failure(
-        DataSourceFailure(
-          message: e.toString(),
-          source: 'twelve_data',
-        ),
-      );
+      return Result.failure(DataSourceFailure(message: e.toString(), source: 'twelve_data'));
     }
   }
 }
