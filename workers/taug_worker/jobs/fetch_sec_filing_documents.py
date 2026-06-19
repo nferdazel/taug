@@ -16,6 +16,8 @@ class DocumentFetchSummary:
   attempted_documents: int
   stored_documents: int
   failed_documents: int
+  stored_filing_version_ids: tuple[str, ...]
+  failed_filing_version_ids: tuple[str, ...]
 
 
 def run_fetch_sec_filing_documents(
@@ -40,6 +42,8 @@ def run_fetch_sec_filing_documents(
 
   stored_count = 0
   failed_count = 0
+  stored_filing_version_ids: list[str] = []
+  failed_filing_version_ids: list[str] = []
 
   try:
     for pending in pending_documents:
@@ -111,9 +115,11 @@ def run_fetch_sec_filing_documents(
             "byte_size": len(body),
           },
         )
+        stored_filing_version_ids.append(pending.filing_version_id)
         stored_count += 1
       except Exception as exc:
         failed_count += 1
+        failed_filing_version_ids.append(pending.filing_version_id)
         supabase_client.insert_validation_event(
           entity_type="filing_version",
           entity_id=pending.filing_version_id,
@@ -149,6 +155,22 @@ def run_fetch_sec_filing_documents(
         "attempted_documents": len(pending_documents),
         "stored_documents": stored_count,
         "failed_documents": failed_count,
+        "stored_filing_version_ids": stored_filing_version_ids,
+        "failed_filing_version_ids": failed_filing_version_ids,
+      },
+    )
+    supabase_client.insert_audit_event(
+      event_type="raw_fetch_run_completed" if failed_count == 0 else "raw_fetch_run_partial",
+      entity_type="raw_fetch_run",
+      entity_id=fetch_run_id,
+      severity="info" if failed_count == 0 else "warning",
+      payload={
+        "source": source.code,
+        "attempted_documents": len(pending_documents),
+        "stored_documents": stored_count,
+        "failed_documents": failed_count,
+        "stored_filing_version_ids": stored_filing_version_ids,
+        "failed_filing_version_ids": failed_filing_version_ids,
       },
     )
   except Exception as exc:
@@ -161,6 +183,23 @@ def run_fetch_sec_filing_documents(
         "attempted_documents": len(pending_documents),
         "stored_documents": stored_count,
         "failed_documents": failed_count,
+        "stored_filing_version_ids": stored_filing_version_ids,
+        "failed_filing_version_ids": failed_filing_version_ids,
+      },
+    )
+    supabase_client.insert_audit_event(
+      event_type="raw_fetch_run_failed",
+      entity_type="raw_fetch_run",
+      entity_id=fetch_run_id,
+      severity="error",
+      payload={
+        "source": source.code,
+        "message": str(exc),
+        "attempted_documents": len(pending_documents),
+        "stored_documents": stored_count,
+        "failed_documents": failed_count,
+        "stored_filing_version_ids": stored_filing_version_ids,
+        "failed_filing_version_ids": failed_filing_version_ids,
       },
     )
     raise
@@ -170,4 +209,6 @@ def run_fetch_sec_filing_documents(
     attempted_documents=len(pending_documents),
     stored_documents=stored_count,
     failed_documents=failed_count,
+    stored_filing_version_ids=tuple(stored_filing_version_ids),
+    failed_filing_version_ids=tuple(failed_filing_version_ids),
   )

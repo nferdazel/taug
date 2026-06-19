@@ -22,6 +22,8 @@ class SyncSummary:
   replayed_filings: int
   created_filing_versions: int
   replayed_filing_versions: int
+  successful_cik_ids: tuple[str, ...]
+  failed_cik_ids: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -64,6 +66,8 @@ def run_sync_sec_submissions(
   replayed_filings: int = 0
   created_filing_versions: int = 0
   replayed_filing_versions: int = 0
+  successful_cik_ids: list[str] = []
+  failed_cik_ids: list[str] = []
 
   try:
     for cik in normalized_ciks:
@@ -134,9 +138,31 @@ def run_sync_sec_submissions(
             "replayed_filing_versions": normalization_result.replayed_filing_versions,
           },
         )
+        supabase_client.insert_audit_event(
+          event_type="sec_company_processed",
+          entity_type="sec_company",
+          entity_id=cik,
+          severity="info",
+          reference_type="raw_fetch_run",
+          reference_id=fetch_run_id,
+          payload={
+            "source": source.code,
+            "ticker": ticker,
+            "raw_record_id": raw_record.id,
+            "created_raw_record": raw_record.created,
+            "company_id": canonical_security.company_id,
+            "security_id": canonical_security.security_id,
+            "created_filings": normalization_result.created_filings,
+            "replayed_filings": normalization_result.replayed_filings,
+            "created_filing_versions": normalization_result.created_filing_versions,
+            "replayed_filing_versions": normalization_result.replayed_filing_versions,
+          },
+        )
+        successful_cik_ids.append(cik)
         success_count += 1
       except Exception as exc:
         failure_count += 1
+        failed_cik_ids.append(cik)
         supabase_client.insert_validation_event(
           entity_type="sec_company",
           entity_id=cik,
@@ -166,10 +192,12 @@ def run_sync_sec_submissions(
     supabase_client.update_fetch_run(
       fetch_run_id=fetch_run_id,
       status=final_status,
-        metadata={
+      metadata={
           "processed_ciks": len(normalized_ciks),
           "succeeded_ciks": success_count,
           "failed_ciks": failure_count,
+          "successful_cik_ids": successful_cik_ids,
+          "failed_cik_ids": failed_cik_ids,
           "created_raw_records": created_raw_records,
           "replayed_raw_records": replayed_raw_records,
           "created_filings": created_filings,
@@ -178,6 +206,26 @@ def run_sync_sec_submissions(
           "replayed_filing_versions": replayed_filing_versions,
         },
       )
+    supabase_client.insert_audit_event(
+      event_type="raw_fetch_run_completed" if failure_count == 0 else "raw_fetch_run_partial",
+      entity_type="raw_fetch_run",
+      entity_id=fetch_run_id,
+      severity="info" if failure_count == 0 else "warning",
+      payload={
+        "source": source.code,
+        "processed_ciks": len(normalized_ciks),
+        "succeeded_ciks": success_count,
+        "failed_ciks": failure_count,
+        "successful_cik_ids": successful_cik_ids,
+        "failed_cik_ids": failed_cik_ids,
+        "created_raw_records": created_raw_records,
+        "replayed_raw_records": replayed_raw_records,
+        "created_filings": created_filings,
+        "replayed_filings": replayed_filings,
+        "created_filing_versions": created_filing_versions,
+        "replayed_filing_versions": replayed_filing_versions,
+      },
+    )
   except Exception as exc:
     supabase_client.update_fetch_run(
       fetch_run_id=fetch_run_id,
@@ -188,6 +236,8 @@ def run_sync_sec_submissions(
           "processed_ciks": len(normalized_ciks),
           "succeeded_ciks": success_count,
           "failed_ciks": failure_count,
+          "successful_cik_ids": successful_cik_ids,
+          "failed_cik_ids": failed_cik_ids,
           "created_raw_records": created_raw_records,
           "replayed_raw_records": replayed_raw_records,
           "created_filings": created_filings,
@@ -196,6 +246,21 @@ def run_sync_sec_submissions(
           "replayed_filing_versions": replayed_filing_versions,
         },
       )
+    supabase_client.insert_audit_event(
+      event_type="raw_fetch_run_failed",
+      entity_type="raw_fetch_run",
+      entity_id=fetch_run_id,
+      severity="error",
+      payload={
+        "source": source.code,
+        "message": str(exc),
+        "processed_ciks": len(normalized_ciks),
+        "succeeded_ciks": success_count,
+        "failed_ciks": failure_count,
+        "successful_cik_ids": successful_cik_ids,
+        "failed_cik_ids": failed_cik_ids,
+      },
+    )
     raise
 
   return SyncSummary(
@@ -209,6 +274,8 @@ def run_sync_sec_submissions(
     replayed_filings=replayed_filings,
     created_filing_versions=created_filing_versions,
     replayed_filing_versions=replayed_filing_versions,
+    successful_cik_ids=tuple(successful_cik_ids),
+    failed_cik_ids=tuple(failed_cik_ids),
   )
 
 

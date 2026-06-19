@@ -261,6 +261,7 @@ Exit criteria:
 - `[done]` build filing and filing_version model
 - `[done]` validate narrow-universe SEC smoke test locally
 - `[done]` validate SEC rerun idempotency on repeated narrow-universe sync
+- `[done]` validate partial-failure audit trail on mixed-result SEC sync
 
 Exit criteria:
 

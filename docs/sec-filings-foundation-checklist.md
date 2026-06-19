@@ -294,7 +294,7 @@ Exit criteria:
 ### E3. Operational validation
 
 - `[done]` verify rerun is idempotent
-- `[todo]` verify partial failure leaves audit trail
+- `[done]` verify partial failure leaves audit trail
 - `[todo]` verify checkpoint only moves after success
 
 Exit criteria:
@@ -304,6 +304,7 @@ Exit criteria:
 Validation note:
 
 - local rerun validation on `2026-06-19` for `1` repeated CIK and `3` filings produced `created_raw_records=0`, `created_filings=0`, and `created_filing_versions=0`
+- local partial-failure validation on `2026-06-19` for `0000320193` plus bogus `0000000000` produced `raw_fetch_runs.status=partial`, `successful_cik_ids=["0000320193"]`, `failed_cik_ids=["0000000000"]`, and matching item-level + run-level audit events
 
 ## F. Storage Convention Checklist
 
