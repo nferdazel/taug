@@ -11,41 +11,54 @@ class DataStatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color badgeColor = _resolveColor();
-    final String officialLabel = origin.isOfficial ? 'OFFICIAL' : 'SOURCE';
-
     return RepaintBoundary(
-      child: Wrap(
-        spacing: 4,
-        runSpacing: 4,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          _buildChip(origin.latencyClass.label, badgeColor),
-          _buildChip(officialLabel, AppThemeColors.backgroundLight),
-          _buildChip(
-            origin.sourceLabel.toUpperCase(),
-            AppThemeColors.backgroundLight,
-          ),
-          if (origin.isSynthetic)
-            _buildChip('SYNTHETIC', AppThemeColors.warning),
-        ],
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: AppThemeColors.backgroundLight,
+          border: Border.all(color: AppThemeColors.border),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Wrap(
+          spacing: 6,
+          runSpacing: 2,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 7,
+                  height: 7,
+                  decoration: BoxDecoration(
+                    color: _resolveColor(),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  origin.latencyClass.label.toUpperCase(),
+                  style: AppTypography.monoTiny.copyWith(
+                    color: AppThemeColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            _buildTextLabel(origin.isOfficial ? 'OFFICIAL' : 'SOURCE'),
+            _buildTextLabel(origin.sourceLabel.toUpperCase()),
+            if (origin.isSynthetic) _buildTextLabel('SYNTHETIC'),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildChip(String label, Color backgroundColor) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        border: Border.all(color: AppThemeColors.border),
-        borderRadius: BorderRadius.circular(3),
-      ),
-      child: Text(
-        label,
-        style: AppTypography.monoTiny.copyWith(
-          color: AppThemeColors.textPrimary,
-        ),
+  Widget _buildTextLabel(String label) {
+    return Text(
+      label,
+      style: AppTypography.monoTiny.copyWith(
+        color: AppThemeColors.textSecondary,
       ),
     );
   }

@@ -4,6 +4,7 @@ import 'package:signals/signals_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/errors/result.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/models/data_origin.dart';
@@ -63,20 +64,20 @@ class _BriefPageState extends State<BriefPage> {
       final bool isLoading = _isLoading.value;
 
       return Container(
-        height: 36,
-        padding: const EdgeInsets.symmetric(horizontal: 8),
+        height: 40,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
         decoration: const BoxDecoration(
           border: Border(bottom: BorderSide(color: AppThemeColors.border)),
         ),
         child: Row(
           children: <Widget>[
             const Text('TERMINAL BRIEF', style: AppTypography.monoSection),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.lg),
             const DataStatusBadge(origin: _briefOrigin),
             const Spacer(),
             if (snapshot != null)
               Padding(
-                padding: const EdgeInsets.only(right: 8),
+                padding: const EdgeInsets.only(right: AppSpacing.lg),
                 child: Text(
                   'Updated ${DateFormat('HH:mm:ss').format(snapshot.fetchedAt)}',
                   style: AppTypography.monoTiny.copyWith(
@@ -86,17 +87,17 @@ class _BriefPageState extends State<BriefPage> {
               ),
             SizedBox(
               width: 24,
-              height: 24,
+              height: AppSpacing.buttonHeight,
               child: IconButton(
                 onPressed: isLoading ? null : _loadBrief,
                 padding: EdgeInsets.zero,
                 icon: isLoading
                     ? const SizedBox(
-                        width: 12,
-                        height: 12,
+                        width: 14,
+                        height: 14,
                         child: CircularProgressIndicator(strokeWidth: 1.5),
                       )
-                    : const Icon(Icons.refresh, size: 14),
+                    : const Icon(Icons.refresh, size: 16),
               ),
             ),
           ],
@@ -162,7 +163,7 @@ class _BriefPageState extends State<BriefPage> {
 
   Widget _buildDesktopBrief(BriefSnapshot snapshot) {
     return Padding(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(AppSpacing.cardPadding),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
@@ -174,7 +175,7 @@ class _BriefPageState extends State<BriefPage> {
               child: _buildHeadlineList(snapshot.headlines),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.sectionGap),
           Expanded(
             flex: 3,
             child: Column(
@@ -206,7 +207,7 @@ class _BriefPageState extends State<BriefPage> {
     return RefreshIndicator(
       onRefresh: _loadBrief,
       child: ListView(
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(AppSpacing.cardPadding),
         children: <Widget>[
           SizedBox(
             height: 248,
@@ -216,7 +217,7 @@ class _BriefPageState extends State<BriefPage> {
               child: _buildHeadlineList(snapshot.headlines),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sectionGap),
           SizedBox(
             height: 224,
             child: _buildPanel(
@@ -225,7 +226,7 @@ class _BriefPageState extends State<BriefPage> {
               child: _buildMoversList(snapshot.movers),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sectionGap),
           SizedBox(
             height: 224,
             child: _buildPanel(

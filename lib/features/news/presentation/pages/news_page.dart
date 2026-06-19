@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/models/data_origin.dart';
@@ -114,8 +115,8 @@ class _NewsPageState extends State<NewsPage> {
           child: Column(
             children: [
               Container(
-                height: 24,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
+                height: 28,
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                 decoration: const BoxDecoration(
                   color: AppThemeColors.backgroundLight,
                   border: Border(
@@ -125,7 +126,7 @@ class _NewsPageState extends State<NewsPage> {
                 child: Row(
                   children: [
                     const Text('TOP IMPACT', style: AppTypography.monoSection),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSpacing.lg),
                     const DataStatusBadge(origin: _topImpactOrigin),
                     const Spacer(),
                     if (_topError.value != null)
@@ -147,7 +148,7 @@ class _NewsPageState extends State<NewsPage> {
                     return InkWell(
                       onTap: () => _launchUrl(headline.url),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
                         decoration: const BoxDecoration(
                           border: Border(
                             bottom: BorderSide(
@@ -168,7 +169,7 @@ class _NewsPageState extends State<NewsPage> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: AppSpacing.lg),
                             Expanded(
                               child: Text(
                                 headline.title,
@@ -179,7 +180,7 @@ class _NewsPageState extends State<NewsPage> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: AppSpacing.lg),
                             SizedBox(
                               width: 92,
                               child: Row(
@@ -221,22 +222,22 @@ class _NewsPageState extends State<NewsPage> {
 
   Widget _buildToolbar() {
     return Container(
-      height: 36,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      height: 40,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       decoration: const BoxDecoration(
         border: Border(bottom: BorderSide(color: AppThemeColors.border)),
       ),
       child: Row(
         children: [
           _buildCategoryFilter(),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.lg),
           _buildPolicyToggle(),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.lg),
           const DataStatusBadge(origin: _newsOrigin),
           const Spacer(),
           if (_lastUpdated.value != null)
             Padding(
-              padding: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.only(right: AppSpacing.lg),
               child: Text(
                 'Updated ${_formatTime(_lastUpdated.value!)}',
                 style: AppTypography.monoTiny.copyWith(
@@ -268,7 +269,7 @@ class _NewsPageState extends State<NewsPage> {
           return Padding(
             padding: const EdgeInsets.only(right: 4),
             child: SizedBox(
-              height: 24,
+              height: AppSpacing.buttonHeight,
               child: TextButton(
                 onPressed: () {
                   _selectedCategory.value = cat;
@@ -278,14 +279,14 @@ class _NewsPageState extends State<NewsPage> {
                   backgroundColor: isSelected
                       ? AppThemeColors.accent
                       : AppThemeColors.backgroundLight,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
                   minimumSize: Size.zero,
                 ),
                 child: Text(
                   cat == 'all'
                       ? AppStrings.all
                       : cat[0].toUpperCase() + cat.substring(1),
-                  style: AppTypography.labelSmall.copyWith(
+                  style: AppTypography.bodySmall.copyWith(
                     color: isSelected
                         ? AppThemeColors.textPrimary
                         : AppThemeColors.textSecondary,
@@ -303,7 +304,7 @@ class _NewsPageState extends State<NewsPage> {
     return Watch((_) {
       final selected = _policyOnly.value;
       return SizedBox(
-        height: 24,
+        height: AppSpacing.buttonHeight,
         child: TextButton(
           onPressed: () {
             _policyOnly.value = !selected;
@@ -313,12 +314,12 @@ class _NewsPageState extends State<NewsPage> {
             backgroundColor: selected
                 ? AppThemeColors.warning
                 : AppThemeColors.backgroundLight,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
             minimumSize: Size.zero,
           ),
           child: Text(
             'Policy Lens',
-            style: AppTypography.labelSmall.copyWith(
+            style: AppTypography.bodySmall.copyWith(
               color: selected
                   ? AppThemeColors.textPrimary
                   : AppThemeColors.textSecondary,
@@ -333,17 +334,17 @@ class _NewsPageState extends State<NewsPage> {
     return Watch((_) {
       final isLoading = _isLoading.value;
       return SizedBox(
-        height: 24,
-        width: 24,
+        height: AppSpacing.buttonHeight,
+        width: AppSpacing.buttonHeight,
         child: IconButton(
           onPressed: isLoading ? null : _refreshNews,
           icon: isLoading
               ? const SizedBox(
-                  width: 12,
-                  height: 12,
+                  width: 14,
+                  height: 14,
                   child: CircularProgressIndicator(strokeWidth: 1.5),
                 )
-              : const Icon(Icons.refresh, size: 14),
+              : const Icon(Icons.refresh, size: 16),
           padding: EdgeInsets.zero,
         ),
       );

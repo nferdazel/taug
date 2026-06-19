@@ -4,13 +4,11 @@ import '../constants/app_colors.dart';
 
 /// Typography system for Taug Financial Terminal
 ///
-/// Scale (harmonious, tight range 10-15px):
-///   15 - heading
-///   14 - price/display
-///   13 - subheading
+/// Scale (harmonious, dense, readable range 11-14px):
+///   14 - compact heading
+///   13 - emphasis/price
 ///   12 - body/data
-///   11 - caption/label
-///   10 - micro/meta
+///   11 - labels/meta
 ///
 /// Sans: UI text, labels, buttons
 /// Mono: Financial data, prices, numbers, code
@@ -20,15 +18,15 @@ abstract final class AppTypography {
 
   // ── Sans Scale ──
 
-  /// 15px — Page titles, dialog headers
+  /// 14px — Compact page titles
   static const TextStyle heading = TextStyle(
     fontFamily: sans,
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: FontWeight.w600,
     color: Color(AppColors.textPrimary),
   );
 
-  /// 13px — Section titles, card headers
+  /// 13px — Section titles, compact headers
   static const TextStyle subheading = TextStyle(
     fontFamily: sans,
     fontSize: 13,
@@ -36,7 +34,7 @@ abstract final class AppTypography {
     color: Color(AppColors.textPrimary),
   );
 
-  /// 12px — Primary body text, button labels
+  /// 12px — Primary body text and controls
   static const TextStyle body = TextStyle(
     fontFamily: sans,
     fontSize: 12,
@@ -44,7 +42,7 @@ abstract final class AppTypography {
     color: Color(AppColors.textPrimary),
   );
 
-  /// 11px — Secondary text, descriptions
+  /// 11px — Secondary text and descriptions
   static const TextStyle caption = TextStyle(
     fontFamily: sans,
     fontSize: 11,
@@ -52,25 +50,25 @@ abstract final class AppTypography {
     color: Color(AppColors.textSecondary),
   );
 
-  /// 10px — Labels, hints, metadata
+  /// 11px — Labels, hints, metadata
   static const TextStyle micro = TextStyle(
     fontFamily: sans,
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: FontWeight.w500,
     color: Color(AppColors.textTertiary),
   );
 
   // ── Mono Scale ──
 
-  /// 14px — Main price display, large numbers
+  /// 13px — Main price display
   static const TextStyle monoPrice = TextStyle(
     fontFamily: mono,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: FontWeight.w600,
     color: Color(AppColors.textPrimary),
   );
 
-  /// 12px — Table data, chart values, secondary numbers
+  /// 12px — Table data, chart values
   static const TextStyle monoData = TextStyle(
     fontFamily: mono,
     fontSize: 12,
@@ -78,7 +76,7 @@ abstract final class AppTypography {
     color: Color(AppColors.textPrimary),
   );
 
-  /// 11px — Column headers, field labels, inline numbers
+  /// 11px — Column headers, field labels
   static const TextStyle monoLabel = TextStyle(
     fontFamily: mono,
     fontSize: 11,
@@ -86,21 +84,21 @@ abstract final class AppTypography {
     color: Color(AppColors.textSecondary),
   );
 
-  /// 10px — Timestamps, metadata, tiny numbers
+  /// 11px — Timestamps and metadata
   static const TextStyle monoMeta = TextStyle(
     fontFamily: mono,
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: FontWeight.w400,
     color: Color(AppColors.textSecondary),
   );
 
-  /// 10px — Table section headers (ALL CAPS)
+  /// 11px — Table section headers (ALL CAPS)
   static const TextStyle monoSection = TextStyle(
     fontFamily: mono,
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: FontWeight.w600,
     color: Color(AppColors.textTertiary),
-    letterSpacing: 1.0,
+    letterSpacing: 0.8,
   );
 
   // ── Semantic Aliases (backward compat) ──

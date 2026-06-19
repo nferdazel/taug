@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:signals/signals_flutter.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/models/data_origin.dart';
@@ -41,21 +42,21 @@ class _MarketPageState extends State<MarketPage> {
 
   Widget _buildToolbar() {
     return Container(
-      height: 32,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      height: 40,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       decoration: const BoxDecoration(
         border: Border(bottom: BorderSide(color: AppThemeColors.border)),
       ),
       child: Row(
         children: [
           const Text('MARKET MOVERS', style: AppTypography.monoSection),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.lg),
           const DataStatusBadge(origin: _marketOrigin),
           const Spacer(),
           Watch((_) {
             if (_provider.lastUpdated.value != null) {
               return Padding(
-                padding: const EdgeInsets.only(right: 8),
+                padding: const EdgeInsets.only(right: AppSpacing.lg),
                 child: Text(
                   'Updated ${_provider.lastUpdated.value!.minute}:${_provider.lastUpdated.value!.second.toString().padLeft(2, '0')}',
                   style: AppTypography.monoMeta,
@@ -98,8 +99,8 @@ class _MarketPageState extends State<MarketPage> {
       return Column(
         children: [
           Container(
-            height: 28,
-            padding: const EdgeInsets.symmetric(horizontal: 6),
+            height: 30,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
             decoration: const BoxDecoration(
               color: AppThemeColors.backgroundLight,
               border: Border(bottom: BorderSide(color: AppThemeColors.border)),
@@ -144,14 +145,14 @@ class _MarketPageState extends State<MarketPage> {
           Expanded(
             child: ListView.builder(
               itemCount: movers.length,
-              itemExtent: 32,
+              itemExtent: 34,
               itemBuilder: (context, index) {
                 final item = movers[index];
                 final isPositive = item.changePercent >= 0;
 
                 return Container(
-                  height: 32,
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  height: 34,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   decoration: const BoxDecoration(
                     border: Border(
                       bottom: BorderSide(

@@ -4,6 +4,7 @@ import 'package:signals/signals_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/models/data_origin.dart';
@@ -71,24 +72,24 @@ class _PolicyPageState extends State<PolicyPage> {
 
   Widget _buildToolbar() {
     return Container(
-      height: 36,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      height: 40,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       decoration: const BoxDecoration(
         border: Border(bottom: BorderSide(color: AppThemeColors.border)),
       ),
       child: Row(
         children: [
           _buildCountryFilter(),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.lg),
           _buildAgencyFilter(),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.lg),
           _buildImportanceFilter(),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.lg),
           const DataStatusBadge(origin: _policyOrigin),
           const Spacer(),
           if (_lastUpdated.value != null)
             Padding(
-              padding: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.only(right: AppSpacing.lg),
               child: Text(
                 'Updated ${DateFormat('HH:mm:ss').format(_lastUpdated.value!)}',
                 style: AppTypography.monoTiny.copyWith(
@@ -136,7 +137,7 @@ class _PolicyPageState extends State<PolicyPage> {
     required ValueChanged<String> onChanged,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 6),
       decoration: BoxDecoration(
         color: AppThemeColors.backgroundLight,
         borderRadius: BorderRadius.circular(4),
@@ -146,7 +147,7 @@ class _PolicyPageState extends State<PolicyPage> {
         value: value,
         underline: const SizedBox(),
         dropdownColor: AppThemeColors.surface,
-        style: AppTypography.monoTiny,
+        style: AppTypography.monoLabel,
         isDense: true,
         items: items
             .map(
@@ -182,7 +183,7 @@ class _PolicyPageState extends State<PolicyPage> {
   Widget _buildImportanceChip(int level, String label) {
     final bool selected = _minImportance.value == level;
     return SizedBox(
-      height: 24,
+      height: AppSpacing.buttonHeight,
       child: TextButton(
         onPressed: () {
           _minImportance.value = level;
@@ -192,12 +193,12 @@ class _PolicyPageState extends State<PolicyPage> {
           backgroundColor: selected
               ? AppThemeColors.accent
               : AppThemeColors.backgroundLight,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
           minimumSize: Size.zero,
         ),
         child: Text(
           label,
-          style: AppTypography.monoTiny.copyWith(
+          style: AppTypography.monoLabel.copyWith(
             color: selected
                 ? AppThemeColors.textPrimary
                 : AppThemeColors.textSecondary,
@@ -210,18 +211,18 @@ class _PolicyPageState extends State<PolicyPage> {
   Widget _buildRefreshButton() {
     return Watch((_) {
       return SizedBox(
-        height: 24,
-        width: 24,
+        height: AppSpacing.buttonHeight,
+        width: AppSpacing.buttonHeight,
         child: IconButton(
           onPressed: _isLoading.value ? null : _refreshEvents,
           padding: EdgeInsets.zero,
           icon: _isLoading.value
               ? const SizedBox(
-                  width: 12,
-                  height: 12,
+                  width: 14,
+                  height: 14,
                   child: CircularProgressIndicator(strokeWidth: 1.5),
                 )
-              : const Icon(Icons.refresh, size: 14),
+              : const Icon(Icons.refresh, size: 16),
         ),
       );
     });
@@ -292,6 +293,7 @@ class _PolicyPageState extends State<PolicyPage> {
         onRefresh: _refreshEvents,
         child: ListView.builder(
           itemCount: events.length,
+          itemExtent: 96,
           itemBuilder: (context, index) => _buildPolicyItem(events[index]),
         ),
       );
@@ -307,69 +309,73 @@ class _PolicyPageState extends State<PolicyPage> {
 
     return InkWell(
       onTap: () => _launchUrl(event.url),
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: const BoxDecoration(
-          border: Border(
-            bottom: BorderSide(color: AppThemeColors.border, width: 0.5),
+      child: RepaintBoundary(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: const BoxDecoration(
+            border: Border(
+              bottom: BorderSide(color: AppThemeColors.border, width: 0.5),
+            ),
           ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: importanceColor,
-                    shape: BoxShape.circle,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: importanceColor,
+                      shape: BoxShape.circle,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  '${event.agency.toUpperCase()} • ${event.country}',
-                  style: AppTypography.monoTiny.copyWith(
-                    color: AppThemeColors.textTertiary,
+                  const SizedBox(width: 8),
+                  Text(
+                    '${event.agency.toUpperCase()} • ${event.country}',
+                    style: AppTypography.monoLabel.copyWith(
+                      color: AppThemeColors.textTertiary,
+                    ),
                   ),
-                ),
-                const Spacer(),
-                Text(
-                  DateFormat(
-                    'MMM d, HH:mm',
-                  ).format(event.publishedAt.toLocal()),
-                  style: AppTypography.monoTiny.copyWith(
-                    color: AppThemeColors.textTertiary,
+                  const Spacer(),
+                  Text(
+                    DateFormat(
+                      'MMM d, HH:mm',
+                    ).format(event.publishedAt.toLocal()),
+                    style: AppTypography.monoLabel.copyWith(
+                      color: AppThemeColors.textTertiary,
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              event.title,
-              style: AppTypography.bodyMedium.copyWith(
-                fontWeight: FontWeight.w600,
+                ],
               ),
-            ),
-            if (event.summary != null && event.summary!.isNotEmpty) ...[
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
               Text(
-                event.summary!,
+                event.title,
+                style: AppTypography.bodyMedium.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: AppTypography.bodySmall,
+              ),
+              if (event.summary != null && event.summary!.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Text(
+                  event.summary!,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.bodySmall,
+                ),
+              ],
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 4,
+                children: [
+                  _buildTag(event.category),
+                  _buildTag('IMP ${event.importance}'),
+                ],
               ),
             ],
-            const SizedBox(height: 4),
-            Wrap(
-              spacing: 4,
-              children: [
-                _buildTag(event.category),
-                _buildTag('IMP ${event.importance}'),
-              ],
-            ),
-          ],
+          ),
         ),
       ),
     );

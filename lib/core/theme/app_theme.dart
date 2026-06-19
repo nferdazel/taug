@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import 'app_spacing.dart';
 import '../constants/app_colors.dart';
 
 abstract final class AppTheme {
@@ -17,6 +19,11 @@ abstract final class AppTheme {
         onError: Color(AppColors.textPrimary),
       ),
       dividerColor: const Color(AppColors.border),
+      visualDensity: VisualDensity.compact,
+      iconTheme: const IconThemeData(
+        color: Color(AppColors.textSecondary),
+        size: 16,
+      ),
       dividerTheme: const DividerThemeData(
         color: Color(AppColors.border),
         thickness: 1,
@@ -38,7 +45,7 @@ abstract final class AppTheme {
         scrolledUnderElevation: 0,
         titleTextStyle: TextStyle(
           fontFamily: 'IBM Plex Sans',
-          fontSize: 14,
+          fontSize: 13,
           fontWeight: FontWeight.w600,
           color: Color(AppColors.textPrimary),
         ),
@@ -49,12 +56,12 @@ abstract final class AppTheme {
         indicatorColor: Color(AppColors.accent),
         labelStyle: TextStyle(
           fontFamily: 'IBM Plex Sans',
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: FontWeight.w600,
         ),
         unselectedLabelStyle: TextStyle(
           fontFamily: 'IBM Plex Sans',
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: FontWeight.w400,
         ),
         dividerColor: Color(AppColors.border),
@@ -74,10 +81,7 @@ abstract final class AppTheme {
           borderRadius: BorderRadius.circular(4),
           borderSide: const BorderSide(color: Color(AppColors.accent)),
         ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 8,
-        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
         hintStyle: const TextStyle(
           fontFamily: 'IBM Plex Sans',
           fontSize: 12,
@@ -89,10 +93,9 @@ abstract final class AppTheme {
           backgroundColor: const Color(AppColors.accent),
           foregroundColor: const Color(AppColors.textPrimary),
           elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(4),
-          ),
+          minimumSize: const Size(0, AppSpacing.buttonHeight),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
           textStyle: const TextStyle(
             fontFamily: 'IBM Plex Sans',
             fontSize: 12,
@@ -103,7 +106,8 @@ abstract final class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: const Color(AppColors.accent),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          minimumSize: const Size(0, AppSpacing.buttonHeight),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
           textStyle: const TextStyle(
             fontFamily: 'IBM Plex Sans',
             fontSize: 12,
@@ -114,7 +118,7 @@ abstract final class AppTheme {
       dataTableTheme: const DataTableThemeData(
         headingTextStyle: TextStyle(
           fontFamily: 'IBM Plex Mono',
-          fontSize: 10,
+          fontSize: 11,
           fontWeight: FontWeight.w600,
           color: Color(AppColors.textSecondary),
         ),
@@ -126,9 +130,7 @@ abstract final class AppTheme {
         headingRowColor: WidgetStatePropertyAll(
           Color(AppColors.backgroundLight),
         ),
-        dataRowColor: WidgetStatePropertyAll(
-          Color(AppColors.background),
-        ),
+        dataRowColor: WidgetStatePropertyAll(Color(AppColors.background)),
         dividerThickness: 1,
         horizontalMargin: 0,
         columnSpacing: 16,

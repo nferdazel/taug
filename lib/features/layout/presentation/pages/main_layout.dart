@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 
@@ -71,7 +72,7 @@ class _MainLayoutState extends State<MainLayout> {
     final int currentIndex = _tabs.indexOf(location);
 
     return Container(
-      height: 32,
+      height: 40,
       decoration: const BoxDecoration(
         color: AppThemeColors.surface,
         border: Border(bottom: BorderSide(color: AppThemeColors.border)),
@@ -79,7 +80,7 @@ class _MainLayoutState extends State<MainLayout> {
       child: Row(
         children: [
           Container(
-            width: 100,
+            width: 108,
             height: double.infinity,
             alignment: Alignment.center,
             child: Text(
@@ -101,7 +102,7 @@ class _MainLayoutState extends State<MainLayout> {
                 return InkWell(
                   onTap: () => _onTabTapped(index),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
                     decoration: BoxDecoration(
                       border: Border(
                         bottom: BorderSide(
@@ -117,15 +118,15 @@ class _MainLayoutState extends State<MainLayout> {
                       children: [
                         Icon(
                           _tabIcons[index],
-                          size: 13,
+                          size: AppSpacing.iconSize + 1,
                           color: isSelected
                               ? AppThemeColors.textPrimary
                               : AppThemeColors.textSecondary,
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: AppSpacing.md),
                         Text(
                           _tabLabels[index],
-                          style: AppTypography.caption.copyWith(
+                          style: AppTypography.labelSmall.copyWith(
                             color: isSelected
                                 ? AppThemeColors.textPrimary
                                 : AppThemeColors.textSecondary,
