@@ -149,8 +149,9 @@ class SymbolRepository {
 
     if (ticker.endsWith('/usdt') ||
         ticker.endsWith('/btc') ||
-        ticker.endsWith('/eth'))
+        ticker.endsWith('/eth')) {
       return 'crypto';
+    }
     if (name.contains('etf') || name.contains('fund')) return 'etf';
     if (name.contains('index')) return 'index';
     return 'equity';
