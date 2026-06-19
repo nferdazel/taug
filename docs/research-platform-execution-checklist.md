@@ -110,7 +110,7 @@ Docs discipline for this repo:
 - `[done]` `securities`
 - `[done]` `currencies`
 - `[done]` `reporting_periods`
-- `[todo]` sector and industry normalization tables
+- `[done]` sector and industry normalization tables
 
 ### Raw immutable layer
 

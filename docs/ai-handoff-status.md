@@ -70,7 +70,7 @@ Not the target:
 - immutable raw ingestion spine (`raw_sources`, `raw_documents`, `raw_records`, `raw_fetch_runs`, `raw_document_links`)
 - SEC filing lineage (`filings`, `filing_versions`) with amendment supersession
 - statement layer (`statement_taxonomy_items`, `financial_statements`, `financial_statement_items`)
-- SEC raw companyfacts ingestion + parser (35 XBRL concepts)
+- SEC raw companyfacts ingestion + parser (124 XBRL concepts)
 - parser replay hardened (bulk lookup, preloaded caches, batched inserts)
 - audit trail (`audit_events`, `validation_events`, `restatement_events`, `ingestion_checkpoints`)
 - metric engine (`metric_definitions` with 19 metrics, `metric_inputs`, `metric_calculation_runs`, `security_metric_snapshots`, `security_price_snapshots`, `screening_universe_memberships`)
@@ -133,8 +133,8 @@ Not the target:
 
 ### Data/model work
 
-- broader taxonomy mapping (currently 35 facts, full XBRL has thousands)
-- sector/industry normalization tables
+- broader taxonomy mapping (now 124 facts, up from 35)
+- sector/industry normalization tables (done — `sectors`, `industries` tables seeded with GICS)
 - `raw_financials`, `raw_macro`, `raw_ownership` tables
 - FRED integration (done — 5 series seeded: DFF, CPIAUCSL, UNRATE, GDP, DGS10)
 - Bank Indonesia, BPS integrations
