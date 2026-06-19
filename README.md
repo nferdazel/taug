@@ -116,6 +116,7 @@ flutter run -d chrome
 supabase functions deploy get-price
 supabase functions deploy get-chart-data
 supabase functions deploy search-symbols
+supabase functions deploy refresh-quote-snapshots
 supabase functions deploy refresh-news
 supabase functions deploy refresh-calendar
 ```
