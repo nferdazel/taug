@@ -3,6 +3,7 @@ import 'package:signals/signals_flutter.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/extensions.dart';
 import '../../domain/watchlist_entity.dart';
 import '../providers/watchlist_provider.dart';
 import 'symbol_search_dialog.dart';
@@ -323,12 +324,7 @@ class _WatchlistPageState extends State<WatchlistPage> {
     return price.toStringAsFixed(2);
   }
 
-  String _formatVolume(int volume) {
-    if (volume >= 1000000000) return '${(volume / 1000000000).toStringAsFixed(1)}B';
-    if (volume >= 1000000) return '${(volume / 1000000).toStringAsFixed(1)}M';
-    if (volume >= 1000) return '${(volume / 1000).toStringAsFixed(1)}K';
-    return volume.toString();
-  }
+  String _formatVolume(int volume) => formatVolume(volume);
 
   String _formatLastUpdated(DateTime time) {
     final diff = DateTime.now().difference(time);

@@ -25,12 +25,12 @@ final class Exchange extends Equatable {
 
   factory Exchange.fromJson(Map<String, dynamic> json) {
     return Exchange(
-      id: json['id'] as int,
-      code: json['code'] as String,
-      name: json['name'] as String,
-      country: json['country'] as String,
-      timezone: json['timezone'] as String,
-      currency: json['currency'] as String,
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      code: json['code'] as String? ?? '',
+      name: json['name'] as String? ?? '',
+      country: json['country'] as String? ?? '',
+      timezone: json['timezone'] as String? ?? 'UTC',
+      currency: json['currency'] as String? ?? 'USD',
       marketOpen: json['market_open'] as String?,
       marketClose: json['market_close'] as String?,
       isActive: json['is_active'] as bool? ?? true,

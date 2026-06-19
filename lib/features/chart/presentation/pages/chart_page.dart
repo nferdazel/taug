@@ -6,6 +6,7 @@ import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/models/price_data.dart';
 import '../../../../shared/widgets/price_cell.dart';
+import '../../../../core/utils/extensions.dart';
 import '../../data/chart_repository.dart';
 import 'panels.dart';
 
@@ -456,10 +457,5 @@ class _ChartPageState extends State<ChartPage> {
     );
   }
 
-  String _formatVolume(int volume) {
-    if (volume >= 1000000000) return '${(volume / 1000000000).toStringAsFixed(1)}B';
-    if (volume >= 1000000) return '${(volume / 1000000).toStringAsFixed(1)}M';
-    if (volume >= 1000) return '${(volume / 1000).toStringAsFixed(1)}K';
-    return volume.toString();
-  }
+  String _formatVolume(int volume) => formatVolume(volume);
 }

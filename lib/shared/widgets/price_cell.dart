@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/extensions.dart';
 
 class PriceCell extends StatelessWidget {
   final String value;
@@ -65,21 +66,10 @@ class VolumeCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-      _formatVolume(value),
+      formatVolume(value),
       style: AppTypography.monoTiny,
       textAlign: textAlign,
     );
-  }
-
-  String _formatVolume(int volume) {
-    if (volume >= 1000000000) {
-      return '${(volume / 1000000000).toStringAsFixed(1)}B';
-    } else if (volume >= 1000000) {
-      return '${(volume / 1000000).toStringAsFixed(1)}M';
-    } else if (volume >= 1000) {
-      return '${(volume / 1000).toStringAsFixed(1)}K';
-    }
-    return volume.toString();
   }
 }
 
