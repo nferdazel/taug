@@ -5,7 +5,9 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/models/data_origin.dart';
 import '../../../../shared/models/news_article.dart';
+import '../../../../shared/widgets/data_status_badge.dart';
 import '../../data/news_repository.dart';
 
 class NewsPage extends StatefulWidget {
@@ -33,9 +35,7 @@ class _NewsPageState extends State<NewsPage> {
     _isLoading.value = true;
     _error.value = null;
 
-    final result = await _repository.getNews(
-      category: _selectedCategory.value,
-    );
+    final result = await _repository.getNews(category: _selectedCategory.value);
 
     if (result.isSuccess) {
       _articles.value = result.data!;
@@ -72,13 +72,17 @@ class _NewsPageState extends State<NewsPage> {
       child: Row(
         children: [
           _buildCategoryFilter(),
+          const SizedBox(width: 8),
+          const DataStatusBadge(origin: _newsOrigin),
           const Spacer(),
           if (_lastUpdated.value != null)
             Padding(
               padding: const EdgeInsets.only(right: 8),
               child: Text(
                 'Updated ${_formatTime(_lastUpdated.value!)}',
-                style: AppTypography.monoTiny.copyWith(color: AppThemeColors.textTertiary),
+                style: AppTypography.monoTiny.copyWith(
+                  color: AppThemeColors.textTertiary,
+                ),
               ),
             ),
           _buildRefreshButton(),
@@ -89,7 +93,13 @@ class _NewsPageState extends State<NewsPage> {
 
   Widget _buildCategoryFilter() {
     return Watch((_) {
-      final categories = ['all', 'markets', 'economy', 'geopolitics', 'earnings'];
+      final categories = [
+        'all',
+        'markets',
+        'economy',
+        'geopolitics',
+        'earnings',
+      ];
       final current = _selectedCategory.value;
 
       return Row(
@@ -112,7 +122,9 @@ class _NewsPageState extends State<NewsPage> {
                   minimumSize: Size.zero,
                 ),
                 child: Text(
-                  cat == 'all' ? AppStrings.all : cat[0].toUpperCase() + cat.substring(1),
+                  cat == 'all'
+                      ? AppStrings.all
+                      : cat[0].toUpperCase() + cat.substring(1),
                   style: AppTypography.labelSmall.copyWith(
                     color: isSelected
                         ? AppThemeColors.textPrimary
@@ -136,7 +148,11 @@ class _NewsPageState extends State<NewsPage> {
         child: IconButton(
           onPressed: isLoading ? null : _refreshNews,
           icon: isLoading
-              ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 1.5))
+              ? const SizedBox(
+                  width: 12,
+                  height: 12,
+                  child: CircularProgressIndicator(strokeWidth: 1.5),
+                )
               : const Icon(Icons.refresh, size: 14),
           padding: EdgeInsets.zero,
         ),
@@ -152,7 +168,11 @@ class _NewsPageState extends State<NewsPage> {
 
       if (isLoading && articles.isEmpty) {
         return const Center(
-          child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+          child: SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
         );
       }
 
@@ -161,11 +181,22 @@ class _NewsPageState extends State<NewsPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 32, color: AppThemeColors.bearish),
+              const Icon(
+                Icons.error_outline,
+                size: 32,
+                color: AppThemeColors.bearish,
+              ),
               const SizedBox(height: 8),
-              Text(error, style: AppTypography.bodySmall, textAlign: TextAlign.center),
+              Text(
+                error,
+                style: AppTypography.bodySmall,
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: 12),
-              ElevatedButton(onPressed: _loadNews, child: const Text(AppStrings.retry)),
+              ElevatedButton(
+                onPressed: _loadNews,
+                child: const Text(AppStrings.retry),
+              ),
             ],
           ),
         );
@@ -176,11 +207,18 @@ class _NewsPageState extends State<NewsPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.newspaper_outlined, size: 32, color: AppThemeColors.textTertiary),
+              const Icon(
+                Icons.newspaper_outlined,
+                size: 32,
+                color: AppThemeColors.textTertiary,
+              ),
               const SizedBox(height: 8),
               const Text('No news articles', style: AppTypography.bodySmall),
               const SizedBox(height: 12),
-              ElevatedButton(onPressed: _refreshNews, child: const Text('Fetch News')),
+              ElevatedButton(
+                onPressed: _refreshNews,
+                child: const Text('Fetch News'),
+              ),
             ],
           ),
         );
@@ -202,7 +240,9 @@ class _NewsPageState extends State<NewsPage> {
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: AppThemeColors.border, width: 0.5)),
+          border: Border(
+            bottom: BorderSide(color: AppThemeColors.border, width: 0.5),
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -211,33 +251,46 @@ class _NewsPageState extends State<NewsPage> {
               children: [
                 if (article.isBreaking) ...[
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 1,
+                    ),
                     decoration: BoxDecoration(
                       color: AppThemeColors.bearish,
                       borderRadius: BorderRadius.circular(2),
                     ),
                     child: const Text(
                       'BREAKING',
-                      style: TextStyle(fontSize: 8, fontWeight: FontWeight.w700, color: AppThemeColors.textPrimary),
+                      style: TextStyle(
+                        fontSize: 8,
+                        fontWeight: FontWeight.w700,
+                        color: AppThemeColors.textPrimary,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 6),
                 ],
                 Text(
                   article.source.toUpperCase(),
-                  style: AppTypography.monoTiny.copyWith(color: AppThemeColors.textTertiary),
+                  style: AppTypography.monoTiny.copyWith(
+                    color: AppThemeColors.textTertiary,
+                  ),
                 ),
                 const Spacer(),
                 Text(
                   _formatTime(article.publishedAt),
-                  style: AppTypography.monoTiny.copyWith(color: AppThemeColors.textTertiary),
+                  style: AppTypography.monoTiny.copyWith(
+                    color: AppThemeColors.textTertiary,
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 4),
             Text(
               article.title,
-              style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w500),
+              style: AppTypography.bodyMedium.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -256,7 +309,10 @@ class _NewsPageState extends State<NewsPage> {
                 spacing: 4,
                 children: article.categories.take(3).map((cat) {
                   return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 1,
+                    ),
                     decoration: BoxDecoration(
                       color: AppThemeColors.backgroundLight,
                       borderRadius: BorderRadius.circular(2),
@@ -264,7 +320,9 @@ class _NewsPageState extends State<NewsPage> {
                     ),
                     child: Text(
                       cat.toUpperCase(),
-                      style: AppTypography.monoTiny.copyWith(color: AppThemeColors.textSecondary),
+                      style: AppTypography.monoTiny.copyWith(
+                        color: AppThemeColors.textSecondary,
+                      ),
                     ),
                   );
                 }).toList(),
@@ -294,3 +352,10 @@ class _NewsPageState extends State<NewsPage> {
     } catch (_) {}
   }
 }
+
+const DataOrigin _newsOrigin = DataOrigin(
+  sourceLabel: 'RSS Feeds',
+  latencyClass: DataLatencyClass.syndicated,
+  isOfficial: false,
+  isSynthetic: false,
+);

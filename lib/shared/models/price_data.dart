@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import 'data_origin.dart';
+
 final class PriceData extends Equatable {
   final String symbol;
   final double price;
@@ -12,6 +14,7 @@ final class PriceData extends Equatable {
   final double? close;
   final double? turnover;
   final DateTime? lastUpdate;
+  final DataOrigin origin;
 
   const PriceData({
     required this.symbol,
@@ -25,6 +28,7 @@ final class PriceData extends Equatable {
     this.close,
     this.turnover,
     this.lastUpdate,
+    required this.origin,
   });
 
   factory PriceData.fromJson(Map<String, dynamic> json) {
@@ -47,23 +51,30 @@ final class PriceData extends Equatable {
       lastUpdate: json['last_update'] != null
           ? DateTime.tryParse(json['last_update'] as String)
           : null,
+      origin: DataOrigin.fromJson(
+        json,
+        fallbackSourceLabel: 'Twelve Data',
+        fallbackLatencyClass: DataLatencyClass.delayed,
+        fallbackIsOfficial: false,
+      ),
     );
   }
 
   @override
   List<Object?> get props => [
-        symbol,
-        price,
-        change,
-        changePercent,
-        volume,
-        open,
-        high,
-        low,
-        close,
-        turnover,
-        lastUpdate,
-      ];
+    symbol,
+    price,
+    change,
+    changePercent,
+    volume,
+    open,
+    high,
+    low,
+    close,
+    turnover,
+    lastUpdate,
+    origin,
+  ];
 }
 
 final class CandleData extends Equatable {

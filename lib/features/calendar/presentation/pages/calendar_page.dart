@@ -4,7 +4,9 @@ import 'package:signals/signals_flutter.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/models/data_origin.dart';
 import '../../../../shared/models/econ_event.dart';
+import '../../../../shared/widgets/data_status_badge.dart';
 import '../../data/calendar_repository.dart';
 
 class CalendarPage extends StatefulWidget {
@@ -79,6 +81,8 @@ class _CalendarPageState extends State<CalendarPage> {
           _buildCountryFilter(),
           const SizedBox(width: 12),
           _buildImportanceFilter(),
+          const SizedBox(width: 12),
+          const DataStatusBadge(origin: _calendarOrigin),
           const Spacer(),
           _buildRefreshButton(),
         ],
@@ -121,7 +125,12 @@ class _CalendarPageState extends State<CalendarPage> {
           style: AppTypography.monoTiny,
           isDense: true,
           items: countries
-              .map((c) => DropdownMenuItem(value: c, child: Text(c == 'all' ? 'All' : c)))
+              .map(
+                (c) => DropdownMenuItem(
+                  value: c,
+                  child: Text(c == 'all' ? 'All' : c),
+                ),
+              )
               .toList(),
           onChanged: (value) {
             if (value != null) {
@@ -160,7 +169,9 @@ class _CalendarPageState extends State<CalendarPage> {
           _loadEvents();
         },
         style: TextButton.styleFrom(
-          backgroundColor: isSelected ? AppThemeColors.accent : AppThemeColors.backgroundLight,
+          backgroundColor: isSelected
+              ? AppThemeColors.accent
+              : AppThemeColors.backgroundLight,
           padding: EdgeInsets.zero,
           minimumSize: Size.zero,
         ),
@@ -178,7 +189,11 @@ class _CalendarPageState extends State<CalendarPage> {
         child: IconButton(
           onPressed: isLoading ? null : _refreshCalendar,
           icon: isLoading
-              ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 1.5))
+              ? const SizedBox(
+                  width: 12,
+                  height: 12,
+                  child: CircularProgressIndicator(strokeWidth: 1.5),
+                )
               : const Icon(Icons.refresh, size: 14),
           padding: EdgeInsets.zero,
         ),
@@ -194,7 +209,11 @@ class _CalendarPageState extends State<CalendarPage> {
 
       if (isLoading && events.isEmpty) {
         return const Center(
-          child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+          child: SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
         );
       }
 
@@ -203,11 +222,22 @@ class _CalendarPageState extends State<CalendarPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 32, color: AppThemeColors.bearish),
+              const Icon(
+                Icons.error_outline,
+                size: 32,
+                color: AppThemeColors.bearish,
+              ),
               const SizedBox(height: 8),
-              Text(error, style: AppTypography.bodySmall, textAlign: TextAlign.center),
+              Text(
+                error,
+                style: AppTypography.bodySmall,
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: 12),
-              ElevatedButton(onPressed: _loadEvents, child: const Text(AppStrings.retry)),
+              ElevatedButton(
+                onPressed: _loadEvents,
+                child: const Text(AppStrings.retry),
+              ),
             ],
           ),
         );
@@ -218,11 +248,21 @@ class _CalendarPageState extends State<CalendarPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.calendar_today_outlined, size: 32, color: AppThemeColors.textTertiary),
+              const Icon(
+                Icons.calendar_today_outlined,
+                size: 32,
+                color: AppThemeColors.textTertiary,
+              ),
               const SizedBox(height: 8),
-              const Text('No events for this date', style: AppTypography.bodySmall),
+              const Text(
+                'No events for this date',
+                style: AppTypography.bodySmall,
+              ),
               const SizedBox(height: 12),
-              ElevatedButton(onPressed: _refreshCalendar, child: const Text('Fetch Events')),
+              ElevatedButton(
+                onPressed: _refreshCalendar,
+                child: const Text('Fetch Events'),
+              ),
             ],
           ),
         );
@@ -253,13 +293,46 @@ class _CalendarPageState extends State<CalendarPage> {
       ),
       child: const Row(
         children: [
-          SizedBox(width: 50, child: Text('Time', style: AppTypography.sectionHeader)),
-          Expanded(flex: 3, child: Text('Event', style: AppTypography.sectionHeader)),
-          SizedBox(width: 40, child: Text('Ctry', style: AppTypography.sectionHeader)),
-          SizedBox(width: 30, child: Text('Imp', style: AppTypography.sectionHeader)),
-          Expanded(flex: 2, child: Text('Actual', style: AppTypography.sectionHeader, textAlign: TextAlign.right)),
-          Expanded(flex: 2, child: Text('Forecast', style: AppTypography.sectionHeader, textAlign: TextAlign.right)),
-          Expanded(flex: 2, child: Text('Previous', style: AppTypography.sectionHeader, textAlign: TextAlign.right)),
+          SizedBox(
+            width: 50,
+            child: Text('Time', style: AppTypography.sectionHeader),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text('Event', style: AppTypography.sectionHeader),
+          ),
+          SizedBox(
+            width: 40,
+            child: Text('Ctry', style: AppTypography.sectionHeader),
+          ),
+          SizedBox(
+            width: 30,
+            child: Text('Imp', style: AppTypography.sectionHeader),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              'Actual',
+              style: AppTypography.sectionHeader,
+              textAlign: TextAlign.right,
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              'Forecast',
+              style: AppTypography.sectionHeader,
+              textAlign: TextAlign.right,
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              'Previous',
+              style: AppTypography.sectionHeader,
+              textAlign: TextAlign.right,
+            ),
+          ),
         ],
       ),
     );
@@ -271,7 +344,9 @@ class _CalendarPageState extends State<CalendarPage> {
       height: 32,
       padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppThemeColors.border, width: 0.5)),
+        border: Border(
+          bottom: BorderSide(color: AppThemeColors.border, width: 0.5),
+        ),
       ),
       child: Row(
         children: [
@@ -281,7 +356,11 @@ class _CalendarPageState extends State<CalendarPage> {
           ),
           Expanded(
             flex: 3,
-            child: Text(event.title, style: AppTypography.monoSmall, overflow: TextOverflow.ellipsis),
+            child: Text(
+              event.title,
+              style: AppTypography.monoSmall,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
           SizedBox(
             width: 40,
@@ -289,7 +368,10 @@ class _CalendarPageState extends State<CalendarPage> {
           ),
           SizedBox(
             width: 30,
-            child: Text(_getImportanceEmoji(importance), style: const TextStyle(fontSize: 10)),
+            child: Text(
+              _getImportanceEmoji(importance),
+              style: const TextStyle(fontSize: 10),
+            ),
           ),
           Expanded(
             flex: 2,
@@ -303,7 +385,9 @@ class _CalendarPageState extends State<CalendarPage> {
             flex: 2,
             child: Text(
               event.forecast?.toString() ?? '-',
-              style: AppTypography.monoSmall.copyWith(color: AppThemeColors.textSecondary),
+              style: AppTypography.monoSmall.copyWith(
+                color: AppThemeColors.textSecondary,
+              ),
               textAlign: TextAlign.right,
             ),
           ),
@@ -311,7 +395,9 @@ class _CalendarPageState extends State<CalendarPage> {
             flex: 2,
             child: Text(
               event.previous?.toString() ?? '-',
-              style: AppTypography.monoSmall.copyWith(color: AppThemeColors.textSecondary),
+              style: AppTypography.monoSmall.copyWith(
+                color: AppThemeColors.textSecondary,
+              ),
               textAlign: TextAlign.right,
             ),
           ),
@@ -322,9 +408,12 @@ class _CalendarPageState extends State<CalendarPage> {
 
   String _getImportanceEmoji(int importance) {
     switch (importance) {
-      case 3: return '🔴';
-      case 2: return '🟡';
-      default: return '⚪';
+      case 3:
+        return '🔴';
+      case 2:
+        return '🟡';
+      default:
+        return '⚪';
     }
   }
 
@@ -353,3 +442,10 @@ class _CalendarPageState extends State<CalendarPage> {
     }
   }
 }
+
+const DataOrigin _calendarOrigin = DataOrigin(
+  sourceLabel: 'Calendar Pending API',
+  latencyClass: DataLatencyClass.unavailable,
+  isOfficial: false,
+  isSynthetic: false,
+);

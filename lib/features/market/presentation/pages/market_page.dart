@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:signals/signals_flutter.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/models/data_origin.dart';
+import '../../../../shared/widgets/data_status_badge.dart';
 import '../providers/market_provider.dart';
 
 class MarketPage extends StatefulWidget {
@@ -47,6 +49,8 @@ class _MarketPageState extends State<MarketPage> {
       child: Row(
         children: [
           const Text('MARKET MOVERS', style: AppTypography.monoSection),
+          const SizedBox(width: 8),
+          const DataStatusBadge(origin: _marketOrigin),
           const Spacer(),
           Watch((_) {
             if (_provider.lastUpdated.value != null) {
@@ -73,14 +77,16 @@ class _MarketPageState extends State<MarketPage> {
 
       if (isLoading && movers.isEmpty) {
         return const Center(
-          child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+          child: SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
         );
       }
 
       if (error != null && movers.isEmpty) {
-        return Center(
-          child: Text(error, style: AppTypography.caption),
-        );
+        return Center(child: Text(error, style: AppTypography.caption));
       }
 
       if (movers.isEmpty) {
@@ -100,11 +106,38 @@ class _MarketPageState extends State<MarketPage> {
             ),
             child: const Row(
               children: [
-                Expanded(flex: 2, child: Text('Symbol', style: AppTypography.monoSection)),
-                Expanded(flex: 3, child: Text('Name', style: AppTypography.monoSection)),
-                Expanded(flex: 2, child: Text('Price', style: AppTypography.monoSection, textAlign: TextAlign.right)),
-                Expanded(flex: 2, child: Text('Change', style: AppTypography.monoSection, textAlign: TextAlign.right)),
-                Expanded(flex: 2, child: Text('Change %', style: AppTypography.monoSection, textAlign: TextAlign.right)),
+                Expanded(
+                  flex: 2,
+                  child: Text('Symbol', style: AppTypography.monoSection),
+                ),
+                Expanded(
+                  flex: 3,
+                  child: Text('Name', style: AppTypography.monoSection),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Price',
+                    style: AppTypography.monoSection,
+                    textAlign: TextAlign.right,
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Change',
+                    style: AppTypography.monoSection,
+                    textAlign: TextAlign.right,
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Change %',
+                    style: AppTypography.monoSection,
+                    textAlign: TextAlign.right,
+                  ),
+                ),
               ],
             ),
           ),
@@ -120,7 +153,12 @@ class _MarketPageState extends State<MarketPage> {
                   height: 32,
                   padding: const EdgeInsets.symmetric(horizontal: 6),
                   decoration: const BoxDecoration(
-                    border: Border(bottom: BorderSide(color: AppThemeColors.border, width: 0.5)),
+                    border: Border(
+                      bottom: BorderSide(
+                        color: AppThemeColors.border,
+                        width: 0.5,
+                      ),
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -128,7 +166,9 @@ class _MarketPageState extends State<MarketPage> {
                         flex: 2,
                         child: Text(
                           item.symbol,
-                          style: AppTypography.monoLabel.copyWith(fontWeight: FontWeight.w600),
+                          style: AppTypography.monoLabel.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                       Expanded(
@@ -152,7 +192,9 @@ class _MarketPageState extends State<MarketPage> {
                         child: Text(
                           '${isPositive ? '+' : ''}${item.change.toStringAsFixed(2)}',
                           style: AppTypography.monoLabel.copyWith(
-                            color: isPositive ? AppThemeColors.bullish : AppThemeColors.bearish,
+                            color: isPositive
+                                ? AppThemeColors.bullish
+                                : AppThemeColors.bearish,
                           ),
                           textAlign: TextAlign.right,
                         ),
@@ -162,7 +204,9 @@ class _MarketPageState extends State<MarketPage> {
                         child: Text(
                           '${isPositive ? '+' : ''}${item.changePercent.toStringAsFixed(2)}%',
                           style: AppTypography.monoLabel.copyWith(
-                            color: isPositive ? AppThemeColors.bullish : AppThemeColors.bearish,
+                            color: isPositive
+                                ? AppThemeColors.bullish
+                                : AppThemeColors.bearish,
                           ),
                           textAlign: TextAlign.right,
                         ),
@@ -178,3 +222,10 @@ class _MarketPageState extends State<MarketPage> {
     });
   }
 }
+
+const DataOrigin _marketOrigin = DataOrigin(
+  sourceLabel: 'Twelve Data',
+  latencyClass: DataLatencyClass.delayed,
+  isOfficial: false,
+  isSynthetic: false,
+);

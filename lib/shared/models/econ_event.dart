@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import 'data_origin.dart';
+
 final class EconEvent extends Equatable {
   final String id;
   final String title;
@@ -13,6 +15,7 @@ final class EconEvent extends Equatable {
   final DateTime eventDate;
   final String? eventTime;
   final String source;
+  final DataOrigin origin;
 
   const EconEvent({
     required this.id,
@@ -27,6 +30,7 @@ final class EconEvent extends Equatable {
     required this.eventDate,
     this.eventTime,
     this.source = 'manual',
+    required this.origin,
   });
 
   factory EconEvent.fromJson(Map<String, dynamic> json) {
@@ -43,22 +47,30 @@ final class EconEvent extends Equatable {
       eventDate: DateTime.parse(json['event_date'] as String),
       eventTime: json['event_time'] as String?,
       source: json['source'] as String? ?? 'manual',
+      origin: DataOrigin.fromJson(
+        json,
+        fallbackSourceLabel: json['source'] as String? ?? 'manual',
+        fallbackLatencyClass: DataLatencyClass.derived,
+        fallbackIsOfficial: false,
+        fallbackIsSynthetic: json['source'] == 'manual',
+      ),
     );
   }
 
   @override
   List<Object?> get props => [
-        id,
-        title,
-        country,
-        category,
-        importance,
-        actual,
-        forecast,
-        previous,
-        unit,
-        eventDate,
-        eventTime,
-        source,
-      ];
+    id,
+    title,
+    country,
+    category,
+    importance,
+    actual,
+    forecast,
+    previous,
+    unit,
+    eventDate,
+    eventTime,
+    source,
+    origin,
+  ];
 }

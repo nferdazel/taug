@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import 'data_origin.dart';
+
 final class NewsArticle extends Equatable {
   final String id;
   final String? externalId;
@@ -14,6 +16,7 @@ final class NewsArticle extends Equatable {
   final List<String> categories;
   final List<int> symbols;
   final bool isBreaking;
+  final DataOrigin origin;
 
   const NewsArticle({
     required this.id,
@@ -29,6 +32,7 @@ final class NewsArticle extends Equatable {
     this.categories = const [],
     this.symbols = const [],
     this.isBreaking = false,
+    required this.origin,
   });
 
   factory NewsArticle.fromJson(Map<String, dynamic> json) {
@@ -43,32 +47,39 @@ final class NewsArticle extends Equatable {
       author: json['author'] as String?,
       publishedAt: DateTime.parse(json['published_at'] as String),
       imageUrl: json['image_url'] as String?,
-      categories: (json['categories'] as List<dynamic>?)
+      categories:
+          (json['categories'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
           [],
-      symbols: (json['symbols'] as List<dynamic>?)
-              ?.map((e) => e as int)
-              .toList() ??
+      symbols:
+          (json['symbols'] as List<dynamic>?)?.map((e) => e as int).toList() ??
           [],
       isBreaking: json['is_breaking'] as bool? ?? false,
+      origin: DataOrigin.fromJson(
+        json,
+        fallbackSourceLabel: json['source'] as String? ?? 'RSS',
+        fallbackLatencyClass: DataLatencyClass.syndicated,
+        fallbackIsOfficial: false,
+      ),
     );
   }
 
   @override
   List<Object?> get props => [
-        id,
-        externalId,
-        title,
-        summary,
-        content,
-        url,
-        source,
-        author,
-        publishedAt,
-        imageUrl,
-        categories,
-        symbols,
-        isBreaking,
-      ];
+    id,
+    externalId,
+    title,
+    summary,
+    content,
+    url,
+    source,
+    author,
+    publishedAt,
+    imageUrl,
+    categories,
+    symbols,
+    isBreaking,
+    origin,
+  ];
 }

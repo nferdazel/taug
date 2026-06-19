@@ -17,7 +17,7 @@ void main() async {
     postgrestOptions: const PostgrestClientOptions(schema: 'taug'),
   );
 
-  GoogleFonts.config.allowRuntimeFetching = true;
+  GoogleFonts.config.allowRuntimeFetching = false;
 
   runApp(const TaugApp());
 }
