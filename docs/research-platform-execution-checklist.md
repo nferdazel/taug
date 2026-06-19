@@ -225,7 +225,8 @@ Docs discipline for this repo:
 - `[done]` screener page (sortable metric table with quality indicators)
 - `[done]` research notes (CRUD in company page, RLS protected)
 - `[done]` investment theses (CRUD with stance tracking, RLS protected)
-- `[todo]` valuation snapshot page
+- `[done]` valuation snapshot page (per-company metric cards with category sections)
+- `[done]` price data integration pending — valuation metrics show "missing" until `security_price_snapshots` populated
 
 ## L. Recommended Phase Order
 
