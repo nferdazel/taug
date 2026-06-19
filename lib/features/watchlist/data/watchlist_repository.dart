@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/errors/failures.dart';
@@ -152,7 +153,9 @@ class WatchlistRepository {
             );
             priceMap[ticker] = price;
           }
-        } catch (_) {}
+        } catch (e) {
+          debugPrint('[getPricesForSymbols] Error fetching $ticker: $e');
+        }
       }
 
       return Result.success(priceMap);

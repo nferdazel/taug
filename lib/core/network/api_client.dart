@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../config/app_env.dart';
 import '../errors/failures.dart';
@@ -117,7 +118,8 @@ class ApiClient {
         return null;
       }
       return decoded;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[ApiClient._parseResponse] $e');
       return null;
     }
   }

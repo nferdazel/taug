@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/errors/failures.dart';
@@ -98,7 +99,8 @@ class SymbolRepository {
           .maybeSingle();
 
       return response?['id'] as int?;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[getSymbolId] $e');
       return null;
     }
   }
@@ -138,7 +140,8 @@ class SymbolRepository {
           .maybeSingle();
 
       return response?['id'] as int?;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[_getExchangeId] $e');
       return null;
     }
   }
