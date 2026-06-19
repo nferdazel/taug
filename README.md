@@ -72,6 +72,7 @@ feature/
 - [Research Platform Schema V2](docs/research-platform-schema-v2.md)
 - [Research Platform Ingestion Topology](docs/research-platform-ingestion-topology.md)
 - [Research Platform Schema Implementation Plan](docs/research-platform-schema-implementation-plan.md)
+- [Research Platform Screener and Metric Engine Design](docs/research-platform-screener-metric-engine.md)
 
 ## Data Sources
 

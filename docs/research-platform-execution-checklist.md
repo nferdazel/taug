@@ -191,12 +191,13 @@ Docs discipline for this repo:
 
 ## J. Screener Architecture
 
-- `[todo]` metric definition model
-- `[todo]` formula lineage design
-- `[todo]` point-in-time metric snapshot design
-- `[todo]` materialized screener read model
-- `[todo]` saved screener data model
-- `[todo]` screener filter DSL or normalized filter schema
+- `[done]` metric definition model
+- `[done]` formula lineage design
+- `[done]` point-in-time metric snapshot design
+- `[done]` materialized screener read model
+- `[done]` saved screener data model
+- `[done]` screener filter DSL or normalized filter schema
+- `[done]` MVP metric catalog documented
 
 ## K. Frontend Product Surfaces Needed Later
 
@@ -268,6 +269,9 @@ Exit criteria:
 
 ### Phase 5: Derived metrics and screener core
 
+- `[done]` design formula engine
+- `[done]` design metric snapshot/read model
+- `[done]` design saved screener support
 - `[todo]` implement formula engine
 - `[todo]` implement metric snapshot/read model
 - `[todo]` implement saved screener support
@@ -275,6 +279,7 @@ Exit criteria:
 Exit criteria:
 
 - screener queries are reproducible and explainable
+- screener and metric engine design document exists
 
 ### Phase 6: Research workspace
 
