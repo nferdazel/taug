@@ -21,7 +21,7 @@ class PortfolioRepository {
       }
 
       final response = await _client
-          .from('${AppSchema.name}.${AppSchema.portfolioHoldings}')
+          .from(AppSchema.portfolioHoldings)
           .select('''
             *,
             symbols!inner(id, ticker, name, exchanges!inner(code))
@@ -65,7 +65,7 @@ class PortfolioRepository {
       }
 
       final response = await _client
-          .from('${AppSchema.name}.${AppSchema.portfolioHoldings}')
+          .from(AppSchema.portfolioHoldings)
           .insert({
             'user_id': userId,
             'symbol_id': symbolId,
@@ -89,7 +89,7 @@ class PortfolioRepository {
   }) async {
     try {
       await _client
-          .from('${AppSchema.name}.${AppSchema.portfolioHoldings}')
+          .from(AppSchema.portfolioHoldings)
           .update({
             'quantity': quantity,
             'avg_price': avgPrice,
@@ -107,7 +107,7 @@ class PortfolioRepository {
   Future<Result<void>> removeHolding(String holdingId) async {
     try {
       await _client
-          .from('${AppSchema.name}.${AppSchema.portfolioHoldings}')
+          .from(AppSchema.portfolioHoldings)
           .delete()
           .eq('id', holdingId);
 

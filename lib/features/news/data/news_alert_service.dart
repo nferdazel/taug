@@ -13,7 +13,7 @@ class NewsAlertService {
   Future<Result<List<NewsArticle>>> getBreakingNews() async {
     try {
       final response = await _client
-          .from('${AppSchema.name}.${AppSchema.newsArticles}')
+          .from(AppSchema.newsArticles)
           .select()
           .eq('is_breaking', true)
           .order('published_at', ascending: false)
@@ -32,7 +32,7 @@ class NewsAlertService {
   Future<Result<int>> getUnreadCount() async {
     try {
       final response = await _client
-          .from('${AppSchema.name}.${AppSchema.newsArticles}')
+          .from(AppSchema.newsArticles)
           .select('id')
           .eq('is_breaking', true)
           .gt('published_at', DateTime.now().subtract(const Duration(hours: 1)).toIso8601String());
