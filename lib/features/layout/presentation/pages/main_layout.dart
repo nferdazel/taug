@@ -17,24 +17,30 @@ class MainLayout extends StatefulWidget {
 class _MainLayoutState extends State<MainLayout> {
   final _currentIndex = Signal<int>(0);
 
-  final _tabs = const [
+  static const _tabs = [
+    '/market',
     '/watchlist',
+    '/portfolio',
     '/chart',
     '/news',
     '/calendar',
     '/settings',
   ];
 
-  final _tabLabels = const [
-    AppStrings.watchlist,
-    AppStrings.chart,
-    AppStrings.news,
-    AppStrings.calendar,
-    AppStrings.settings,
+  static const _tabLabels = [
+    'Market',
+    'Watchlist',
+    'Portfolio',
+    'Chart',
+    'News',
+    'Calendar',
+    'Settings',
   ];
 
-  final _tabIcons = const [
+  static const _tabIcons = [
+    Icons.show_chart,
     Icons.list_alt,
+    Icons.account_balance_wallet_outlined,
     Icons.candlestick_chart_outlined,
     Icons.newspaper_outlined,
     Icons.calendar_today_outlined,
@@ -61,25 +67,23 @@ class _MainLayoutState extends State<MainLayout> {
   Widget _buildTabBar() {
     return Watch((_) {
       return Container(
-        height: 36,
+        height: 32,
         decoration: const BoxDecoration(
           color: AppThemeColors.surface,
-          border: Border(
-            bottom: BorderSide(color: AppThemeColors.border),
-          ),
+          border: Border(bottom: BorderSide(color: AppThemeColors.border)),
         ),
         child: Row(
           children: [
             Container(
-              width: 120,
+              width: 100,
               height: double.infinity,
               alignment: Alignment.center,
               child: Text(
                 AppStrings.appName.toUpperCase(),
-                style: AppTypography.monoMedium.copyWith(
+                style: AppTypography.monoData.copyWith(
                   color: AppThemeColors.accent,
                   fontWeight: FontWeight.w700,
-                  letterSpacing: 2,
+                  letterSpacing: 1.5,
                 ),
               ),
             ),
@@ -93,13 +97,11 @@ class _MainLayoutState extends State<MainLayout> {
                   return InkWell(
                     onTap: () => _onTabTapped(index),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
                       decoration: BoxDecoration(
                         border: Border(
                           bottom: BorderSide(
-                            color: isSelected
-                                ? AppThemeColors.accent
-                                : Colors.transparent,
+                            color: isSelected ? AppThemeColors.accent : Colors.transparent,
                             width: 2,
                           ),
                         ),
@@ -109,18 +111,14 @@ class _MainLayoutState extends State<MainLayout> {
                         children: [
                           Icon(
                             _tabIcons[index],
-                            size: 14,
-                            color: isSelected
-                                ? AppThemeColors.textPrimary
-                                : AppThemeColors.textSecondary,
+                            size: 13,
+                            color: isSelected ? AppThemeColors.textPrimary : AppThemeColors.textSecondary,
                           ),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: 4),
                           Text(
                             _tabLabels[index],
-                            style: AppTypography.labelMedium.copyWith(
-                              color: isSelected
-                                  ? AppThemeColors.textPrimary
-                                  : AppThemeColors.textSecondary,
+                            style: AppTypography.caption.copyWith(
+                              color: isSelected ? AppThemeColors.textPrimary : AppThemeColors.textSecondary,
                             ),
                           ),
                         ],

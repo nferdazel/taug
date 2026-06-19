@@ -10,4 +10,5 @@ abstract final class AppSchema {
   static const String econEvents = 'econ_events';
   static const String alerts = 'alerts';
   static const String userSettings = 'user_settings';
+  static const String portfolioHoldings = 'portfolio_holdings';
 }

@@ -1,0 +1,41 @@
+import 'dart:async';
+import 'package:signals/signals.dart';
+import '../../../../shared/models/price_data.dart';
+import '../../data/market_repository.dart';
+
+class MarketProvider {
+  final MarketRepository _repository;
+
+  final movers = Signal<List<PriceData>>([]);
+  final isLoading = Signal<bool>(false);
+  final error = Signal<String?>(null);
+  final lastUpdated = Signal<DateTime?>(null);
+
+  Timer? _refreshTimer;
+
+  MarketProvider({MarketRepository? repository})
+      : _repository = repository ?? MarketRepository();
+
+  void dispose() => _refreshTimer?.cancel();
+
+  void startAutoRefresh() {
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 15), (_) => loadMovers());
+  }
+
+  Future<void> loadMovers() async {
+    if (movers.value.isEmpty) isLoading.value = true;
+    error.value = null;
+
+    final result = await _repository.getTopMovers();
+
+    if (result.isSuccess) {
+      movers.value = result.data!;
+      lastUpdated.value = DateTime.now();
+    } else {
+      error.value = result.error.toString();
+    }
+
+    isLoading.value = false;
+  }
+}

@@ -7,7 +7,9 @@ import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/calendar/presentation/pages/calendar_page.dart';
 import '../../features/chart/presentation/pages/chart_page.dart';
 import '../../features/layout/presentation/pages/main_layout.dart';
+import '../../features/market/presentation/pages/market_page.dart';
 import '../../features/news/presentation/pages/news_page.dart';
+import '../../features/portfolio/presentation/pages/portfolio_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/watchlist/presentation/pages/watchlist_page.dart';
 
@@ -42,9 +44,19 @@ final router = GoRouter(
       builder: (context, state, child) => MainLayout(child: child),
       routes: [
         GoRoute(
+          path: '/market',
+          pageBuilder: (context, state) =>
+              const NoTransitionPage(child: MarketPage()),
+        ),
+        GoRoute(
           path: '/watchlist',
           pageBuilder: (context, state) =>
               const NoTransitionPage(child: WatchlistPage()),
+        ),
+        GoRoute(
+          path: '/portfolio',
+          pageBuilder: (context, state) =>
+              const NoTransitionPage(child: PortfolioPage()),
         ),
         GoRoute(
           path: '/chart',
