@@ -19,7 +19,7 @@ final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
 final router = GoRouter(
   navigatorKey: _rootNavigatorKey,
-  initialLocation: '/watchlist',
+  initialLocation: '/login',
   redirect: (context, state) {
     final session = Supabase.instance.client.auth.currentSession;
     final isAuthRoute =
@@ -34,6 +34,14 @@ final router = GoRouter(
     }
     return null;
   },
+  errorBuilder: (context, state) => Scaffold(
+    body: Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Text(state.error.toString(), textAlign: TextAlign.center),
+      ),
+    ),
+  ),
   routes: [
     GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
     GoRoute(

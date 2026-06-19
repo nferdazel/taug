@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:signals/signals_flutter.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
@@ -15,8 +14,6 @@ class MainLayout extends StatefulWidget {
 }
 
 class _MainLayoutState extends State<MainLayout> {
-  final _currentIndex = Signal<int>(1);
-
   static const _tabs = [
     '/market',
     '/watchlist',
@@ -51,7 +48,6 @@ class _MainLayoutState extends State<MainLayout> {
   ];
 
   void _onTabTapped(int index) {
-    _currentIndex.value = index;
     context.go(_tabs[index]);
   }
 
@@ -68,78 +64,79 @@ class _MainLayoutState extends State<MainLayout> {
   }
 
   Widget _buildTabBar() {
-    return Watch((_) {
-      return Container(
-        height: 32,
-        decoration: const BoxDecoration(
-          color: AppThemeColors.surface,
-          border: Border(bottom: BorderSide(color: AppThemeColors.border)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 100,
-              height: double.infinity,
-              alignment: Alignment.center,
-              child: Text(
-                AppStrings.appName.toUpperCase(),
-                style: AppTypography.monoData.copyWith(
-                  color: AppThemeColors.accent,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.5,
-                ),
+    final String location = GoRouterState.of(context).matchedLocation;
+    final int currentIndex = _tabs.indexOf(location);
+
+    return Container(
+      height: 32,
+      decoration: const BoxDecoration(
+        color: AppThemeColors.surface,
+        border: Border(bottom: BorderSide(color: AppThemeColors.border)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 100,
+            height: double.infinity,
+            alignment: Alignment.center,
+            child: Text(
+              AppStrings.appName.toUpperCase(),
+              style: AppTypography.monoData.copyWith(
+                color: AppThemeColors.accent,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.5,
               ),
             ),
-            const VerticalDivider(width: 1),
-            Expanded(
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: _tabs.length,
-                itemBuilder: (context, index) {
-                  final isSelected = _currentIndex.value == index;
-                  return InkWell(
-                    onTap: () => _onTabTapped(index),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      decoration: BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(
-                            color: isSelected
-                                ? AppThemeColors.accent
-                                : Colors.transparent,
-                            width: 2,
-                          ),
+          ),
+          const VerticalDivider(width: 1),
+          Expanded(
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: _tabs.length,
+              itemBuilder: (context, index) {
+                final bool isSelected = index == currentIndex;
+                return InkWell(
+                  onTap: () => _onTabTapped(index),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: isSelected
+                              ? AppThemeColors.accent
+                              : Colors.transparent,
+                          width: 2,
                         ),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            _tabIcons[index],
-                            size: 13,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          _tabIcons[index],
+                          size: 13,
+                          color: isSelected
+                              ? AppThemeColors.textPrimary
+                              : AppThemeColors.textSecondary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _tabLabels[index],
+                          style: AppTypography.caption.copyWith(
                             color: isSelected
                                 ? AppThemeColors.textPrimary
                                 : AppThemeColors.textSecondary,
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            _tabLabels[index],
-                            style: AppTypography.caption.copyWith(
-                              color: isSelected
-                                  ? AppThemeColors.textPrimary
-                                  : AppThemeColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  );
-                },
-              ),
+                  ),
+                );
+              },
             ),
-          ],
-        ),
-      );
-    });
+          ),
+        ],
+      ),
+    );
   }
 }
