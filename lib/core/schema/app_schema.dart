@@ -6,6 +6,8 @@ abstract final class AppSchema {
   static const String watchlists = 'watchlists';
   static const String watchlistItems = 'watchlist_items';
   static const String priceHistory = 'price_history';
+  static const String instrumentSources = 'instrument_sources';
+  static const String quoteSnapshots = 'quote_snapshots';
   static const String newsArticles = 'news_articles';
   static const String econEvents = 'econ_events';
   static const String alerts = 'alerts';
