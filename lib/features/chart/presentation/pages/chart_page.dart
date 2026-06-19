@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/errors/result.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/models/data_origin.dart';
 import '../../../../shared/models/price_data.dart';
+import '../../../../shared/widgets/data_status_badge.dart';
 import '../../../../shared/widgets/price_cell.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../data/chart_repository.dart';
@@ -28,6 +31,7 @@ class _ChartPageState extends State<ChartPage> {
   final _selectedSymbol = Signal<String>('AAPL');
   final _selectedInterval = Signal<String>('1d');
   final _selectedChartType = Signal<ChartType>(ChartType.candle);
+  int _requestId = 0;
 
   @override
   void initState() {
@@ -36,16 +40,29 @@ class _ChartPageState extends State<ChartPage> {
   }
 
   Future<void> _loadData() async {
+    final requestId = ++_requestId;
     _isLoading.value = true;
     _error.value = null;
 
-    final priceResult = await _repository.getCurrentPrice(_selectedSymbol.value);
-    if (priceResult.isSuccess) _currentPrice.value = priceResult.data;
+    final List<Object> results = await Future.wait<Object>([
+      _repository.getCurrentPrice(_selectedSymbol.value),
+      _repository.getChartData(
+        symbol: _selectedSymbol.value,
+        interval: _selectedInterval.value,
+      ),
+    ]);
 
-    final chartResult = await _repository.getChartData(
-      symbol: _selectedSymbol.value,
-      interval: _selectedInterval.value,
-    );
+    if (requestId != _requestId) {
+      return;
+    }
+
+    final Result<PriceData> priceResult = results[0] as Result<PriceData>;
+    final Result<List<CandleData>> chartResult =
+        results[1] as Result<List<CandleData>>;
+
+    if (priceResult.isSuccess) {
+      _currentPrice.value = priceResult.data;
+    }
 
     if (chartResult.isSuccess) {
       _candles.value = chartResult.data!;
@@ -99,7 +116,9 @@ class _ChartPageState extends State<ChartPage> {
                     Container(
                       height: 28,
                       decoration: const BoxDecoration(
-                        border: Border(bottom: BorderSide(color: AppThemeColors.border)),
+                        border: Border(
+                          bottom: BorderSide(color: AppThemeColors.border),
+                        ),
                       ),
                       child: const TabBar(
                         tabs: [
@@ -140,6 +159,8 @@ class _ChartPageState extends State<ChartPage> {
       child: Row(
         children: [
           _buildSymbolSelector(),
+          const SizedBox(width: 8),
+          const DataStatusBadge(origin: _chartOrigin),
           const SizedBox(width: 8),
           _buildChartTypeSelector(),
           const SizedBox(width: 8),
@@ -311,9 +332,17 @@ class _ChartPageState extends State<ChartPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 24, color: AppThemeColors.bearish),
+              const Icon(
+                Icons.error_outline,
+                size: 24,
+                color: AppThemeColors.bearish,
+              ),
               const SizedBox(height: 6),
-              Text(error, style: AppTypography.caption, textAlign: TextAlign.center),
+              Text(
+                error,
+                style: AppTypography.caption,
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: 8),
               ElevatedButton(
                 onPressed: _loadData,
@@ -351,7 +380,10 @@ class _ChartPageState extends State<ChartPage> {
             labelStyle: AppTypography.monoMeta,
           ),
           primaryYAxis: const NumericAxis(
-            majorGridLines: MajorGridLines(width: 0.5, color: AppThemeColors.border),
+            majorGridLines: MajorGridLines(
+              width: 0.5,
+              color: AppThemeColors.border,
+            ),
             axisLine: AxisLine(width: 0),
             labelStyle: AppTypography.monoMeta,
           ),
@@ -459,3 +491,10 @@ class _ChartPageState extends State<ChartPage> {
 
   String _formatVolume(int volume) => formatVolume(volume);
 }
+
+const DataOrigin _chartOrigin = DataOrigin(
+  sourceLabel: 'Twelve Data',
+  latencyClass: DataLatencyClass.delayed,
+  isOfficial: false,
+  isSynthetic: false,
+);

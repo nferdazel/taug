@@ -16,26 +16,6 @@ const intervalMap: Record<string, string> = {
   "1M": "1month",
 };
 
-const yahooIntervalMap: Record<string, string> = {
-  "1m": "1m",
-  "5m": "5m",
-  "15m": "15m",
-  "1h": "1h",
-  "1d": "1d",
-  "1w": "1wk",
-  "1M": "1mo",
-};
-
-const yahooRangeMap: Record<string, string> = {
-  "1m": "5d",
-  "5m": "1mo",
-  "15m": "1mo",
-  "1h": "3mo",
-  "1d": "1y",
-  "1w": "5y",
-  "1M": "max",
-};
-
 async function fetchFromTwelveData(
   symbol: string,
   interval: string,
@@ -58,48 +38,13 @@ async function fetchFromTwelveData(
       low: parseFloat(v.low),
       close: parseFloat(v.close),
       volume: parseInt(v.volume || "0"),
+      source: "twelve_data",
+      source_label: "Twelve Data",
+      latency_class: "delayed",
+      is_official: false,
+      is_synthetic: false,
     }))
     .reverse();
-}
-
-async function fetchFromYahoo(
-  symbol: string,
-  interval: string,
-  limit: number
-): Promise<Array<Record<string, unknown>> | null> {
-  const yfInterval = yahooIntervalMap[interval] || "1d";
-  const range = yahooRangeMap[interval] || "1y";
-
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=${yfInterval}&range=${range}`;
-  const response = await fetch(url, {
-    headers: { "User-Agent": "Taug/1.0" },
-  });
-
-  if (!response.ok) return null;
-
-  const data = await response.json();
-  const result = data?.chart?.result?.[0];
-  if (!result) return null;
-
-  const timestamps = result.timestamp || [];
-  const ohlcv = result.indicators?.quote?.[0];
-  if (!ohlcv) return null;
-
-  const candles: Array<Record<string, unknown>> = [];
-  for (let i = 0; i < timestamps.length; i++) {
-    if (ohlcv.close[i] != null) {
-      candles.push({
-        date: new Date(timestamps[i] * 1000).toISOString().split("T")[0],
-        open: ohlcv.open[i] || 0,
-        high: ohlcv.high[i] || 0,
-        low: ohlcv.low[i] || 0,
-        close: ohlcv.close[i] || 0,
-        volume: ohlcv.volume?.[i] || 0,
-      });
-    }
-  }
-
-  return candles.slice(-limit);
 }
 
 Deno.serve(async (req) => {
@@ -126,12 +71,10 @@ Deno.serve(async (req) => {
     }
 
     if (!candles) {
-      candles = await fetchFromYahoo(symbol, interval, count);
-    }
-
-    if (!candles) {
       return new Response(
-        JSON.stringify({ error: "No chart data found" }),
+        JSON.stringify({
+          error: "No legal chart source configured for symbol",
+        }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

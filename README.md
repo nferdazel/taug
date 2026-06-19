@@ -65,9 +65,9 @@ feature/
 | Source | Data | Cost |
 |---|---|---|
 | Twelve Data API | US/Global stocks, commodities | Free tier |
-| Yahoo Finance | IDX stocks (`.JK` suffix) | Free |
 | Binance WebSocket | Crypto real-time | Free |
 | RSS Feeds | News aggregation | Free |
+| SEC / FRED / BLS / Official feeds | Filings and macro/public data | Free/public |
 
 ## Getting Started
 

@@ -25,32 +25,15 @@ async function fetchFromTwelveData(symbol: string, apiKey: string): Promise<Reco
     last_update: data.timestamp
       ? new Date(data.timestamp * 1000).toISOString()
       : new Date().toISOString(),
-  };
-}
-
-async function fetchFromYahoo(symbol: string): Promise<Record<string, unknown> | null> {
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`;
-  const response = await fetch(url, {
-    headers: { "User-Agent": "Taug/1.0" },
-  });
-
-  if (!response.ok) return null;
-
-  const data = await response.json();
-  const result = data?.chart?.result?.[0];
-  if (!result) return null;
-
-  const meta = result.meta;
-  return {
-    symbol: meta.symbol,
-    price: meta.regularMarketPrice || 0,
-    previous_close: meta.previousClose || meta.chartPreviousClose || 0,
-    open: meta.regularMarketOpen || 0,
-    high: meta.regularMarketDayHigh || 0,
-    low: meta.regularMarketDayLow || 0,
-    volume: meta.regularMarketVolume || 0,
-    turnover: 0,
-    last_update: new Date().toISOString(),
+    source: "twelve_data",
+    source_label: "Twelve Data",
+    latency_class: "delayed",
+    is_official: false,
+    is_synthetic: false,
+    fetched_at: new Date().toISOString(),
+    as_of: data.timestamp
+      ? new Date(data.timestamp * 1000).toISOString()
+      : new Date().toISOString(),
   };
 }
 
@@ -76,17 +59,11 @@ Deno.serve(async (req) => {
       result = await fetchFromTwelveData(symbol, apiKey);
     }
 
-    if (!result && symbol.includes(".JK")) {
-      result = await fetchFromYahoo(symbol);
-    }
-
-    if (!result && apiKey) {
-      result = await fetchFromYahoo(symbol);
-    }
-
     if (!result) {
       return new Response(
-        JSON.stringify({ error: "No data found for symbol" }),
+        JSON.stringify({
+          error: "No legal quote source configured for symbol",
+        }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
