@@ -3,6 +3,7 @@ import 'package:signals/signals_flutter.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/errors/result.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/models/data_origin.dart';
@@ -13,7 +14,7 @@ import '../../../../core/utils/extensions.dart';
 import '../../data/chart_repository.dart';
 import 'panels.dart';
 
-enum ChartType { candle, line, area, ohlc }
+enum ChartType { line, area, candle, ohlc }
 
 class ChartPage extends StatefulWidget {
   const ChartPage({super.key});
@@ -30,7 +31,7 @@ class _ChartPageState extends State<ChartPage> {
   final _error = Signal<String?>(null);
   final _selectedSymbol = Signal<String>('AAPL');
   final _selectedInterval = Signal<String>('1d');
-  final _selectedChartType = Signal<ChartType>(ChartType.candle);
+  final _selectedChartType = Signal<ChartType>(ChartType.line);
   int _requestId = 0;
 
   @override
@@ -151,19 +152,19 @@ class _ChartPageState extends State<ChartPage> {
 
   Widget _buildToolbar() {
     return Container(
-      height: 36,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      height: 40,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       decoration: const BoxDecoration(
         border: Border(bottom: BorderSide(color: AppThemeColors.border)),
       ),
       child: Row(
         children: [
           _buildSymbolSelector(),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.lg),
           const DataStatusBadge(origin: _chartOrigin),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.lg),
           _buildChartTypeSelector(),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.lg),
           _buildIntervalButtons(),
           const Spacer(),
           _buildPriceInfo(),
@@ -215,11 +216,11 @@ class _ChartPageState extends State<ChartPage> {
       final current = _selectedChartType.value;
       return Row(
         children: [
-          _buildTypeButton(ChartType.candle, 'Candle', current),
-          const SizedBox(width: 2),
           _buildTypeButton(ChartType.line, 'Line', current),
           const SizedBox(width: 2),
           _buildTypeButton(ChartType.area, 'Area', current),
+          const SizedBox(width: 2),
+          _buildTypeButton(ChartType.candle, 'Candle', current),
           const SizedBox(width: 2),
           _buildTypeButton(ChartType.ohlc, 'OHLC', current),
         ],
@@ -232,7 +233,7 @@ class _ChartPageState extends State<ChartPage> {
     return GestureDetector(
       onTap: () => _selectedChartType.value = type,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
         decoration: BoxDecoration(
           color: isSelected ? AppThemeColors.accent : Colors.transparent,
           border: Border.all(
@@ -242,7 +243,7 @@ class _ChartPageState extends State<ChartPage> {
         ),
         child: Text(
           label,
-          style: AppTypography.monoMeta.copyWith(
+          style: AppTypography.monoLabel.copyWith(
             color: isSelected
                 ? AppThemeColors.textPrimary
                 : AppThemeColors.textSecondary,
@@ -261,7 +262,7 @@ class _ChartPageState extends State<ChartPage> {
           return Padding(
             padding: const EdgeInsets.only(right: 2),
             child: SizedBox(
-              height: 22,
+              height: AppSpacing.buttonHeight,
               child: TextButton(
                 onPressed: () {
                   _selectedInterval.value = interval;
@@ -271,7 +272,7 @@ class _ChartPageState extends State<ChartPage> {
                   backgroundColor: isSelected
                       ? AppThemeColors.accent
                       : Colors.transparent,
-                  padding: const EdgeInsets.symmetric(horizontal: 5),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   minimumSize: Size.zero,
                   side: BorderSide(
                     color: isSelected
@@ -281,7 +282,7 @@ class _ChartPageState extends State<ChartPage> {
                 ),
                 child: Text(
                   interval,
-                  style: AppTypography.monoMeta.copyWith(
+                  style: AppTypography.monoLabel.copyWith(
                     color: isSelected
                         ? AppThemeColors.textPrimary
                         : AppThemeColors.textSecondary,

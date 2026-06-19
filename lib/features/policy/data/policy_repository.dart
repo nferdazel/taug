@@ -35,9 +35,10 @@ class PolicyRepository {
           .order('published_at', ascending: false)
           .limit(limit);
 
-      final events = response
+      final List<PolicyEvent> rawEvents = response
           .map((json) => PolicyEvent.fromJson(json))
           .toList();
+      final List<PolicyEvent> events = _dedupeEvents(rawEvents);
       return Result.success(events);
     } catch (e) {
       debugPrint('[PolicyRepo] getPolicyEvents: $e');
@@ -53,5 +54,20 @@ class PolicyRepository {
       debugPrint('[PolicyRepo] refreshPolicyEvents: $e');
       return Result.failure(ServerFailure(message: e.toString()));
     }
+  }
+
+  List<PolicyEvent> _dedupeEvents(List<PolicyEvent> events) {
+    final Set<String> seen = <String>{};
+    final List<PolicyEvent> unique = <PolicyEvent>[];
+
+    for (final PolicyEvent event in events) {
+      final String key =
+          '${event.agency}|${event.title.trim().toLowerCase()}|${event.publishedAt.toUtc().toIso8601String()}';
+      if (seen.add(key)) {
+        unique.add(event);
+      }
+    }
+
+    return unique;
   }
 }
