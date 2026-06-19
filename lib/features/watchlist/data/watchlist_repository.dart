@@ -11,15 +11,13 @@ class WatchlistRepository {
   final SupabaseClient _client;
 
   WatchlistRepository({SupabaseClient? client})
-    : _client = client ?? Supabase.instance.client;
+      : _client = client ?? Supabase.instance.client;
 
   Future<Result<List<Watchlist>>> getWatchlists() async {
     try {
       final userId = _client.auth.currentUser?.id;
       if (userId == null) {
-        return const Result.failure(
-          AuthFailure(message: 'User not authenticated'),
-        );
+        return const Result.failure(AuthFailure(message: 'User not authenticated'));
       }
 
       final response = await _client
@@ -28,12 +26,10 @@ class WatchlistRepository {
           .eq('user_id', userId)
           .order('sort_order');
 
-      final watchlists = response
-          .map((json) => Watchlist.fromJson(json))
-          .toList();
-
+      final watchlists = response.map((json) => Watchlist.fromJson(json)).toList();
       return Result.success(watchlists);
     } catch (e) {
+      debugPrint('[WatchlistRepo] getWatchlists: $e');
       return Result.failure(ServerFailure(message: e.toString()));
     }
   }
@@ -42,9 +38,7 @@ class WatchlistRepository {
     try {
       final userId = _client.auth.currentUser?.id;
       if (userId == null) {
-        return const Result.failure(
-          AuthFailure(message: 'User not authenticated'),
-        );
+        return const Result.failure(AuthFailure(message: 'User not authenticated'));
       }
 
       final response = await _client
@@ -55,6 +49,7 @@ class WatchlistRepository {
 
       return Result.success(Watchlist.fromJson(response));
     } catch (e) {
+      debugPrint('[WatchlistRepo] createWatchlist: $e');
       return Result.failure(ServerFailure(message: e.toString()));
     }
   }
@@ -67,13 +62,12 @@ class WatchlistRepository {
           .eq('id', watchlistId);
       return const Result.success(null);
     } catch (e) {
+      debugPrint('[WatchlistRepo] deleteWatchlist: $e');
       return Result.failure(ServerFailure(message: e.toString()));
     }
   }
 
-  Future<Result<List<WatchlistItem>>> getWatchlistItems(
-    String watchlistId,
-  ) async {
+  Future<Result<List<WatchlistItem>>> getWatchlistItems(String watchlistId) async {
     try {
       final response = await _client
           .from('${AppSchema.name}.${AppSchema.watchlistItems}')
@@ -103,14 +97,12 @@ class WatchlistRepository {
 
       return Result.success(items);
     } catch (e) {
+      debugPrint('[WatchlistRepo] getWatchlistItems: $e');
       return Result.failure(ServerFailure(message: e.toString()));
     }
   }
 
-  Future<Result<WatchlistItem>> addToWatchlist(
-    String watchlistId,
-    int symbolId,
-  ) async {
+  Future<Result<WatchlistItem>> addToWatchlist(String watchlistId, int symbolId) async {
     try {
       final response = await _client
           .from('${AppSchema.name}.${AppSchema.watchlistItems}')
@@ -119,6 +111,7 @@ class WatchlistRepository {
           .single();
       return Result.success(WatchlistItem.fromJson(response));
     } catch (e) {
+      debugPrint('[WatchlistRepo] addToWatchlist: $e');
       return Result.failure(ServerFailure(message: e.toString()));
     }
   }
@@ -131,13 +124,12 @@ class WatchlistRepository {
           .eq('id', itemId);
       return const Result.success(null);
     } catch (e) {
+      debugPrint('[WatchlistRepo] removeFromWatchlist: $e');
       return Result.failure(ServerFailure(message: e.toString()));
     }
   }
 
-  Future<Result<Map<String, PriceData>>> getPricesForSymbols(
-    List<String> tickers,
-  ) async {
+  Future<Result<Map<String, PriceData>>> getPricesForSymbols(List<String> tickers) async {
     try {
       final Map<String, PriceData> priceMap = {};
 
@@ -148,18 +140,17 @@ class WatchlistRepository {
             body: {'symbol': ticker},
           );
           if (response.data != null) {
-            final price = PriceData.fromJson(
-              response.data as Map<String, dynamic>,
-            );
+            final price = PriceData.fromJson(response.data as Map<String, dynamic>);
             priceMap[ticker] = price;
           }
         } catch (e) {
-          debugPrint('[getPricesForSymbols] Error fetching $ticker: $e');
+          debugPrint('[WatchlistRepo] getPricesForSymbols[$ticker]: $e');
         }
       }
 
       return Result.success(priceMap);
     } catch (e) {
+      debugPrint('[WatchlistRepo] getPricesForSymbols: $e');
       return Result.failure(ServerFailure(message: e.toString()));
     }
   }

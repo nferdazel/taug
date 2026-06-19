@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/errors/failures.dart';
@@ -8,7 +9,7 @@ class ChartRepository {
   final SupabaseClient _client;
 
   ChartRepository({SupabaseClient? client})
-    : _client = client ?? Supabase.instance.client;
+      : _client = client ?? Supabase.instance.client;
 
   Future<Result<List<CandleData>>> getChartData({
     required String symbol,
@@ -31,9 +32,8 @@ class ChartRepository {
 
       return const Result.success([]);
     } catch (e) {
-      return Result.failure(
-        DataSourceFailure(message: e.toString(), source: 'twelve_data'),
-      );
+      debugPrint('[ChartRepo] getChartData: $e');
+      return Result.failure(DataSourceFailure(message: e.toString(), source: 'twelve_data'));
     }
   }
 
@@ -50,13 +50,10 @@ class ChartRepository {
         );
       }
 
-      return const Result.failure(
-        DataSourceFailure(message: 'No price data', source: 'twelve_data'),
-      );
+      return const Result.failure(DataSourceFailure(message: 'No price data', source: 'twelve_data'));
     } catch (e) {
-      return Result.failure(
-        DataSourceFailure(message: e.toString(), source: 'twelve_data'),
-      );
+      debugPrint('[ChartRepo] getCurrentPrice: $e');
+      return Result.failure(DataSourceFailure(message: e.toString(), source: 'twelve_data'));
     }
   }
 }

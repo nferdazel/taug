@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/errors/failures.dart';
@@ -9,7 +10,7 @@ class NewsRepository {
   final SupabaseClient _client;
 
   NewsRepository({SupabaseClient? client})
-    : _client = client ?? Supabase.instance.client;
+      : _client = client ?? Supabase.instance.client;
 
   Future<Result<List<NewsArticle>>> getNews({
     String? category,
@@ -29,12 +30,10 @@ class NewsRepository {
           .order('published_at', ascending: false)
           .range(offset, offset + limit - 1);
 
-      final articles = response
-          .map((json) => NewsArticle.fromJson(json))
-          .toList();
-
+      final articles = response.map((json) => NewsArticle.fromJson(json)).toList();
       return Result.success(articles);
     } catch (e) {
+      debugPrint('[NewsRepo] getNews: $e');
       return Result.failure(ServerFailure(message: e.toString()));
     }
   }
@@ -44,6 +43,7 @@ class NewsRepository {
       await _client.functions.invoke('refresh-news');
       return const Result.success(null);
     } catch (e) {
+      debugPrint('[NewsRepo] refreshNews: $e');
       return Result.failure(ServerFailure(message: e.toString()));
     }
   }

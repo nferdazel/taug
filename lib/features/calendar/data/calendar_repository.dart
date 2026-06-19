@@ -1,8 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../../core/errors/failures.dart';
 import '../../../core/errors/result.dart';
 import '../../../core/schema/app_schema.dart';
-import '../../../../shared/models/econ_event.dart';
+import '../../../shared/models/econ_event.dart';
 
 class CalendarRepository {
   final SupabaseClient _client;
@@ -38,15 +40,11 @@ class CalendarRepository {
           .order('event_date', ascending: true)
           .order('event_time', ascending: true);
 
-      final events = response
-          .map((json) => EconEvent.fromJson(json))
-          .toList();
-
+      final events = response.map((json) => EconEvent.fromJson(json)).toList();
       return Result.success(events);
     } catch (e) {
-      return Result.failure(
-        ServerFailure(message: e.toString()),
-      );
+      debugPrint('[CalendarRepo] getEvents: $e');
+      return Result.failure(ServerFailure(message: e.toString()));
     }
   }
 
@@ -55,9 +53,8 @@ class CalendarRepository {
       await _client.functions.invoke('refresh-calendar');
       return const Result.success(null);
     } catch (e) {
-      return Result.failure(
-        ServerFailure(message: e.toString()),
-      );
+      debugPrint('[CalendarRepo] refreshCalendar: $e');
+      return Result.failure(ServerFailure(message: e.toString()));
     }
   }
 }

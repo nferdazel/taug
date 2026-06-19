@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../../core/errors/failures.dart';
 import '../../../core/errors/result.dart';
 import '../../../core/schema/app_schema.dart';
@@ -13,9 +15,7 @@ class SettingsRepository {
     try {
       final userId = _client.auth.currentUser?.id;
       if (userId == null) {
-        return const Result.failure(
-          AuthFailure(message: 'User not authenticated'),
-        );
+        return const Result.failure(AuthFailure(message: 'User not authenticated'));
       }
 
       final response = await _client
@@ -26,9 +26,8 @@ class SettingsRepository {
 
       return Result.success(response);
     } catch (e) {
-      return Result.failure(
-        ServerFailure(message: e.toString()),
-      );
+      debugPrint('[SettingsRepo] getSettings: $e');
+      return Result.failure(ServerFailure(message: e.toString()));
     }
   }
 
@@ -36,9 +35,7 @@ class SettingsRepository {
     try {
       final userId = _client.auth.currentUser?.id;
       if (userId == null) {
-        return const Result.failure(
-          AuthFailure(message: 'User not authenticated'),
-        );
+        return const Result.failure(AuthFailure(message: 'User not authenticated'));
       }
 
       await _client
@@ -48,9 +45,8 @@ class SettingsRepository {
 
       return const Result.success(null);
     } catch (e) {
-      return Result.failure(
-        ServerFailure(message: e.toString()),
-      );
+      debugPrint('[SettingsRepo] updateSettings: $e');
+      return Result.failure(ServerFailure(message: e.toString()));
     }
   }
 
@@ -58,9 +54,7 @@ class SettingsRepository {
     try {
       final userId = _client.auth.currentUser?.id;
       if (userId == null) {
-        return const Result.failure(
-          AuthFailure(message: 'User not authenticated'),
-        );
+        return const Result.failure(AuthFailure(message: 'User not authenticated'));
       }
 
       final response = await _client
@@ -71,9 +65,8 @@ class SettingsRepository {
 
       return Result.success(response);
     } catch (e) {
-      return Result.failure(
-        ServerFailure(message: e.toString()),
-      );
+      debugPrint('[SettingsRepo] getProfile: $e');
+      return Result.failure(ServerFailure(message: e.toString()));
     }
   }
 
@@ -81,9 +74,7 @@ class SettingsRepository {
     try {
       final userId = _client.auth.currentUser?.id;
       if (userId == null) {
-        return const Result.failure(
-          AuthFailure(message: 'User not authenticated'),
-        );
+        return const Result.failure(AuthFailure(message: 'User not authenticated'));
       }
 
       await _client
@@ -93,9 +84,8 @@ class SettingsRepository {
 
       return const Result.success(null);
     } catch (e) {
-      return Result.failure(
-        ServerFailure(message: e.toString()),
-      );
+      debugPrint('[SettingsRepo] updateProfile: $e');
+      return Result.failure(ServerFailure(message: e.toString()));
     }
   }
 }
