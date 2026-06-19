@@ -13,7 +13,7 @@ from ..supabase_rest import (
 )
 
 
-ANNUAL_MIN_DAYS: int = 300
+ANNUAL_MIN_DAYS: int = 250
 HISTORY_FETCH_LIMIT: int = 40
 
 TTM_INCOME_FACTS: frozenset[str] = frozenset({
@@ -191,15 +191,17 @@ def run_compute_company_metrics(
         )
 
         currency_code: str | None = (
-          latest_annual.currency_code
-          or latest_quarterly.currency_code
+          (latest_annual.currency_code if latest_annual else None)
+          or (latest_quarterly.currency_code if latest_quarterly else None)
           or (periods[0].currency_code if periods else None)
         )
 
         as_of_date: str = (
           _extract_date(latest_annual.published_at or latest_annual.period_end)
           if latest_annual
-          else _extract_date(latest_quarterly.published_at or latest_quarterly.period_end)
+          else _extract_date(
+            latest_quarterly.published_at or latest_quarterly.period_end
+          )
           if latest_quarterly
           else _today_iso()
         )

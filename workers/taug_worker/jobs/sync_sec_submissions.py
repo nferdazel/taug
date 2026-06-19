@@ -629,7 +629,7 @@ def _normalize_filing_discovery(
       version_failure_codes.append("raw_record_id_mismatch")
     if filing_version_record.version_number != 1:
       version_failure_codes.append("unexpected_version_number")
-    if filing_version_record.status != "active":
+    if filing_version_record.status not in ("active", "superseded"):
       version_failure_codes.append("unexpected_status")
     if version_failure_codes:
       failure_payload: dict[str, object] = {
