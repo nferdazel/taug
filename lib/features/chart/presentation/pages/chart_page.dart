@@ -7,6 +7,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/models/price_data.dart';
 import '../../../../shared/widgets/price_cell.dart';
 import '../../data/chart_repository.dart';
+import 'panels.dart';
 
 enum ChartType { candle, line, area, ohlc }
 
@@ -59,10 +60,73 @@ class _ChartPageState extends State<ChartPage> {
     return Column(
       children: [
         _buildToolbar(),
-        Expanded(child: _buildChart()),
-        _buildInfoPanel(),
+        Expanded(
+          child: Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: Column(
+                  children: [
+                    Expanded(child: _buildChart()),
+                    _buildInfoPanel(),
+                  ],
+                ),
+              ),
+              _buildSidePanels(),
+            ],
+          ),
+        ),
       ],
     );
+  }
+
+  Widget _buildSidePanels() {
+    return Watch((_) {
+      final symbol = _selectedSymbol.value;
+      return Container(
+        width: 220,
+        decoration: const BoxDecoration(
+          border: Border(left: BorderSide(color: AppThemeColors.border)),
+        ),
+        child: Column(
+          children: [
+            Expanded(
+              child: DefaultTabController(
+                length: 2,
+                child: Column(
+                  children: [
+                    Container(
+                      height: 28,
+                      decoration: const BoxDecoration(
+                        border: Border(bottom: BorderSide(color: AppThemeColors.border)),
+                      ),
+                      child: const TabBar(
+                        tabs: [
+                          Tab(text: 'Order Book'),
+                          Tab(text: 'Trades'),
+                        ],
+                        labelStyle: AppTypography.monoMeta,
+                        unselectedLabelStyle: AppTypography.monoMeta,
+                        indicatorSize: TabBarIndicatorSize.label,
+                        dividerHeight: 0,
+                      ),
+                    ),
+                    Expanded(
+                      child: TabBarView(
+                        children: [
+                          OrderBookPanel(symbol: symbol),
+                          RunningTradesPanel(symbol: symbol),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    });
   }
 
   Widget _buildToolbar() {
