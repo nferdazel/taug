@@ -87,7 +87,7 @@ Not the target:
 - `company_data_quality_v`
 - `screener_results_v`
 
-### Worker jobs (8 total)
+### Worker jobs (9 total)
 
 - `sync-sec-submissions` — fetch SEC EDGAR submissions, normalize filings
 - `fetch-sec-filing-documents` — store immutable raw filing documents
@@ -97,6 +97,7 @@ Not the target:
 - `sync-price-snapshots` — fetch quotes from Twelve Data API
 - `execute-screener` — execute saved screener filters against metric snapshots
 - `compute-data-quality` — compute data quality scores per company
+- `sync-fred-series` — fetch FRED macro time series (5 series seeded)
 
 ### CI/CD (6 workflows)
 
@@ -135,7 +136,8 @@ Not the target:
 - broader taxonomy mapping (currently 35 facts, full XBRL has thousands)
 - sector/industry normalization tables
 - `raw_financials`, `raw_macro`, `raw_ownership` tables
-- FRED, Bank Indonesia, BPS integrations
+- FRED integration (done — 5 series seeded: DFF, CPIAUCSL, UNRATE, GDP, DGS10)
+- Bank Indonesia, BPS integrations
 - IDX issuer/reference data
 - home market preference model
 - `coverage_lists` table (done)

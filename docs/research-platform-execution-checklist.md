@@ -170,7 +170,7 @@ Docs discipline for this repo:
 
 - `[done]` source strategy and ingestion priority documented
 - `[done]` SEC EDGAR ingestion worker
-- `[todo]` FRED integration
+- `[done]` FRED integration
 - `[todo]` Bank Indonesia integration
 - `[todo]` BPS integration
 - `[todo]` IDX issuer/reference data review
