@@ -63,7 +63,7 @@ final router = GoRouter(
           children: [
             const Icon(Icons.error_outline, size: 48, color: Color(0xFFF43F5E)),
             const SizedBox(height: 16),
-            Text('Page not found', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            const Text('Page not found', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             Text(state.error.toString(), textAlign: TextAlign.center),
             const SizedBox(height: 16),
@@ -96,9 +96,9 @@ final router = GoRouter(
                 ),
               ),
               routes: [
-                GoRoute(path: 'overview', builder: (_, __) => const SizedBox()),
-                GoRoute(path: 'financials', builder: (_, __) => const SizedBox()),
-                GoRoute(path: 'research', builder: (_, __) => const SizedBox()),
+                GoRoute(path: 'overview', builder: (_, _) => const SizedBox()),
+                GoRoute(path: 'financials', builder: (_, _) => const SizedBox()),
+                GoRoute(path: 'research', builder: (_, _) => const SizedBox()),
               ],
             ),
           ],

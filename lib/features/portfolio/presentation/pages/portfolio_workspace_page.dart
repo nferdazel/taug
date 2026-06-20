@@ -49,7 +49,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Portfolio', style: AppTypography.heading),
+                  const Text('Portfolio', style: AppTypography.heading),
                   const SizedBox(height: 2),
                   Text(
                     '${_provider.activeCount} active · ${_provider.reviewCount} review needed · ${_provider.closedCount} closed',
@@ -175,7 +175,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
           backgroundColor: AppThemeColors.surface,
-          title: Text('Add Position', style: AppTypography.heading),
+          title: const Text('Add Position', style: AppTypography.heading),
           content: SizedBox(
             width: 500,
             child: SingleChildScrollView(
@@ -183,12 +183,12 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Company ID', style: AppTypography.caption),
+                  const Text('Company ID', style: AppTypography.caption),
                   const SizedBox(height: 4),
                   TextField(
                     controller: companyController,
                     style: AppTypography.body,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       hintText: 'Enter company UUID',
                       hintStyle: AppTypography.caption,
                       border: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.border)),
@@ -200,7 +200,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
                     onChanged: (v) => selectedCompanyId = v,
                   ),
                   const SizedBox(height: 12),
-                  Text('Conviction', style: AppTypography.caption),
+                  const Text('Conviction', style: AppTypography.caption),
                   const SizedBox(height: 4),
                   Row(
                     children: ['low', 'medium', 'high'].map((c) => Padding(
@@ -215,7 +215,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
                     )).toList(),
                   ),
                   const SizedBox(height: 12),
-                  Text('Entry Date', style: AppTypography.caption),
+                  const Text('Entry Date', style: AppTypography.caption),
                   const SizedBox(height: 4),
                   InkWell(
                     onTap: () async {
@@ -241,13 +241,13 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Text('Entry Price (optional)', style: AppTypography.caption),
+                  const Text('Entry Price (optional)', style: AppTypography.caption),
                   const SizedBox(height: 4),
                   TextField(
                     controller: entryPriceController,
                     style: AppTypography.body,
                     keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       hintText: 'e.g. 150.00',
                       hintStyle: AppTypography.caption,
                       border: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.border)),
@@ -258,13 +258,13 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Text('Notes (optional)', style: AppTypography.caption),
+                  const Text('Notes (optional)', style: AppTypography.caption),
                   const SizedBox(height: 4),
                   TextField(
                     controller: notesController,
                     style: AppTypography.body,
                     maxLines: 3,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       hintText: 'Why are you making this decision?',
                       hintStyle: AppTypography.caption,
                       border: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.border)),
@@ -281,7 +281,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Cancel', style: TextStyle(color: AppThemeColors.textSecondary)),
+              child: const Text('Cancel', style: TextStyle(color: AppThemeColors.textSecondary)),
             ),
             ElevatedButton(
               onPressed: () {
@@ -312,14 +312,14 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
           backgroundColor: AppThemeColors.surface,
-          title: Text('Close Position', style: AppTypography.heading),
+          title: const Text('Close Position', style: AppTypography.heading),
           content: SizedBox(
             width: 500,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Outcome', style: AppTypography.caption),
+                const Text('Outcome', style: AppTypography.caption),
                 const SizedBox(height: 4),
                 Row(
                   children: ['correct', 'incorrect', 'partial'].map((o) => Padding(
@@ -334,13 +334,13 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
                   )).toList(),
                 ),
                 const SizedBox(height: 12),
-                Text('Lessons Learned (optional)', style: AppTypography.caption),
+                const Text('Lessons Learned (optional)', style: AppTypography.caption),
                 const SizedBox(height: 4),
                 TextField(
                   controller: lessonsController,
                   style: AppTypography.body,
                   maxLines: 4,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     hintText: 'What did you learn from this decision?',
                     hintStyle: AppTypography.caption,
                     border: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.border)),
@@ -356,7 +356,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Cancel', style: TextStyle(color: AppThemeColors.textSecondary)),
+              child: const Text('Cancel', style: TextStyle(color: AppThemeColors.textSecondary)),
             ),
             ElevatedButton(
               onPressed: () {
@@ -465,11 +465,11 @@ class _ActivePositionCard extends StatelessWidget {
                     color: AppThemeColors.warning.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: Text('Review Needed', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppThemeColors.warning)),
+                  child: const Text('Review Needed', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppThemeColors.warning)),
                 ),
               const SizedBox(width: 8),
               PopupMenuButton<String>(
-                icon: Icon(Icons.more_vert, size: 16, color: AppThemeColors.textSecondary),
+                icon: const Icon(Icons.more_vert, size: 16, color: AppThemeColors.textSecondary),
                 onSelected: (value) {
                   if (value == 'view') onViewCompany();
                   if (value == 'close') onClose();
@@ -487,7 +487,7 @@ class _ActivePositionCard extends StatelessWidget {
               _ConvictionChip(conviction: position.conviction),
               const SizedBox(width: 8),
               if (position.thesisTitle != null) ...[
-                Icon(Icons.lightbulb_outline, size: 12, color: AppThemeColors.textTertiary),
+                const Icon(Icons.lightbulb_outline, size: 12, color: AppThemeColors.textTertiary),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
@@ -563,7 +563,7 @@ class _ClosedPositionCard extends StatelessWidget {
               if (position.outcome != null) _OutcomeBadge(outcome: position.outcome!),
               const SizedBox(width: 8),
               IconButton(
-                icon: Icon(Icons.open_in_new, size: 16, color: AppThemeColors.textSecondary),
+                icon: const Icon(Icons.open_in_new, size: 16, color: AppThemeColors.textSecondary),
                 onPressed: onViewCompany,
                 tooltip: 'View Company',
               ),

@@ -1,6 +1,5 @@
 import 'package:signals/signals.dart';
 
-import '../../../../core/errors/result.dart';
 import '../../data/portfolio_models.dart';
 import '../../data/portfolio_workspace_repository.dart';
 

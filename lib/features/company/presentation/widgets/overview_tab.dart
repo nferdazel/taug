@@ -278,7 +278,7 @@ class _MetricCard extends StatelessWidget {
                   ),
                 ),
                 if (tooltip != null)
-                  Icon(Icons.info_outline, size: 10, color: AppThemeColors.textTertiary),
+                  const Icon(Icons.info_outline, size: 10, color: AppThemeColors.textTertiary),
               ],
             ),
             const SizedBox(height: 4),

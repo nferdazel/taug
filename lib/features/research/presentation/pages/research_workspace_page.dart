@@ -58,7 +58,7 @@ class _ResearchWorkspacePageState extends State<ResearchWorkspacePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Research', style: AppTypography.heading),
+            const Text('Research', style: AppTypography.heading),
             const SizedBox(height: 2),
             Text(
               '$totalResearch companies · $totalTheses theses · $totalNotes notes',
@@ -131,15 +131,15 @@ class _ResearchWorkspacePageState extends State<ResearchWorkspacePage> {
             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(4),
-              borderSide: BorderSide(color: AppThemeColors.border),
+              borderSide: const BorderSide(color: AppThemeColors.border),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(4),
-              borderSide: BorderSide(color: AppThemeColors.border),
+              borderSide: const BorderSide(color: AppThemeColors.border),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(4),
-              borderSide: BorderSide(color: AppThemeColors.accent),
+              borderSide: const BorderSide(color: AppThemeColors.accent),
             ),
             filled: true,
             fillColor: AppThemeColors.surfaceMuted,
@@ -336,7 +336,7 @@ class _CompanyResearchCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(width: 8),
-                Icon(Icons.chevron_right, size: 16, color: AppThemeColors.textTertiary),
+                const Icon(Icons.chevron_right, size: 16, color: AppThemeColors.textTertiary),
               ],
             ),
           ),
@@ -390,7 +390,7 @@ class _ThesisIndexCard extends StatelessWidget {
                 ),
                 _StanceChip(stance: thesis.stance),
                 const SizedBox(width: 8),
-                Icon(Icons.chevron_right, size: 16, color: AppThemeColors.textTertiary),
+                const Icon(Icons.chevron_right, size: 16, color: AppThemeColors.textTertiary),
               ],
             ),
           ),
@@ -452,7 +452,7 @@ class _NoteIndexCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Icon(Icons.chevron_right, size: 16, color: AppThemeColors.textTertiary),
+                const Icon(Icons.chevron_right, size: 16, color: AppThemeColors.textTertiary),
               ],
             ),
           ),

@@ -143,7 +143,7 @@ class MetricExplainer extends StatelessWidget {
         children: [
           Text(metric, style: AppTypography.body),
           const SizedBox(width: 4),
-          Icon(Icons.info_outline, size: 12, color: AppThemeColors.textTertiary),
+          const Icon(Icons.info_outline, size: 12, color: AppThemeColors.textTertiary),
         ],
       ),
     );
