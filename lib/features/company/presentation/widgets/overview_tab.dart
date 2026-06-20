@@ -63,26 +63,26 @@ class OverviewTab extends StatelessWidget {
       }
     }
 
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: keyMetrics.map((code) {
-        final m = metricMap[code];
-        if (m == null) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: AppThemeColors.border),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: GridView.count(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        crossAxisCount: 3,
+        childAspectRatio: 2.2,
+        children: keyMetrics.map((code) {
+          final m = metricMap[code];
           return _MetricCard(
             label: _metricLabel(code),
-            value: '—',
-            isOk: false,
+            value: m != null ? _formatMetric(m) : '—',
+            isOk: m != null,
             tooltip: _metricTooltip(code),
           );
-        }
-        return _MetricCard(
-          label: m.metricName,
-          value: _formatMetric(m),
-          isOk: true,
-          tooltip: _metricTooltip(code),
-        );
-      }).toList(),
+        }).toList(),
+      ),
     );
   }
 
@@ -258,22 +258,23 @@ class _MetricCard extends StatelessWidget {
       ),
       textStyle: AppTypography.caption.copyWith(color: AppThemeColors.textPrimary),
       child: Container(
-        width: 140,
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: AppThemeColors.surface,
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: AppThemeColors.border),
+          border: Border(
+            right: BorderSide(color: AppThemeColors.border.withValues(alpha: 0.5)),
+            bottom: BorderSide(color: AppThemeColors.border.withValues(alpha: 0.5)),
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Row(
               children: [
                 Expanded(
                   child: Text(
                     label,
-                    style: AppTypography.caption,
+                    style: AppTypography.caption.copyWith(fontSize: 10),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -284,10 +285,9 @@ class _MetricCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               value,
-              style: AppTypography.monoData.copyWith(
-                color: isOk
-                    ? AppThemeColors.textPrimary
-                    : AppThemeColors.textTertiary,
+              style: AppTypography.monoPrice.copyWith(
+                color: isOk ? AppThemeColors.textPrimary : AppThemeColors.textTertiary,
+                fontSize: 13,
               ),
             ),
           ],

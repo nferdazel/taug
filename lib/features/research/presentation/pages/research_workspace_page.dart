@@ -51,18 +51,39 @@ class _ResearchWorkspacePageState extends State<ResearchWorkspacePage> {
       final totalNotes = _provider.notes.length;
 
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         decoration: const BoxDecoration(
           border: Border(bottom: BorderSide(color: Color(0xFF27272A))),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
             const Text('Research', style: AppTypography.heading),
-            const SizedBox(height: 2),
-            Text(
-              '$totalResearch companies · $totalTheses theses · $totalNotes notes',
-              style: AppTypography.caption,
+            const SizedBox(width: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppThemeColors.surfaceLight,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text('$totalResearch companies', style: AppTypography.monoLabel),
+            ),
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppThemeColors.surfaceLight,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text('$totalTheses theses', style: AppTypography.monoLabel),
+            ),
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppThemeColors.surfaceLight,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text('$totalNotes notes', style: AppTypography.monoLabel),
             ),
           ],
         ),

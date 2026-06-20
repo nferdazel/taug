@@ -39,25 +39,43 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
   Widget _buildHeader() {
     return Watch((_) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         decoration: const BoxDecoration(
           border: Border(bottom: BorderSide(color: Color(0xFF27272A))),
         ),
         child: Row(
           children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Portfolio', style: AppTypography.heading),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${_provider.activeCount} active · ${_provider.reviewCount} review needed · ${_provider.closedCount} closed',
-                    style: AppTypography.caption,
-                  ),
-                ],
+            const Text('Portfolio', style: AppTypography.heading),
+            const SizedBox(width: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppThemeColors.accent.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(4),
               ),
+              child: Text('${_provider.activeCount} active', style: AppTypography.monoLabel.copyWith(color: AppThemeColors.accent)),
             ),
+            if (_provider.reviewCount > 0) ...[
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppThemeColors.warning.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text('${_provider.reviewCount} review', style: AppTypography.monoLabel.copyWith(color: AppThemeColors.warning)),
+              ),
+            ],
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppThemeColors.surfaceLight,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text('${_provider.closedCount} closed', style: AppTypography.monoLabel),
+            ),
+            const Spacer(),
             ElevatedButton.icon(
               onPressed: () => _showAddPositionDialog(context),
               icon: const Icon(Icons.add, size: 16),
@@ -65,6 +83,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppThemeColors.accent,
                 foregroundColor: AppThemeColors.textPrimary,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               ),
             ),
           ],

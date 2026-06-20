@@ -69,7 +69,7 @@ class _CompanyWorkspacePageState extends State<CompanyWorkspacePage> {
     final researchStatus = _provider.researchStatus;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       decoration: const BoxDecoration(
         border: Border(bottom: BorderSide(color: Color(0xFF27272A))),
       ),
@@ -77,16 +77,31 @@ class _CompanyWorkspacePageState extends State<CompanyWorkspacePage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(profile.displayName, style: AppTypography.heading),
-                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        Text(profile.displayName, style: AppTypography.heading),
+                        if (profile.ticker != null) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppThemeColors.surfaceLight,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(profile.ticker!, style: AppTypography.monoLabel),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 4),
                     Text(
                       [
-                        if (profile.ticker != null) profile.ticker,
                         if (profile.sector != null) profile.sector,
                         if (profile.domicileCountryCode != null) profile.domicileCountryCode,
                       ].join(' · '),
@@ -95,18 +110,19 @@ class _CompanyWorkspacePageState extends State<CompanyWorkspacePage> {
                   ],
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            children: [
-              if (quality != null) QualityBadge(score: quality),
-              if (freshness != null) FreshnessBadge(
-                status: _mapFreshness(freshness),
-              ),
-              ResearchStatusBadge(
-                status: ResearchStatus.fromString(researchStatus),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Wrap(
+                    spacing: 6,
+                    children: [
+                      if (quality != null) QualityBadge(score: quality),
+                      if (freshness != null) FreshnessBadge(status: _mapFreshness(freshness)),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  ResearchStatusBadge(status: ResearchStatus.fromString(researchStatus)),
+                ],
               ),
             ],
           ),

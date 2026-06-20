@@ -47,10 +47,19 @@ class _MainLayoutState extends State<MainLayout> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppThemeColors.background,
       body: Column(
         children: [
           _buildTabBar(),
-          Expanded(child: widget.child),
+          Expanded(
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1400),
+                child: widget.child,
+              ),
+            ),
+          ),
         ],
       ),
     );
