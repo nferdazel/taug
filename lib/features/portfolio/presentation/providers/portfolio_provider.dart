@@ -1,7 +1,5 @@
 import 'dart:async';
-
 import 'package:signals/signals.dart';
-
 import '../../../../shared/models/price_data.dart';
 import '../../data/portfolio_repository.dart';
 import '../../domain/portfolio_entity.dart';
@@ -60,7 +58,6 @@ class PortfolioProvider {
     if (tickers.isEmpty) return;
 
     _isLoadingPrices = true;
-    await _repository.refreshQuoteSnapshots(tickers);
     final result = await _repository.getPrices(tickers);
     if (result.isSuccess) {
       prices.value = result.data!;

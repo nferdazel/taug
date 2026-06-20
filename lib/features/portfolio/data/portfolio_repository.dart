@@ -150,19 +150,6 @@ class PortfolioRepository {
     }
   }
 
-  Future<Result<void>> refreshQuoteSnapshots(List<String> tickers) async {
-    try {
-      await _client.functions.invoke(
-        'refresh-quote-snapshots',
-        body: {'tickers': tickers},
-      );
-      return const Result.success(null);
-    } catch (e) {
-      debugPrint('[PortfolioRepo] refreshQuoteSnapshots: $e');
-      return Result.failure(ServerFailure(message: e.toString()));
-    }
-  }
-
   Map<String, dynamic>? _extractSnapshot(Map<String, dynamic> row) {
     final Object? relation = row[AppSchema.quoteSnapshots];
     if (relation is Map<String, dynamic>) {

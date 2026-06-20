@@ -1,16 +1,670 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:signals/signals_flutter.dart';
 
+import '../../../../core/theme/app_theme_colors.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/widgets/app_state_widgets.dart';
+import '../../data/portfolio_models.dart';
+import '../providers/portfolio_workspace_provider.dart';
 
-class PortfolioWorkspacePage extends StatelessWidget {
+class PortfolioWorkspacePage extends StatefulWidget {
   const PortfolioWorkspacePage({super.key});
 
   @override
+  State<PortfolioWorkspacePage> createState() => _PortfolioWorkspacePageState();
+}
+
+class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
+  late final PortfolioProvider _provider;
+
+  @override
+  void initState() {
+    super.initState();
+    _provider = PortfolioProvider();
+    _provider.loadPositions();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const AppEmptyState(
-      icon: Icons.account_balance_wallet_outlined,
-      title: 'Portfolio',
-      description: 'Track positions, theses, and investment decisions. This workspace is not yet implemented.',
+    return Column(
+      children: [
+        _buildHeader(),
+        _buildTabBar(),
+        Expanded(child: _buildContent()),
+      ],
+    );
+  }
+
+  Widget _buildHeader() {
+    return Watch((_) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: const BoxDecoration(
+          border: Border(bottom: BorderSide(color: Color(0xFF27272A))),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Portfolio', style: AppTypography.heading),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${_provider.activeCount} active · ${_provider.reviewCount} review needed · ${_provider.closedCount} closed',
+                    style: AppTypography.caption,
+                  ),
+                ],
+              ),
+            ),
+            ElevatedButton.icon(
+              onPressed: () => _showAddPositionDialog(context),
+              icon: const Icon(Icons.add, size: 16),
+              label: const Text('Add Position'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppThemeColors.accent,
+                foregroundColor: AppThemeColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _buildTabBar() {
+    return Watch((_) {
+      return Container(
+        height: 36,
+        decoration: const BoxDecoration(
+          border: Border(bottom: BorderSide(color: Color(0xFF27272A))),
+        ),
+        child: Row(
+          children: [
+            _TabButton(
+              label: 'Active (${_provider.activeCount})',
+              selected: _provider.activeTab.value == 0,
+              onTap: () => _provider.activeTab.value = 0,
+            ),
+            _TabButton(
+              label: 'Closed (${_provider.closedCount})',
+              selected: _provider.activeTab.value == 1,
+              onTap: () => _provider.activeTab.value = 1,
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _buildContent() {
+    return Watch((_) {
+      if (_provider.isLoading.value) {
+        return const AppLoadingState(message: 'Loading portfolio...');
+      }
+
+      return _provider.activeTab.value == 0
+          ? _buildActiveView()
+          : _buildClosedView();
+    });
+  }
+
+  Widget _buildActiveView() {
+    return Watch((_) {
+      final positions = _provider.activePositions;
+
+      if (positions.isEmpty) {
+        return const AppEmptyState(
+          icon: Icons.account_balance_wallet_outlined,
+          title: 'No active positions',
+          description: 'Start by researching companies and creating theses. Then add positions to track your investment decisions.',
+          actionLabel: 'Browse Companies',
+        );
+      }
+
+      return ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: positions.length,
+        itemBuilder: (context, index) {
+          return _ActivePositionCard(
+            position: positions[index],
+            onClose: () => _showClosePositionDialog(context, positions[index]),
+            onViewCompany: () => context.go('/companies/${positions[index].companyId}'),
+          );
+        },
+      );
+    });
+  }
+
+  Widget _buildClosedView() {
+    return Watch((_) {
+      final positions = _provider.closedPositions;
+
+      if (positions.isEmpty) {
+        return const AppEmptyState(
+          icon: Icons.history,
+          title: 'No closed positions',
+          description: 'Closed positions and their outcomes will appear here.',
+        );
+      }
+
+      return ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: positions.length,
+        itemBuilder: (context, index) {
+          return _ClosedPositionCard(
+            position: positions[index],
+            onViewCompany: () => context.go('/companies/${positions[index].companyId}'),
+          );
+        },
+      );
+    });
+  }
+
+  void _showAddPositionDialog(BuildContext context) {
+    final companyController = TextEditingController();
+    final entryPriceController = TextEditingController();
+    final notesController = TextEditingController();
+    String conviction = 'low';
+    DateTime entryDate = DateTime.now();
+    String? selectedCompanyId;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: AppThemeColors.surface,
+          title: Text('Add Position', style: AppTypography.heading),
+          content: SizedBox(
+            width: 500,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Company ID', style: AppTypography.caption),
+                  const SizedBox(height: 4),
+                  TextField(
+                    controller: companyController,
+                    style: AppTypography.body,
+                    decoration: InputDecoration(
+                      hintText: 'Enter company UUID',
+                      hintStyle: AppTypography.caption,
+                      border: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.border)),
+                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.border)),
+                      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.accent)),
+                      filled: true,
+                      fillColor: AppThemeColors.surfaceMuted,
+                    ),
+                    onChanged: (v) => selectedCompanyId = v,
+                  ),
+                  const SizedBox(height: 12),
+                  Text('Conviction', style: AppTypography.caption),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: ['low', 'medium', 'high'].map((c) => Padding(
+                      padding: const EdgeInsets.only(right: 4),
+                      child: ChoiceChip(
+                        label: Text(c[0].toUpperCase() + c.substring(1)),
+                        selected: conviction == c,
+                        onSelected: (selected) {
+                          if (selected) setDialogState(() => conviction = c);
+                        },
+                      ),
+                    )).toList(),
+                  ),
+                  const SizedBox(height: 12),
+                  Text('Entry Date', style: AppTypography.caption),
+                  const SizedBox(height: 4),
+                  InkWell(
+                    onTap: () async {
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate: entryDate,
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime.now(),
+                      );
+                      if (date != null) setDialogState(() => entryDate = date);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppThemeColors.border),
+                        borderRadius: BorderRadius.circular(4),
+                        color: AppThemeColors.surfaceMuted,
+                      ),
+                      child: Text(
+                        '${entryDate.year}-${entryDate.month.toString().padLeft(2, '0')}-${entryDate.day.toString().padLeft(2, '0')}',
+                        style: AppTypography.body,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text('Entry Price (optional)', style: AppTypography.caption),
+                  const SizedBox(height: 4),
+                  TextField(
+                    controller: entryPriceController,
+                    style: AppTypography.body,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      hintText: 'e.g. 150.00',
+                      hintStyle: AppTypography.caption,
+                      border: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.border)),
+                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.border)),
+                      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.accent)),
+                      filled: true,
+                      fillColor: AppThemeColors.surfaceMuted,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text('Notes (optional)', style: AppTypography.caption),
+                  const SizedBox(height: 4),
+                  TextField(
+                    controller: notesController,
+                    style: AppTypography.body,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      hintText: 'Why are you making this decision?',
+                      hintStyle: AppTypography.caption,
+                      border: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.border)),
+                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.border)),
+                      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.accent)),
+                      filled: true,
+                      fillColor: AppThemeColors.surfaceMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel', style: TextStyle(color: AppThemeColors.textSecondary)),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (selectedCompanyId == null || selectedCompanyId!.isEmpty) return;
+                _provider.addPosition(
+                  companyId: selectedCompanyId!,
+                  conviction: conviction,
+                  entryDate: entryDate,
+                  entryPrice: double.tryParse(entryPriceController.text),
+                  notes: notesController.text.isNotEmpty ? notesController.text : null,
+                );
+                Navigator.pop(context);
+              },
+              child: const Text('Add Position'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showClosePositionDialog(BuildContext context, PortfolioPosition position) {
+    String outcome = 'correct';
+    final lessonsController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: AppThemeColors.surface,
+          title: Text('Close Position', style: AppTypography.heading),
+          content: SizedBox(
+            width: 500,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Outcome', style: AppTypography.caption),
+                const SizedBox(height: 4),
+                Row(
+                  children: ['correct', 'incorrect', 'partial'].map((o) => Padding(
+                    padding: const EdgeInsets.only(right: 4),
+                    child: ChoiceChip(
+                      label: Text(o[0].toUpperCase() + o.substring(1)),
+                      selected: outcome == o,
+                      onSelected: (selected) {
+                        if (selected) setDialogState(() => outcome = o);
+                      },
+                    ),
+                  )).toList(),
+                ),
+                const SizedBox(height: 12),
+                Text('Lessons Learned (optional)', style: AppTypography.caption),
+                const SizedBox(height: 4),
+                TextField(
+                  controller: lessonsController,
+                  style: AppTypography.body,
+                  maxLines: 4,
+                  decoration: InputDecoration(
+                    hintText: 'What did you learn from this decision?',
+                    hintStyle: AppTypography.caption,
+                    border: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.border)),
+                    enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.border)),
+                    focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.accent)),
+                    filled: true,
+                    fillColor: AppThemeColors.surfaceMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel', style: TextStyle(color: AppThemeColors.textSecondary)),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                _provider.closePosition(
+                  positionId: position.id,
+                  outcome: outcome,
+                  lessonsLearned: lessonsController.text.isNotEmpty ? lessonsController.text : null,
+                );
+                Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: AppThemeColors.critical),
+              child: const Text('Close Position'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TabButton extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _TabButton({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: selected ? AppThemeColors.accent : Colors.transparent,
+              width: 2,
+            ),
+          ),
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+              color: selected ? AppThemeColors.textPrimary : AppThemeColors.textSecondary,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ActivePositionCard extends StatelessWidget {
+  final PortfolioPosition position;
+  final VoidCallback onClose;
+  final VoidCallback onViewCompany;
+
+  const _ActivePositionCard({
+    required this.position,
+    required this.onClose,
+    required this.onViewCompany,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppThemeColors.surface,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: position.isReviewNeeded ? AppThemeColors.warning : AppThemeColors.border,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      position.companyName ?? 'Unknown Company',
+                      style: AppTypography.body.copyWith(fontWeight: FontWeight.w500),
+                    ),
+                    if (position.ticker != null)
+                      Text(position.ticker!, style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary)),
+                  ],
+                ),
+              ),
+              if (position.isReviewNeeded)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AppThemeColors.warning.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text('Review Needed', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppThemeColors.warning)),
+                ),
+              const SizedBox(width: 8),
+              PopupMenuButton<String>(
+                icon: Icon(Icons.more_vert, size: 16, color: AppThemeColors.textSecondary),
+                onSelected: (value) {
+                  if (value == 'view') onViewCompany();
+                  if (value == 'close') onClose();
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(value: 'view', child: Text('View Company')),
+                  const PopupMenuItem(value: 'close', child: Text('Close Position')),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              _ConvictionChip(conviction: position.conviction),
+              const SizedBox(width: 8),
+              if (position.thesisTitle != null) ...[
+                Icon(Icons.lightbulb_outline, size: 12, color: AppThemeColors.textTertiary),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    position.thesisTitle!,
+                    style: AppTypography.caption,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Text(
+                'Entry: ${_formatDate(position.entryDate)}',
+                style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
+              ),
+              if (position.entryPrice != null) ...[
+                const SizedBox(width: 12),
+                Text(
+                  'Price: \$${position.entryPrice!.toStringAsFixed(2)}',
+                  style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
+                ),
+              ],
+            ],
+          ),
+          if (position.notes != null && position.notes!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(position.notes!, style: AppTypography.caption),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(DateTime dt) {
+    return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+  }
+}
+
+class _ClosedPositionCard extends StatelessWidget {
+  final PortfolioPosition position;
+  final VoidCallback onViewCompany;
+
+  const _ClosedPositionCard({
+    required this.position,
+    required this.onViewCompany,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppThemeColors.surface,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: AppThemeColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  position.companyName ?? 'Unknown Company',
+                  style: AppTypography.body.copyWith(fontWeight: FontWeight.w500),
+                ),
+              ),
+              if (position.outcome != null) _OutcomeBadge(outcome: position.outcome!),
+              const SizedBox(width: 8),
+              IconButton(
+                icon: Icon(Icons.open_in_new, size: 16, color: AppThemeColors.textSecondary),
+                onPressed: onViewCompany,
+                tooltip: 'View Company',
+              ),
+            ],
+          ),
+          if (position.thesisTitle != null) ...[
+            const SizedBox(height: 4),
+            Text(position.thesisTitle!, style: AppTypography.caption),
+          ],
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Text(
+                'Entry: ${_formatDate(position.entryDate)}',
+                style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
+              ),
+              if (position.exitDate != null) ...[
+                const SizedBox(width: 12),
+                Text(
+                  'Exit: ${_formatDate(position.exitDate!)}',
+                  style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
+                ),
+              ],
+            ],
+          ),
+          if (position.lessonsLearned != null && position.lessonsLearned!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text('Lessons:', style: AppTypography.caption.copyWith(fontWeight: FontWeight.w600)),
+            Text(position.lessonsLearned!, style: AppTypography.caption),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(DateTime dt) {
+    return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+  }
+}
+
+class _ConvictionChip extends StatelessWidget {
+  final String conviction;
+
+  const _ConvictionChip({required this.conviction});
+
+  @override
+  Widget build(BuildContext context) {
+    Color color;
+    switch (conviction) {
+      case 'high':
+        color = AppThemeColors.accent;
+        break;
+      case 'medium':
+        color = AppThemeColors.warning;
+        break;
+      default:
+        color = AppThemeColors.textTertiary;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        conviction[0].toUpperCase() + conviction.substring(1),
+        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color),
+      ),
+    );
+  }
+}
+
+class _OutcomeBadge extends StatelessWidget {
+  final PositionOutcome outcome;
+
+  const _OutcomeBadge({required this.outcome});
+
+  @override
+  Widget build(BuildContext context) {
+    Color color;
+    String label;
+    switch (outcome) {
+      case PositionOutcome.correct:
+        color = AppThemeColors.success;
+        label = 'Correct';
+      case PositionOutcome.incorrect:
+        color = AppThemeColors.critical;
+        label = 'Incorrect';
+      case PositionOutcome.partial:
+        color = AppThemeColors.warning;
+        label = 'Partial';
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color)),
     );
   }
 }
