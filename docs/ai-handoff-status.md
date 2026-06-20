@@ -21,12 +21,12 @@ Taug is a financial research platform / investment research workspace.
 
 Phase 4–6 of the execution checklist are complete. The data foundation, serving views, metric engine, and core Flutter research pages are implemented.
 
-### Pilot Expansion Complete (Batch A2.0)
+### Pilot Expansion Complete (Batch A2.0 + A2.1)
 
-- 14 companies with parsed financial statements (was 10)
-- 4 new companies: NVDA, ORCL, CSCO, ADBE
-- 537 financial statements, 247 metric snapshots
-- Screener validates across all 14 companies
+- 18 companies with parsed financial statements (was 10)
+- 8 new companies: NVDA, ORCL, CSCO, ADBE, AVGO, CRM, INTC, ACN
+- 697 financial statements, 323 metric snapshots
+- Screener validates across all 18 companies
 - Quality scores: 72-83% for new companies
 
 ## Product Direction
