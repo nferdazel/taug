@@ -38,7 +38,6 @@ class _ResearchWorkspacePageState extends State<ResearchWorkspacePage> {
     return Column(
       children: [
         _buildHeader(),
-        _buildTabBar(),
         Expanded(child: _buildContent()),
       ],
     );
@@ -59,61 +58,41 @@ class _ResearchWorkspacePageState extends State<ResearchWorkspacePage> {
           children: [
             const Text('Research', style: AppTypography.heading),
             const SizedBox(width: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: AppThemeColors.surfaceLight,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text('$totalResearch companies', style: AppTypography.monoLabel),
-            ),
+            _CounterBadge(label: '$totalResearch companies', color: AppThemeColors.accent),
             const SizedBox(width: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: AppThemeColors.surfaceLight,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text('$totalTheses theses', style: AppTypography.monoLabel),
-            ),
+            _CounterBadge(label: '$totalTheses theses', color: AppThemeColors.warning),
             const SizedBox(width: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: AppThemeColors.surfaceLight,
-                borderRadius: BorderRadius.circular(4),
+            _CounterBadge(label: '$totalNotes notes', color: AppThemeColors.textSecondary),
+            const Spacer(),
+            SizedBox(
+              width: 240,
+              height: 32,
+              child: TextField(
+                controller: _searchController,
+                style: AppTypography.body,
+                decoration: InputDecoration(
+                  hintText: 'Search research...',
+                  hintStyle: AppTypography.caption,
+                  prefixIcon: const Icon(Icons.search, size: 16),
+                  prefixIconColor: AppThemeColors.textTertiary,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(4),
+                    borderSide: const BorderSide(color: AppThemeColors.border),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(4),
+                    borderSide: const BorderSide(color: AppThemeColors.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(4),
+                    borderSide: const BorderSide(color: AppThemeColors.accent),
+                  ),
+                  filled: true,
+                  fillColor: AppThemeColors.surfaceMuted,
+                ),
+                onChanged: (v) => _provider.setSearchQuery(v),
               ),
-              child: Text('$totalNotes notes', style: AppTypography.monoLabel),
-            ),
-          ],
-        ),
-      );
-    });
-  }
-
-  Widget _buildTabBar() {
-    return Watch((_) {
-      return Container(
-        height: 36,
-        decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: Color(0xFF27272A))),
-        ),
-        child: Row(
-          children: [
-            _TabButton(
-              label: 'Queue',
-              selected: _provider.activeTab.value == 0,
-              onTap: () => _provider.activeTab.value = 0,
-            ),
-            _TabButton(
-              label: 'Theses',
-              selected: _provider.activeTab.value == 1,
-              onTap: () => _provider.activeTab.value = 1,
-            ),
-            _TabButton(
-              label: 'Notes',
-              selected: _provider.activeTab.value == 2,
-              onTap: () => _provider.activeTab.value = 2,
             ),
           ],
         ),
@@ -127,356 +106,303 @@ class _ResearchWorkspacePageState extends State<ResearchWorkspacePage> {
         return const AppLoadingState(message: 'Loading research...');
       }
 
-      return Column(
-        children: [
-          _buildSearchBar(),
-          Expanded(child: _buildTabContent()),
-        ],
+      final companies = _provider.filteredCompanies;
+      final theses = _provider.filteredTheses;
+      final notes = _provider.filteredNotes;
+
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Active Research — primary focus
+            _buildSection(
+              title: 'ACTIVE RESEARCH',
+              icon: Icons.science_outlined,
+              count: companies.length,
+              child: companies.isEmpty
+                  ? _buildEmptyResearch()
+                  : Column(
+                      children: companies.map((c) => _ResearchCompanyCard(
+                        company: c,
+                        onTap: () => context.go('/companies/${c.companyId}'),
+                      )).toList(),
+                    ),
+            ),
+            const SizedBox(height: 24),
+
+            // Recent Theses
+            _buildSection(
+              title: 'RECENT THESES',
+              icon: Icons.lightbulb_outline,
+              count: theses.length,
+              child: theses.isEmpty
+                  ? _buildEmptyTheses()
+                  : Column(
+                      children: theses.take(5).map((t) => _ThesisCard(
+                        thesis: t,
+                        onTap: () => context.go('/companies/${t.companyId}'),
+                      )).toList(),
+                    ),
+            ),
+            const SizedBox(height: 24),
+
+            // Recent Notes
+            _buildSection(
+              title: 'RECENT NOTES',
+              icon: Icons.note_outlined,
+              count: notes.length,
+              child: notes.isEmpty
+                  ? _buildEmptyNotes()
+                  : Column(
+                      children: notes.take(5).map((n) => _NoteCard(
+                        note: n,
+                        onTap: () => context.go('/companies/${n.companyId}'),
+                      )).toList(),
+                    ),
+            ),
+          ],
+        ),
       );
     });
   }
 
-  Widget _buildSearchBar() {
+  Widget _buildSection({
+    required String title,
+    required IconData icon,
+    required int count,
+    required Widget child,
+  }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: SizedBox(
-        height: 32,
-        child: TextField(
-          controller: _searchController,
-          style: AppTypography.body,
-          decoration: InputDecoration(
-            hintText: 'Search companies, theses, notes...',
-            hintStyle: AppTypography.caption,
-            prefixIcon: const Icon(Icons.search, size: 16),
-            prefixIconColor: AppThemeColors.textTertiary,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(4),
-              borderSide: const BorderSide(color: AppThemeColors.border),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppThemeColors.border),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: const BoxDecoration(
+              color: AppThemeColors.surfaceMuted,
+              border: Border(bottom: BorderSide(color: AppThemeColors.border)),
             ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(4),
-              borderSide: const BorderSide(color: AppThemeColors.border),
+            child: Row(
+              children: [
+                Icon(icon, size: 14, color: AppThemeColors.textSecondary),
+                const SizedBox(width: 8),
+                Text(title, style: AppTypography.monoSection),
+                const Spacer(),
+                Text('$count', style: AppTypography.monoLabel.copyWith(color: AppThemeColors.textTertiary)),
+              ],
             ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(4),
-              borderSide: const BorderSide(color: AppThemeColors.accent),
-            ),
-            filled: true,
-            fillColor: AppThemeColors.surfaceMuted,
           ),
-          onChanged: (v) => _provider.setSearchQuery(v),
+          child,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyResearch() {
+    return const Padding(
+      padding: EdgeInsets.all(24),
+      child: Center(
+        child: Column(
+          children: [
+            Icon(Icons.science_outlined, size: 32, color: AppThemeColors.textTertiary),
+            SizedBox(height: 8),
+            Text('No active research', style: AppTypography.subheading),
+            SizedBox(height: 4),
+            Text(
+              'Start by researching companies from the Companies page.\nNotes and theses will appear here.',
+              style: AppTypography.caption,
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildTabContent() {
-    switch (_provider.activeTab.value) {
-      case 0:
-        return _buildQueueView();
-      case 1:
-        return _buildThesesView();
-      case 2:
-        return _buildNotesView();
-      default:
-        return const SizedBox.shrink();
-    }
+  Widget _buildEmptyTheses() {
+    return const Padding(
+      padding: EdgeInsets.all(24),
+      child: Center(
+        child: Column(
+          children: [
+            Icon(Icons.lightbulb_outline, size: 32, color: AppThemeColors.textTertiary),
+            SizedBox(height: 8),
+            Text('No theses yet', style: AppTypography.subheading),
+            SizedBox(height: 4),
+            Text(
+              'Create investment theses from company research pages.',
+              style: AppTypography.caption,
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
-  Widget _buildQueueView() {
-    return Watch((_) {
-      final companies = _provider.filteredCompanies;
-
-      if (companies.isEmpty) {
-        return const AppEmptyState(
-          icon: Icons.edit_note_outlined,
-          title: 'No active research',
-          description: 'Start researching companies from the Companies page. Notes and theses will appear here.',
-        );
-      }
-
-      return ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        itemCount: companies.length,
-        itemBuilder: (context, index) {
-          final company = companies[index];
-          return _CompanyResearchCard(
-            company: company,
-            onTap: () => context.go('/companies/${company.companyId}'),
-          );
-        },
-      );
-    });
-  }
-
-  Widget _buildThesesView() {
-    return Watch((_) {
-      final theses = _provider.filteredTheses;
-
-      if (theses.isEmpty) {
-        return const AppEmptyState(
-          icon: Icons.lightbulb_outline,
-          title: 'No theses yet',
-          description: 'Create investment theses from company research pages.',
-        );
-      }
-
-      return ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        itemCount: theses.length,
-        itemBuilder: (context, index) {
-          final thesis = theses[index];
-          return _ThesisIndexCard(
-            thesis: thesis,
-            onTap: () => context.go('/companies/${thesis.companyId}'),
-          );
-        },
-      );
-    });
-  }
-
-  Widget _buildNotesView() {
-    return Watch((_) {
-      final notes = _provider.filteredNotes;
-
-      if (notes.isEmpty) {
-        return const AppEmptyState(
-          icon: Icons.note_outlined,
-          title: 'No notes yet',
-          description: 'Create research notes from company research pages.',
-        );
-      }
-
-      return ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        itemCount: notes.length,
-        itemBuilder: (context, index) {
-          final note = notes[index];
-          return _NoteIndexCard(
-            note: note,
-            onTap: () => context.go('/companies/${note.companyId}'),
-          );
-        },
-      );
-    });
+  Widget _buildEmptyNotes() {
+    return const Padding(
+      padding: EdgeInsets.all(24),
+      child: Center(
+        child: Column(
+          children: [
+            Icon(Icons.note_outlined, size: 32, color: AppThemeColors.textTertiary),
+            SizedBox(height: 8),
+            Text('No notes yet', style: AppTypography.subheading),
+            SizedBox(height: 4),
+            Text(
+              'Create research notes from company research pages.',
+              style: AppTypography.caption,
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
-class _TabButton extends StatelessWidget {
+class _CounterBadge extends StatelessWidget {
   final String label;
-  final bool selected;
-  final VoidCallback onTap;
+  final Color color;
 
-  const _TabButton({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
+  const _CounterBadge({required this.label, required this.color});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: selected ? AppThemeColors.accent : Colors.transparent,
-              width: 2,
-            ),
-          ),
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-              color: selected ? AppThemeColors.textPrimary : AppThemeColors.textSecondary,
-            ),
-          ),
-        ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(4),
       ),
+      child: Text(label, style: AppTypography.monoLabel.copyWith(color: color)),
     );
   }
 }
 
-class _CompanyResearchCard extends StatelessWidget {
+class _ResearchCompanyCard extends StatelessWidget {
   final ResearchCompany company;
   final VoidCallback onTap;
 
-  const _CompanyResearchCard({required this.company, required this.onTap});
+  const _ResearchCompanyCard({required this.company, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: Material(
-        color: AppThemeColors.surface,
-        borderRadius: BorderRadius.circular(6),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(6),
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: AppThemeColors.border),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        company.displayName,
-                        style: AppTypography.body.copyWith(fontWeight: FontWeight.w500),
-                      ),
-                      if (company.ticker != null)
-                        Text(
-                          company.ticker!,
-                          style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
-                        ),
-                    ],
-                  ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    ResearchStatusBadge(
-                      status: ResearchStatus.fromString(company.researchStatus),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${company.notesCount} notes · ${company.thesesCount} theses',
-                      style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 8),
-                const Icon(Icons.chevron_right, size: 16, color: AppThemeColors.textTertiary),
-              ],
-            ),
-          ),
+    return InkWell(
+      onTap: onTap,
+      hoverColor: AppThemeColors.surfaceLight.withValues(alpha: 0.5),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: AppThemeColors.border.withValues(alpha: 0.5))),
         ),
-      ),
-    );
-  }
-}
-
-class _ThesisIndexCard extends StatelessWidget {
-  final ResearchThesisIndex thesis;
-  final VoidCallback onTap;
-
-  const _ThesisIndexCard({required this.thesis, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: Material(
-        color: AppThemeColors.surface,
-        borderRadius: BorderRadius.circular(6),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(6),
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: AppThemeColors.border),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      Text(
-                        thesis.title,
-                        style: AppTypography.body.copyWith(fontWeight: FontWeight.w500),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${thesis.companyName}${thesis.ticker != null ? " (${thesis.ticker})" : ""}',
-                        style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
-                      ),
-                    ],
-                  ),
-                ),
-                _StanceChip(stance: thesis.stance),
-                const SizedBox(width: 8),
-                const Icon(Icons.chevron_right, size: 16, color: AppThemeColors.textTertiary),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _NoteIndexCard extends StatelessWidget {
-  final ResearchNoteIndex note;
-  final VoidCallback onTap;
-
-  const _NoteIndexCard({required this.note, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: Material(
-        color: AppThemeColors.surface,
-        borderRadius: BorderRadius.circular(6),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(6),
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: AppThemeColors.border),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        note.title,
-                        style: AppTypography.body.copyWith(fontWeight: FontWeight.w500),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${note.companyName}${note.ticker != null ? " (${note.ticker})" : ""}',
-                        style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
-                      ),
-                      if (note.body.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          note.body,
-                          style: AppTypography.caption,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                      Text(company.displayName, style: AppTypography.body.copyWith(fontWeight: FontWeight.w500)),
+                      if (company.ticker != null) ...[
+                        const SizedBox(width: 6),
+                        Text(company.ticker!, style: AppTypography.monoLabel.copyWith(color: AppThemeColors.textTertiary)),
                       ],
                     ],
                   ),
-                ),
-                const SizedBox(width: 8),
-                const Icon(Icons.chevron_right, size: 16, color: AppThemeColors.textTertiary),
-              ],
+                  const SizedBox(height: 2),
+                  Text(
+                    '${company.notesCount} notes · ${company.thesesCount} theses',
+                    style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
+                  ),
+                ],
+              ),
             ),
-          ),
+            ResearchStatusBadge(status: ResearchStatus.fromString(company.researchStatus)),
+            const SizedBox(width: 8),
+            const Icon(Icons.chevron_right, size: 16, color: AppThemeColors.textTertiary),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ThesisCard extends StatelessWidget {
+  final ResearchThesisIndex thesis;
+  final VoidCallback onTap;
+
+  const _ThesisCard({required this.thesis, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      hoverColor: AppThemeColors.surfaceLight.withValues(alpha: 0.5),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: AppThemeColors.border.withValues(alpha: 0.5))),
+        ),
+        child: Row(
+          children: [
+            _StanceChip(stance: thesis.stance),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(thesis.title, style: AppTypography.body.copyWith(fontWeight: FontWeight.w500), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  Text('${thesis.companyName}${thesis.ticker != null ? " (${thesis.ticker})" : ""}', style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary)),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, size: 16, color: AppThemeColors.textTertiary),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NoteCard extends StatelessWidget {
+  final ResearchNoteIndex note;
+  final VoidCallback onTap;
+
+  const _NoteCard({required this.note, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      hoverColor: AppThemeColors.surfaceLight.withValues(alpha: 0.5),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: AppThemeColors.border.withValues(alpha: 0.5))),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(note.title, style: AppTypography.body.copyWith(fontWeight: FontWeight.w500), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  Text('${note.companyName}${note.ticker != null ? " (${note.ticker})" : ""}', style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary)),
+                  if (note.body.isNotEmpty)
+                    Text(note.body, style: AppTypography.caption, maxLines: 1, overflow: TextOverflow.ellipsis),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, size: 16, color: AppThemeColors.textTertiary),
+          ],
         ),
       ),
     );
@@ -493,19 +419,10 @@ class _StanceChip extends StatelessWidget {
     Color color;
     String label;
     switch (stance) {
-      case 'bullish':
-        color = AppThemeColors.success;
-        label = 'Bullish';
-        break;
-      case 'bearish':
-        color = AppThemeColors.critical;
-        label = 'Bearish';
-        break;
-      default:
-        color = AppThemeColors.neutral;
-        label = 'Neutral';
+      case 'bullish': color = AppThemeColors.success; label = 'Bullish';
+      case 'bearish': color = AppThemeColors.critical; label = 'Bearish';
+      default: color = AppThemeColors.neutral; label = 'Neutral';
     }
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(

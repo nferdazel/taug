@@ -3,8 +3,6 @@ import 'package:signals/signals_flutter.dart';
 
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../shared/widgets/status_badges.dart';
-import '../../../companies/presentation/widgets/research_status_badge.dart';
 import '../providers/workspace_provider.dart';
 
 class OverviewTab extends StatelessWidget {
@@ -18,44 +16,157 @@ class OverviewTab extends StatelessWidget {
       final profile = provider.profile.value;
       final metrics = provider.metrics;
       final theses = provider.theses;
+      final notes = provider.notes;
 
-      return ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // Company Summary
-          if (profile?.description != null) ...[
-            const _SectionHeader(title: 'Company Summary'),
-            const SizedBox(height: 8),
-            Text(profile!.description!, style: AppTypography.body),
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Research Status — primary object
+            _buildResearchSection(theses, notes),
             const SizedBox(height: 24),
+
+            // Key Metrics — decision-relevant
+            _buildMetricsSection(metrics),
+            const SizedBox(height: 24),
+
+            // Company Summary — secondary
+            if (profile?.description != null) ...[
+              _buildSectionHeader('About'),
+              const SizedBox(height: 8),
+              Text(profile!.description!, style: AppTypography.body),
+            ],
           ],
-
-          // Key Metrics
-          const _SectionHeader(title: 'Key Metrics'),
-          const SizedBox(height: 8),
-          _buildMetricsGrid(metrics),
-          const SizedBox(height: 24),
-
-          // Thesis Snapshot
-          const _SectionHeader(title: 'Thesis Snapshot'),
-          const SizedBox(height: 8),
-          _buildThesisSnapshot(theses),
-          const SizedBox(height: 24),
-        ],
+        ),
       );
     });
   }
 
-  Widget _buildMetricsGrid(List<dynamic> metrics) {
-    final keyMetrics = [
-      'market_cap',
-      'pe',
-      'roe',
-      'gross_margin',
-      'net_margin',
-      'debt_equity',
-    ];
+  Widget _buildResearchSection(List<dynamic> theses, List<dynamic> notes) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: AppThemeColors.border),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: const BoxDecoration(
+              color: AppThemeColors.surfaceMuted,
+              border: Border(bottom: BorderSide(color: AppThemeColors.border)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.lightbulb_outline, size: 14, color: AppThemeColors.textSecondary),
+                const SizedBox(width: 8),
+                const Text('RESEARCH', style: AppTypography.monoSection),
+                const Spacer(),
+                Text('${notes.length} notes', style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary)),
+              ],
+            ),
+          ),
+          if (theses.isNotEmpty)
+            _buildThesisSummary(theses.first)
+          else
+            _buildNoThesisPrompt(),
+          if (notes.isNotEmpty)
+            _buildRecentNotes(notes.take(3).toList()),
+        ],
+      ),
+    );
+  }
 
+  Widget _buildThesisSummary(dynamic thesis) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _StanceChip(stance: thesis.stance),
+              const SizedBox(width: 8),
+              _ConvictionChip(conviction: thesis.conviction),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  thesis.title,
+                  style: AppTypography.subheading,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          if (thesis.summary != null && thesis.summary!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              thesis.summary!,
+              style: AppTypography.body,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoThesisPrompt() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          const Icon(Icons.lightbulb_outline, size: 16, color: AppThemeColors.textTertiary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'No thesis yet. Create one in the Research tab to track your investment thesis.',
+              style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecentNotes(List<dynamic> notes) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: AppThemeColors.border.withValues(alpha: 0.5))),
+      ),
+      child: Column(
+        children: notes.map((note) => Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: AppThemeColors.border.withValues(alpha: 0.3))),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.note_outlined, size: 12, color: AppThemeColors.textTertiary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  note.title,
+                  style: AppTypography.body,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Text(
+                _formatDate(note.updatedAt),
+                style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
+              ),
+            ],
+          ),
+        )).toList(),
+      ),
+    );
+  }
+
+  Widget _buildMetricsSection(List<dynamic> metrics) {
+    final keyMetrics = ['market_cap', 'pe', 'roe', 'gross_margin', 'net_margin', 'debt_equity'];
     final metricMap = <String, dynamic>{};
     for (final m in metrics) {
       if (m.isOk && keyMetrics.contains(m.metricCode)) {
@@ -68,129 +179,68 @@ class OverviewTab extends StatelessWidget {
         border: Border.all(color: AppThemeColors.border),
         borderRadius: BorderRadius.circular(6),
       ),
-      child: GridView.count(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisCount: 3,
-        childAspectRatio: 2.2,
-        children: keyMetrics.map((code) {
-          final m = metricMap[code];
-          return _MetricCard(
-            label: _metricLabel(code),
-            value: m != null ? _formatMetric(m) : '—',
-            isOk: m != null,
-            tooltip: _metricTooltip(code),
-          );
-        }).toList(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: const BoxDecoration(
+              color: AppThemeColors.surfaceMuted,
+              border: Border(bottom: BorderSide(color: AppThemeColors.border)),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.insights, size: 14, color: AppThemeColors.textSecondary),
+                SizedBox(width: 8),
+                Text('KEY METRICS', style: AppTypography.monoSection),
+              ],
+            ),
+          ),
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 3,
+            childAspectRatio: 2.2,
+            children: keyMetrics.map((code) {
+              final m = metricMap[code];
+              return _MetricCell(
+                label: _metricLabel(code),
+                value: m != null ? _formatMetric(m) : '—',
+                isOk: m != null,
+                tooltip: _metricTooltip(code),
+              );
+            }).toList(),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildThesisSnapshot(List<dynamic> theses) {
-    if (theses.isEmpty) {
-      return Card(
-        color: AppThemeColors.surface,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              const Text('No thesis yet', style: AppTypography.caption),
-              const SizedBox(height: 8),
-              Text(
-                'Create a thesis in the Research tab',
-                style: AppTypography.caption.copyWith(
-                  color: AppThemeColors.textTertiary,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    final thesis = theses.first;
-    return Card(
-      color: AppThemeColors.surface,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(thesis.title, style: AppTypography.subheading),
-                ),
-                ResearchStatusBadge(
-                  status: ResearchStatus.fromString('researching'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                _StanceBadge(stance: thesis.stance),
-                const SizedBox(width: 8),
-                _ConvictionBadge(conviction: thesis.conviction),
-              ],
-            ),
-            if (thesis.summary != null && thesis.summary!.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(
-                thesis.summary!,
-                style: AppTypography.body,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-            const SizedBox(height: 8),
-            Text(
-              'Updated: ${_formatDate(thesis.updatedAt)}',
-              style: AppTypography.caption.copyWith(
-                color: AppThemeColors.textTertiary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  Widget _buildSectionHeader(String title) {
+    return Text(title.toUpperCase(), style: AppTypography.monoSection);
   }
 
   String _metricLabel(String code) {
     switch (code) {
-      case 'market_cap':
-        return 'Market Cap';
-      case 'pe':
-        return 'PE';
-      case 'roe':
-        return 'ROE';
-      case 'gross_margin':
-        return 'Gross Margin';
-      case 'net_margin':
-        return 'Net Margin';
-      case 'debt_equity':
-        return 'D/E';
-      default:
-        return code;
+      case 'market_cap': return 'Market Cap';
+      case 'pe': return 'PE';
+      case 'roe': return 'ROE';
+      case 'gross_margin': return 'Gross Margin';
+      case 'net_margin': return 'Net Margin';
+      case 'debt_equity': return 'D/E';
+      default: return code;
     }
   }
 
   String _metricTooltip(String code) {
     switch (code) {
-      case 'market_cap':
-        return 'Total market value of outstanding shares. Share price × shares outstanding.';
-      case 'pe':
-        return 'Price-to-Earnings ratio. How much investors pay per dollar of earnings.';
-      case 'roe':
-        return 'Return on Equity. Profitability relative to shareholders\' equity.';
-      case 'gross_margin':
-        return 'Gross profit as % of revenue. Revenue remaining after cost of goods sold.';
-      case 'net_margin':
-        return 'Net income as % of revenue. Overall profitability after all expenses.';
-      case 'debt_equity':
-        return 'Total debt ÷ shareholders\' equity. Financial leverage measure.';
-      default:
-        return code;
+      case 'market_cap': return 'Total market value of outstanding shares.';
+      case 'pe': return 'Price-to-Earnings ratio.';
+      case 'roe': return 'Return on Equity. Profitability relative to equity.';
+      case 'gross_margin': return 'Gross profit as % of revenue.';
+      case 'net_margin': return 'Net income as % of revenue.';
+      case 'debt_equity': return 'Total debt ÷ shareholders equity.';
+      default: return code;
     }
   }
 
@@ -198,14 +248,10 @@ class OverviewTab extends StatelessWidget {
     if (m.valueNumeric == null) return '—';
     final v = m.valueNumeric as double;
     switch (m.unitType) {
-      case 'percentage':
-        return '${(v * 100).toStringAsFixed(2)}%';
-      case 'monetary':
-        return _formatLargeNumber(v);
-      case 'ratio':
-        return v.toStringAsFixed(2);
-      default:
-        return v.toStringAsFixed(2);
+      case 'percentage': return '${(v * 100).toStringAsFixed(2)}%';
+      case 'monetary': return _formatLargeNumber(v);
+      case 'ratio': return v.toStringAsFixed(2);
+      default: return v.toStringAsFixed(2);
     }
   }
 
@@ -218,28 +264,17 @@ class OverviewTab extends StatelessWidget {
   }
 
   String _formatDate(DateTime dt) {
-    return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+    return '${dt.month.toString().padLeft(2, '0')}/${dt.day.toString().padLeft(2, '0')}';
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  final String title;
-
-  const _SectionHeader({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(title.toUpperCase(), style: AppTypography.monoSection);
-  }
-}
-
-class _MetricCard extends StatelessWidget {
+class _MetricCell extends StatelessWidget {
   final String label;
   final String value;
   final bool isOk;
   final String? tooltip;
 
-  const _MetricCard({
+  const _MetricCell({
     required this.label,
     required this.value,
     required this.isOk,
@@ -250,7 +285,6 @@ class _MetricCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Tooltip(
       message: tooltip ?? label,
-      preferBelow: true,
       decoration: BoxDecoration(
         color: AppThemeColors.surfaceLight,
         borderRadius: BorderRadius.circular(6),
@@ -269,19 +303,7 @@ class _MetricCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    label,
-                    style: AppTypography.caption.copyWith(fontSize: 10),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                if (tooltip != null)
-                  const Icon(Icons.info_outline, size: 10, color: AppThemeColors.textTertiary),
-              ],
-            ),
+            Text(label, style: AppTypography.caption.copyWith(fontSize: 10)),
             const SizedBox(height: 4),
             Text(
               value,
@@ -297,29 +319,44 @@ class _MetricCard extends StatelessWidget {
   }
 }
 
-class _StanceBadge extends StatelessWidget {
+class _StanceChip extends StatelessWidget {
   final String stance;
 
-  const _StanceBadge({required this.stance});
+  const _StanceChip({required this.stance});
 
   @override
   Widget build(BuildContext context) {
     Color color;
     String label;
     switch (stance) {
-      case 'bullish':
-        color = AppThemeColors.success;
-        label = 'Bullish';
-        break;
-      case 'bearish':
-        color = AppThemeColors.critical;
-        label = 'Bearish';
-        break;
-      default:
-        color = AppThemeColors.neutral;
-        label = 'Neutral';
+      case 'bullish': color = AppThemeColors.success; label = 'Bullish';
+      case 'bearish': color = AppThemeColors.critical; label = 'Bearish';
+      default: color = AppThemeColors.neutral; label = 'Neutral';
     }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color)),
+    );
+  }
+}
 
+class _ConvictionChip extends StatelessWidget {
+  final String conviction;
+
+  const _ConvictionChip({required this.conviction});
+
+  @override
+  Widget build(BuildContext context) {
+    Color color;
+    switch (conviction) {
+      case 'high': color = AppThemeColors.accent;
+      case 'medium': color = AppThemeColors.warning;
+      default: color = AppThemeColors.textTertiary;
+    }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
@@ -327,28 +364,9 @@ class _StanceBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
+        conviction[0].toUpperCase() + conviction.substring(1),
+        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color),
       ),
     );
-  }
-}
-
-class _ConvictionBadge extends StatelessWidget {
-  final String conviction;
-
-  const _ConvictionBadge({required this.conviction});
-
-  @override
-  Widget build(BuildContext context) {
-    final level = ConvictionLevel.values.firstWhere(
-      (l) => l.name == conviction,
-      orElse: () => ConvictionLevel.low,
-    );
-    return ConvictionBadge(level: level);
   }
 }
