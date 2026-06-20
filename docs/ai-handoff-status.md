@@ -21,13 +21,15 @@ Taug is a financial research platform / investment research workspace.
 
 Phase 4–6 of the execution checklist are complete. The data foundation, serving views, metric engine, and core Flutter research pages are implemented.
 
-### Expansion Complete (A2.0 → A2.3)
+### Expansion Complete (A2.0 → A2.4)
 
-- 25 companies with parsed financial statements (was 10)
-- 15 new companies across Technology, Healthcare, Financials, Consumer, Industrials, Energy, Materials
-- 1,280+ financial statements, 513 metric snapshots
-- Screener validates across all 25 companies
+- 32 companies with parsed financial statements (was 10)
+- 22 new companies across all 10 GICS sectors
+- 1,637+ financial statements, 646 metric snapshots
+- Screener validates across all 32 companies
 - Quality scores: 68-83%
+- Metric visibility fix applied (ok preferred over missing_input)
+- All 10 GICS sectors represented
 
 ## Product Direction
 
