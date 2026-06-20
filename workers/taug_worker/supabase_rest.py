@@ -1887,6 +1887,7 @@ class SupabaseRestClient:
             "validation_warning_flag": validation_warning_flag,
             "calculation_run_id": calculation_run_id,
             "input_fingerprint": input_fingerprint,
+            "last_fetched_at": datetime.now(timezone.utc).isoformat(),
             "updated_at": datetime.now(timezone.utc).isoformat(),
           },
         )
@@ -1908,6 +1909,7 @@ class SupabaseRestClient:
       "calculation_run_id": calculation_run_id,
       "formula_version": formula_version,
       "input_fingerprint": input_fingerprint,
+      "last_fetched_at": datetime.now(timezone.utc).isoformat(),
     }
     if metadata is not None:
       snap_payload["metadata"] = metadata
