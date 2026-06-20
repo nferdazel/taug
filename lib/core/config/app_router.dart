@@ -7,7 +7,7 @@ import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/brief/presentation/pages/brief_page.dart';
 import '../../features/calendar/presentation/pages/calendar_page.dart';
 import '../../features/chart/presentation/pages/chart_page.dart';
-import '../../features/companies/presentation/pages/companies_page.dart';
+import '../../features/companies/presentation/pages/companies_workspace_page.dart';
 import '../../features/company/presentation/pages/company_workspace_page.dart';
 import '../../features/data/presentation/pages/data_workspace_page.dart';
 import '../../features/company/presentation/pages/company_page.dart';
@@ -65,7 +65,7 @@ final router = GoRouter(
         GoRoute(
           path: '/companies',
           pageBuilder: (context, state) =>
-              const NoTransitionPage(child: CompaniesPage()),
+              const NoTransitionPage(child: CompaniesWorkspacePage()),
           routes: [
             GoRoute(
               path: ':id',

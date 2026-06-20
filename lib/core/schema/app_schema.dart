@@ -1,5 +1,6 @@
 abstract final class AppSchema {
   static const String name = 'taug';
+  static const String companies = 'companies';
   static const String exchanges = 'exchanges';
   static const String symbols = 'symbols';
   static const String profiles = 'profiles';
