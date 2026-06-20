@@ -4,6 +4,7 @@ abstract final class AppColors {
   static const int backgroundLight = 0xFF18181B;
   static const int surface = 0xFF18181B;
   static const int surfaceLight = 0xFF27272A;
+  static const int surfaceMuted = 0xFF1C1C1F;
 
   // Borders
   static const int border = 0xFF27272A;
@@ -11,8 +12,8 @@ abstract final class AppColors {
 
   // Text
   static const int textPrimary = 0xFFFAFAFA;
-  static const int textSecondary = 0xFF71717A;
-  static const int textTertiary = 0xFF52525B;
+  static const int textSecondary = 0xFFA1A1AA;
+  static const int textTertiary = 0xFF71717A;
 
   // Semantic
   static const int bullish = 0xFF10B981;
@@ -24,11 +25,16 @@ abstract final class AppColors {
   static const int accent = 0xFF3B82F6;
   static const int accentLight = 0xFF60A5FA;
 
-  // Warning
+  // Status
+  static const int success = 0xFF10B981;
+  static const int successLight = 0xFF34D399;
   static const int warning = 0xFFF59E0B;
   static const int warningLight = 0xFFFBBF24;
+  static const int critical = 0xFFF43F5E;
+  static const int criticalLight = 0xFFFB7185;
+  static const int neutral = 0xFF71717A;
 
-  // Neutral
+  // Legacy aliases
   static const int neutral50 = 0xFFFAFAFA;
   static const int neutral100 = 0xFFF4F4F5;
   static const int neutral200 = 0xFFE4E4E7;
