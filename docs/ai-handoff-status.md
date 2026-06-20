@@ -93,7 +93,7 @@ Not the target:
 - `fetch-sec-filing-documents` — store immutable raw filing documents
 - `sync-sec-companyfacts` — ingest XBRL companyfacts payload
 - `parse-sec-companyfacts` — parse into statements (35 facts)
-- `compute-company-metrics` — compute 19 metrics (tested on AAPL + MSFT)
+- `compute-company-metrics` — compute 19 metrics (price-dependent metrics now working with Twelve Data price snapshots)
 - `sync-price-snapshots` — fetch quotes from Twelve Data API
 - `execute-screener` — execute saved screener filters against metric snapshots
 - `compute-data-quality` — compute data quality scores per company

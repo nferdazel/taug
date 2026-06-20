@@ -206,6 +206,17 @@ def run_compute_company_metrics(
           else _today_iso()
         )
 
+        close_price: float | None = None
+        shares_outstanding: float | None = None
+        price_snapshot = supabase_client.get_latest_price_snapshot(
+          security_id=security.security_id,
+        )
+        if price_snapshot:
+          close_price = price_snapshot.get("close_price")
+        shares_outstanding = supabase_client.get_latest_shares_outstanding(
+          company_id=company_id,
+        )
+
         computed: int = 0
         skipped: int = 0
         for code, defn in defs_by_code.items():
@@ -219,6 +230,8 @@ def run_compute_company_metrics(
             balance=latest_balance,
             latest_annual=latest_annual,
             as_of_date=as_of_date,
+            close_price=close_price,
+            shares_outstanding=shares_outstanding,
           )
 
           fp_input: str = f"{code}|{result.as_of_date}|{ttm_income.period_end if ttm_income else ''}"
@@ -494,6 +507,8 @@ def _compute_metric(
   balance: StatementPeriod | None,
   latest_annual: StatementPeriod | None,
   as_of_date: str,
+  close_price: float | None = None,
+  shares_outstanding: float | None = None,
 ) -> MetricComputationResult:
   no_input = MetricComputationResult(
     metric_code=code,
@@ -507,18 +522,113 @@ def _compute_metric(
     input_fingerprint="",
   )
 
-  if code in ("market_cap", "enterprise_value", "pe", "pb", "ps", "ev_ebit", "ev_ebitda"):
-    return MetricComputationResult(
-      metric_code=code,
-      value_numeric=None,
-      computation_status="missing_input",
-      stale_input_flag=False,
-      missing_input_flag=True,
-      validation_warning_flag=False,
-      reporting_period_id=None,
-      as_of_date=as_of_date,
-      input_fingerprint="needs_price_data",
-    )
+  if code == "market_cap":
+    if close_price is not None and shares_outstanding is not None:
+      val = close_price * shares_outstanding
+      return MetricComputationResult(
+        metric_code=code, value_numeric=val,
+        computation_status="ok", stale_input_flag=False,
+        missing_input_flag=False, validation_warning_flag=False,
+        reporting_period_id=None, as_of_date=as_of_date,
+        input_fingerprint=f"price|{as_of_date}",
+      )
+    return no_input
+
+  if code == "enterprise_value":
+    if close_price is not None and shares_outstanding is not None:
+      mcap = close_price * shares_outstanding
+      debt = balance.long_term_debt if balance else None
+      cash = balance.cash_and_equivalents if balance else None
+      if debt is not None and cash is not None:
+        val = mcap + debt - cash
+        return MetricComputationResult(
+          metric_code=code, value_numeric=val,
+          computation_status="ok", stale_input_flag=False,
+          missing_input_flag=False, validation_warning_flag=False,
+          reporting_period_id=None, as_of_date=as_of_date,
+          input_fingerprint=f"price|{as_of_date}",
+        )
+    return no_input
+
+  if code == "pe":
+    if close_price is not None and shares_outstanding is not None and ttm and ttm.net_income is not None and ttm.net_income > 0:
+      mcap = close_price * shares_outstanding
+      val = _safe_div(mcap, ttm.net_income)
+      if val is not None:
+        return MetricComputationResult(
+          metric_code=code, value_numeric=val,
+          computation_status="ok", stale_input_flag=False,
+          missing_input_flag=False, validation_warning_flag=False,
+          reporting_period_id=None, as_of_date=as_of_date,
+          input_fingerprint=f"price|{as_of_date}",
+        )
+    return no_input
+
+  if code == "pb":
+    if close_price is not None and shares_outstanding is not None and balance and balance.stockholders_equity is not None and balance.stockholders_equity > 0:
+      mcap = close_price * shares_outstanding
+      val = _safe_div(mcap, balance.stockholders_equity)
+      if val is not None:
+        return MetricComputationResult(
+          metric_code=code, value_numeric=val,
+          computation_status="ok", stale_input_flag=False,
+          missing_input_flag=False, validation_warning_flag=False,
+          reporting_period_id=None, as_of_date=as_of_date,
+          input_fingerprint=f"price|{as_of_date}",
+        )
+    return no_input
+
+  if code == "ps":
+    if close_price is not None and shares_outstanding is not None and ttm and ttm.revenue is not None and ttm.revenue > 0:
+      mcap = close_price * shares_outstanding
+      val = _safe_div(mcap, ttm.revenue)
+      if val is not None:
+        return MetricComputationResult(
+          metric_code=code, value_numeric=val,
+          computation_status="ok", stale_input_flag=False,
+          missing_input_flag=False, validation_warning_flag=False,
+          reporting_period_id=None, as_of_date=as_of_date,
+          input_fingerprint=f"price|{as_of_date}",
+        )
+    return no_input
+
+  if code == "ev_ebit":
+    if close_price is not None and shares_outstanding is not None and ttm and ttm.operating_income is not None and ttm.operating_income > 0 and balance:
+      mcap = close_price * shares_outstanding
+      debt = balance.long_term_debt
+      cash = balance.cash_and_equivalents
+      if debt is not None and cash is not None:
+        ev = mcap + debt - cash
+        val = _safe_div(ev, ttm.operating_income)
+        if val is not None:
+          return MetricComputationResult(
+            metric_code=code, value_numeric=val,
+            computation_status="ok", stale_input_flag=False,
+            missing_input_flag=False, validation_warning_flag=False,
+            reporting_period_id=None, as_of_date=as_of_date,
+            input_fingerprint=f"price|{as_of_date}",
+          )
+    return no_input
+
+  if code == "ev_ebitda":
+    if close_price is not None and shares_outstanding is not None and ttm and balance:
+      ebitda = _sum_or_none([ttm.operating_income, ttm.depreciation_amortization])
+      if ebitda is not None and ebitda > 0:
+        mcap = close_price * shares_outstanding
+        debt = balance.long_term_debt
+        cash = balance.cash_and_equivalents
+        if debt is not None and cash is not None:
+          ev = mcap + debt - cash
+          val = _safe_div(ev, ebitda)
+          if val is not None:
+            return MetricComputationResult(
+              metric_code=code, value_numeric=val,
+              computation_status="ok", stale_input_flag=False,
+              missing_input_flag=False, validation_warning_flag=False,
+              reporting_period_id=None, as_of_date=as_of_date,
+              input_fingerprint=f"price|{as_of_date}",
+            )
+    return no_input
 
   if code == "gross_margin":
     val = _safe_div(ttm.gross_profit, ttm.revenue) if ttm else None

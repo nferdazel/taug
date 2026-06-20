@@ -216,15 +216,26 @@ class TestComputeMetric:
     assert result.computation_status == "ok"
     assert abs(result.value_numeric - (35.0 / 25.0)) < 0.01
 
-  def test_price_dependent_returns_missing_input(self) -> None:
+  def test_price_dependent_returns_missing_input_without_price(self) -> None:
     ttm = _make_ttm()
     for code in ("market_cap", "enterprise_value", "pe", "pb", "ps", "ev_ebit", "ev_ebitda"):
       result = _compute_metric(
         code=code, ttm=ttm, prior_ttm=None,
-        balance=None, latest_annual=None, as_of_date=self.AS_OF,
+        balance=_make_balance(), latest_annual=None, as_of_date=self.AS_OF,
       )
-      assert result.computation_status == "missing_input", f"{code} should be missing_input"
-      assert result.input_fingerprint == "needs_price_data"
+      assert result.computation_status == "missing_input", f"{code} should be missing_input without price data"
+
+  def test_price_dependent_computes_with_price(self) -> None:
+    ttm = _make_ttm()
+    balance = _make_balance()
+    for code in ("market_cap", "pe", "pb", "ps"):
+      result = _compute_metric(
+        code=code, ttm=ttm, prior_ttm=None,
+        balance=balance, latest_annual=None, as_of_date=self.AS_OF,
+        close_price=150.0, shares_outstanding=1_000_000_000,
+      )
+      assert result.computation_status == "ok", f"{code} should be ok with price data"
+      assert result.value_numeric is not None
 
   def test_revenue_yoy_ok(self) -> None:
     ttm = _make_ttm(revenue=120.0)

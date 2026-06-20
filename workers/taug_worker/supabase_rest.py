@@ -1793,7 +1793,7 @@ class SupabaseRestClient:
     metadata: dict[str, object] | None = None,
   ) -> UpsertResult:
     query: dict[str, str] = {
-      "select": "id",
+      "select": "id,computation_status",
       "security_id": f"eq.{security_id}",
       "metric_definition_id": f"eq.{metric_definition_id}",
       "as_of_date": f"eq.{as_of_date}",
@@ -1811,7 +1811,27 @@ class SupabaseRestClient:
       query=query,
     )
     if existing_rows:
-      return UpsertResult(id=str(existing_rows[0]["id"]), created=False)
+      existing = existing_rows[0]
+      existing_status: str = str(existing.get("computation_status", ""))
+      if existing_status == "missing_input" and computation_status == "ok":
+        self._request(
+          "PATCH",
+          "security_metric_snapshots",
+          query={"id": f"eq.{existing['id']}"},
+          headers={"Prefer": "return=minimal"},
+          payload={
+            "value_numeric": value_numeric,
+            "computation_status": computation_status,
+            "stale_input_flag": stale_input_flag,
+            "missing_input_flag": missing_input_flag,
+            "validation_warning_flag": validation_warning_flag,
+            "calculation_run_id": calculation_run_id,
+            "input_fingerprint": input_fingerprint,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+          },
+        )
+        return UpsertResult(id=str(existing["id"]), created=True)
+      return UpsertResult(id=str(existing["id"]), created=False)
 
     snap_payload: dict[str, object] = {
       "security_id": security_id,
@@ -2033,3 +2053,70 @@ class SupabaseRestClient:
         "updated_at": now,
       },
     )
+
+  def get_latest_price_snapshot(
+    self,
+    *,
+    security_id: str,
+  ) -> dict[str, Any] | None:
+    rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "security_price_snapshots",
+      query={
+        "select": "close_price,market_cap,enterprise_value,shares_outstanding,price_date",
+        "security_id": f"eq.{security_id}",
+        "order": "price_date.desc",
+        "limit": "1",
+      },
+    )
+    if not rows:
+      return None
+    return rows[0]
+
+  def get_latest_shares_outstanding(
+    self,
+    *,
+    company_id: str,
+  ) -> float | None:
+    tax_rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "statement_taxonomy_items",
+      query={
+        "select": "id",
+        "code": "eq.EntityCommonStockSharesOutstanding",
+        "limit": "1",
+      },
+    )
+    if not tax_rows:
+      return None
+    tax_id: str = str(tax_rows[0]["id"])
+
+    stmt_rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "financial_statements",
+      query={
+        "select": "id",
+        "company_id": f"eq.{company_id}",
+        "statement_type": "eq.equity",
+        "order": "period_end.desc",
+        "limit": "1",
+      },
+    )
+    if not stmt_rows:
+      return None
+    stmt_id: str = str(stmt_rows[0]["id"])
+
+    item_rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "financial_statement_items",
+      query={
+        "select": "value_numeric",
+        "financial_statement_id": f"eq.{stmt_id}",
+        "taxonomy_item_id": f"eq.{tax_id}",
+        "limit": "1",
+      },
+    )
+    if not item_rows:
+      return None
+    val = item_rows[0].get("value_numeric")
+    return float(val) if val is not None else None
