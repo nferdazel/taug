@@ -23,7 +23,7 @@ class AppChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
           color: selected
-              ? AppThemeColors.accent.withOpacity(0.15)
+              ? AppThemeColors.accent.withValues(alpha: 0.15)
               : AppThemeColors.surface,
           borderRadius: BorderRadius.circular(4),
           border: Border.all(

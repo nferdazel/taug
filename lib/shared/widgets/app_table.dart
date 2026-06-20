@@ -106,7 +106,7 @@ class MetricValueText extends StatelessWidget {
     }
 
     String formatted;
-    Color color = AppThemeColors.textPrimary;
+    final Color color = AppThemeColors.textPrimary;
 
     switch (format) {
       case 'percentage':

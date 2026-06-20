@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../core/theme/app_theme_colors.dart';
 import '../../core/theme/app_typography.dart';
 
 enum AppBadgeSize { small, medium }
@@ -29,7 +28,7 @@ class AppBadge extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Row(
@@ -41,7 +40,8 @@ class AppBadge extends StatelessWidget {
           ],
           Text(
             label,
-            style: AppTypography.sans.copyWith(
+            style: TextStyle(
+              fontFamily: AppTypography.sans,
               fontSize: fontSize,
               fontWeight: FontWeight.w600,
               color: color,
