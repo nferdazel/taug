@@ -2182,3 +2182,42 @@ class SupabaseRestClient:
       return None
     val = item_rows[0].get("value_numeric")
     return float(val) if val is not None else None
+
+  def list_ingestible_ciks(self) -> list[tuple[str, str]]:
+    """List CIKs for companies with ingestion_enabled = true.
+
+    Returns:
+      List of (company_id, cik) tuples.
+    """
+    companies: list[dict[str, Any]] = self._request(
+      "GET",
+      "companies",
+      query={
+        "select": "id",
+        "ingestion_enabled": "eq.true",
+        "limit": "1000",
+      },
+    )
+    if not companies:
+      return []
+
+    cik_rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "security_identifiers",
+      query={
+        "select": "security_id,identifier_value,securities!inner(company_id)",
+        "identifier_type": "eq.CIK",
+        "limit": "1000",
+      },
+    )
+
+    company_ids: set[str] = {str(c["id"]) for c in companies}
+    result: list[tuple[str, str]] = []
+    for row in cik_rows:
+      secs = row.get("securities", {})
+      cid = str(secs.get("company_id", "")) if isinstance(secs, dict) else ""
+      cik = str(row.get("identifier_value", ""))
+      if cid in company_ids and cik:
+        result.append((cid, cik))
+
+    return result

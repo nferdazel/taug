@@ -106,10 +106,6 @@ def main() -> int:
   config = WorkerConfig.from_env()
 
   if args.command == "sync-sec-submissions":
-    ciks: tuple[str, ...] = _resolve_ciks(args.ciks, config)
-    if args.max_companies > 0:
-      ciks = ciks[: args.max_companies]
-
     http_client = HttpClient()
     sec_client = SecClient(http_client=http_client, user_agent=config.sec_user_agent)
     supabase_client = SupabaseRestClient(
@@ -117,6 +113,14 @@ def main() -> int:
       supabase_url=config.supabase_url,
       service_role_key=config.supabase_service_role_key,
     )
+
+    ciks: tuple[str, ...] = _resolve_ciks(args.ciks, config)
+    if not ciks:
+      ciks = _resolve_ciks_from_db(supabase_client)
+    if not ciks:
+      raise ValueError("No target CIKs. Use --ciks, SEC_TARGET_CIKS, or enable companies in DB.")
+    if args.max_companies > 0:
+      ciks = ciks[: args.max_companies]
 
     summary = run_sync_sec_submissions(
       ciks=ciks,
@@ -145,10 +149,6 @@ def main() -> int:
     return 0
 
   if args.command == "sync-sec-companyfacts":
-    ciks: tuple[str, ...] = _resolve_ciks(args.ciks, config)
-    if args.max_companies > 0:
-      ciks = ciks[: args.max_companies]
-
     http_client = HttpClient()
     sec_client = SecClient(http_client=http_client, user_agent=config.sec_user_agent)
     supabase_client = SupabaseRestClient(
@@ -156,6 +156,14 @@ def main() -> int:
       supabase_url=config.supabase_url,
       service_role_key=config.supabase_service_role_key,
     )
+
+    ciks: tuple[str, ...] = _resolve_ciks(args.ciks, config)
+    if not ciks:
+      ciks = _resolve_ciks_from_db(supabase_client)
+    if not ciks:
+      raise ValueError("No target CIKs. Use --ciks, SEC_TARGET_CIKS, or enable companies in DB.")
+    if args.max_companies > 0:
+      ciks = ciks[: args.max_companies]
 
     summary = run_sync_sec_companyfacts(
       ciks=ciks,
@@ -179,16 +187,21 @@ def main() -> int:
     return 0
 
   if args.command == "parse-sec-companyfacts":
-    ciks: tuple[str, ...] = _resolve_ciks(args.ciks, config)
-    if args.max_companies > 0:
-      ciks = ciks[: args.max_companies]
-
     http_client = HttpClient()
     supabase_client = SupabaseRestClient(
       http_client=http_client,
       supabase_url=config.supabase_url,
       service_role_key=config.supabase_service_role_key,
     )
+
+    ciks: tuple[str, ...] = _resolve_ciks(args.ciks, config)
+    if not ciks:
+      ciks = _resolve_ciks_from_db(supabase_client)
+    if not ciks:
+      raise ValueError("No target CIKs. Use --ciks, SEC_TARGET_CIKS, or enable companies in DB.")
+    if args.max_companies > 0:
+      ciks = ciks[: args.max_companies]
+
     summary = run_parse_sec_companyfacts(
       ciks=ciks,
       supabase_client=supabase_client,
@@ -426,7 +439,13 @@ def _resolve_ciks(cli_value: str | None, config: WorkerConfig) -> tuple[str, ...
     return tuple(item.strip() for item in cli_value.split(",") if item.strip())
   if config.sec_target_ciks:
     return config.sec_target_ciks
-  raise ValueError("No target CIKs provided. Use --ciks or SEC_TARGET_CIKS.")
+  return ()
+
+
+def _resolve_ciks_from_db(supabase_client: Any) -> tuple[str, ...]:
+  """Discover CIKs from database where companies.ingestion_enabled = true."""
+  pairs = supabase_client.list_ingestible_ciks()
+  return tuple(cik for _, cik in pairs)
 
 
 def _resolve_company_ids(cli_value: str | None, config: WorkerConfig) -> list[str]:
