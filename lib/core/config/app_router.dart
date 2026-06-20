@@ -7,12 +7,17 @@ import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/brief/presentation/pages/brief_page.dart';
 import '../../features/calendar/presentation/pages/calendar_page.dart';
 import '../../features/chart/presentation/pages/chart_page.dart';
+import '../../features/companies/presentation/pages/companies_page.dart';
+import '../../features/company/presentation/pages/company_workspace_page.dart';
+import '../../features/data/presentation/pages/data_workspace_page.dart';
 import '../../features/company/presentation/pages/company_page.dart';
 import '../../features/layout/presentation/pages/main_layout.dart';
 import '../../features/market/presentation/pages/market_page.dart';
 import '../../features/news/presentation/pages/news_page.dart';
 import '../../features/policy/presentation/pages/policy_page.dart';
 import '../../features/portfolio/presentation/pages/portfolio_page.dart';
+import '../../features/portfolio/presentation/pages/portfolio_workspace_page.dart';
+import '../../features/research/presentation/pages/research_page.dart';
 import '../../features/screener/presentation/pages/screener_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/valuation/presentation/pages/valuation_page.dart';
@@ -34,7 +39,7 @@ final router = GoRouter(
       return '/login';
     }
     if (session != null && isAuthRoute) {
-      return '/brief';
+      return '/companies';
     }
     return null;
   },
@@ -56,6 +61,43 @@ final router = GoRouter(
       navigatorKey: _shellNavigatorKey,
       builder: (context, state, child) => MainLayout(child: child),
       routes: [
+        // New MVP routes
+        GoRoute(
+          path: '/companies',
+          pageBuilder: (context, state) =>
+              const NoTransitionPage(child: CompaniesPage()),
+          routes: [
+            GoRoute(
+              path: ':id',
+              pageBuilder: (context, state) => NoTransitionPage(
+                child: CompanyWorkspacePage(
+                  companyId: state.pathParameters['id']!,
+                ),
+              ),
+              routes: [
+                GoRoute(path: 'overview', builder: (_, __) => const SizedBox()),
+                GoRoute(path: 'financials', builder: (_, __) => const SizedBox()),
+                GoRoute(path: 'research', builder: (_, __) => const SizedBox()),
+              ],
+            ),
+          ],
+        ),
+        GoRoute(
+          path: '/research',
+          pageBuilder: (context, state) =>
+              const NoTransitionPage(child: ResearchPage()),
+        ),
+        GoRoute(
+          path: '/portfolio-workspace',
+          pageBuilder: (context, state) =>
+              const NoTransitionPage(child: PortfolioWorkspacePage()),
+        ),
+        GoRoute(
+          path: '/data',
+          pageBuilder: (context, state) =>
+              const NoTransitionPage(child: DataWorkspacePage()),
+        ),
+        // Legacy terminal routes (preserved)
         GoRoute(
           path: '/brief',
           pageBuilder: (context, state) =>
