@@ -17,47 +17,26 @@ class MainLayout extends StatefulWidget {
 
 class _MainLayoutState extends State<MainLayout> {
   static const _tabs = [
-    '/brief',
-    '/market',
-    '/company',
-    '/screener',
-    '/valuation',
-    '/watchlist',
-    '/portfolio',
-    '/chart',
-    '/news',
-    '/policy',
-    '/calendar',
+    '/companies',
+    '/research',
+    '/portfolio-workspace',
+    '/data',
     '/settings',
   ];
 
   static const _tabLabels = [
-    'Brief',
-    'Market',
-    'Company',
-    'Screener',
-    'Valuation',
-    'Watchlist',
+    'Companies',
+    'Research',
     'Portfolio',
-    'Chart',
-    'News',
-    'Policy',
-    'Calendar',
+    'Data',
     'Settings',
   ];
 
   static const _tabIcons = [
-    Icons.dashboard_outlined,
-    Icons.show_chart,
     Icons.business_outlined,
-    Icons.filter_list,
-    Icons.price_check,
-    Icons.list_alt,
+    Icons.edit_note_outlined,
     Icons.account_balance_wallet_outlined,
-    Icons.candlestick_chart_outlined,
-    Icons.newspaper_outlined,
-    Icons.account_balance_outlined,
-    Icons.calendar_today_outlined,
+    Icons.storage_outlined,
     Icons.settings_outlined,
   ];
 
@@ -79,10 +58,16 @@ class _MainLayoutState extends State<MainLayout> {
 
   Widget _buildTabBar() {
     final String location = GoRouterState.of(context).matchedLocation;
-    final int currentIndex = _tabs.indexOf(location);
+    int currentIndex = -1;
+    for (int i = 0; i < _tabs.length; i++) {
+      if (location.startsWith(_tabs[i])) {
+        currentIndex = i;
+        break;
+      }
+    }
 
     return Container(
-      height: 40,
+      height: 48,
       decoration: const BoxDecoration(
         color: AppThemeColors.surface,
         border: Border(bottom: BorderSide(color: AppThemeColors.border)),
@@ -90,7 +75,7 @@ class _MainLayoutState extends State<MainLayout> {
       child: Row(
         children: [
           Container(
-            width: 108,
+            width: 120,
             height: double.infinity,
             alignment: Alignment.center,
             child: Text(
@@ -112,7 +97,7 @@ class _MainLayoutState extends State<MainLayout> {
                 return InkWell(
                   onTap: () => _onTabTapped(index),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
                     decoration: BoxDecoration(
                       border: Border(
                         bottom: BorderSide(

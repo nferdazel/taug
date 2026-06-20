@@ -4,24 +4,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
-import '../../features/brief/presentation/pages/brief_page.dart';
-import '../../features/calendar/presentation/pages/calendar_page.dart';
-import '../../features/chart/presentation/pages/chart_page.dart';
 import '../../features/companies/presentation/pages/companies_workspace_page.dart';
-import '../../features/company/presentation/pages/company_page.dart';
 import '../../features/company/presentation/pages/company_workspace_page.dart';
 import '../../features/data/presentation/pages/data_workspace_page.dart';
 import '../../features/layout/presentation/pages/main_layout.dart';
-import '../../features/market/presentation/pages/market_page.dart';
-import '../../features/news/presentation/pages/news_page.dart';
-import '../../features/policy/presentation/pages/policy_page.dart';
-import '../../features/portfolio/presentation/pages/portfolio_page.dart';
 import '../../features/portfolio/presentation/pages/portfolio_workspace_page.dart';
 import '../../features/research/presentation/pages/research_page.dart';
-import '../../features/screener/presentation/pages/screener_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
-import '../../features/valuation/presentation/pages/valuation_page.dart';
-import '../../features/watchlist/presentation/pages/watchlist_page.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
@@ -41,27 +30,59 @@ final router = GoRouter(
     if (session != null && isAuthRoute) {
       return '/companies';
     }
+
+    // Redirect legacy terminal routes to new workspace routes
+    final legacyRedirects = {
+      '/brief': '/companies',
+      '/market': '/companies',
+      '/company': '/companies',
+      '/screener': '/companies',
+      '/valuation': '/companies',
+      '/watchlist': '/companies',
+      '/chart': '/companies',
+      '/news': '/companies',
+      '/policy': '/companies',
+      '/calendar': '/companies',
+      '/portfolio': '/portfolio-workspace',
+    };
+
+    for (final entry in legacyRedirects.entries) {
+      if (state.matchedLocation.startsWith(entry.key)) {
+        return entry.value;
+      }
+    }
+
     return null;
   },
   errorBuilder: (context, state) => Scaffold(
     body: Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
-        child: Text(state.error.toString(), textAlign: TextAlign.center),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Color(0xFFF43F5E)),
+            const SizedBox(height: 16),
+            Text('Page not found', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
+            Text(state.error.toString(), textAlign: TextAlign.center),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => context.go('/companies'),
+              child: const Text('Go to Companies'),
+            ),
+          ],
+        ),
       ),
     ),
   ),
   routes: [
     GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
-    GoRoute(
-      path: '/register',
-      builder: (context, state) => const RegisterPage(),
-    ),
+    GoRoute(path: '/register', builder: (context, state) => const RegisterPage()),
     ShellRoute(
       navigatorKey: _shellNavigatorKey,
       builder: (context, state, child) => MainLayout(child: child),
       routes: [
-        // New MVP routes
         GoRoute(
           path: '/companies',
           pageBuilder: (context, state) =>
@@ -75,12 +96,9 @@ final router = GoRouter(
                 ),
               ),
               routes: [
-                GoRoute(path: 'overview', builder: (_, _) => const SizedBox()),
-                GoRoute(
-                  path: 'financials',
-                  builder: (_, _) => const SizedBox(),
-                ),
-                GoRoute(path: 'research', builder: (_, _) => const SizedBox()),
+                GoRoute(path: 'overview', builder: (_, __) => const SizedBox()),
+                GoRoute(path: 'financials', builder: (_, __) => const SizedBox()),
+                GoRoute(path: 'research', builder: (_, __) => const SizedBox()),
               ],
             ),
           ],
@@ -99,62 +117,6 @@ final router = GoRouter(
           path: '/data',
           pageBuilder: (context, state) =>
               const NoTransitionPage(child: DataWorkspacePage()),
-        ),
-        // Legacy terminal routes (preserved)
-        GoRoute(
-          path: '/brief',
-          pageBuilder: (context, state) =>
-              const NoTransitionPage(child: BriefPage()),
-        ),
-        GoRoute(
-          path: '/market',
-          pageBuilder: (context, state) =>
-              const NoTransitionPage(child: MarketPage()),
-        ),
-        GoRoute(
-          path: '/watchlist',
-          pageBuilder: (context, state) =>
-              const NoTransitionPage(child: WatchlistPage()),
-        ),
-        GoRoute(
-          path: '/portfolio',
-          pageBuilder: (context, state) =>
-              const NoTransitionPage(child: PortfolioPage()),
-        ),
-        GoRoute(
-          path: '/chart',
-          pageBuilder: (context, state) =>
-              const NoTransitionPage(child: ChartPage()),
-        ),
-        GoRoute(
-          path: '/company',
-          pageBuilder: (context, state) =>
-              const NoTransitionPage(child: CompanyPage()),
-        ),
-        GoRoute(
-          path: '/screener',
-          pageBuilder: (context, state) =>
-              const NoTransitionPage(child: ScreenerPage()),
-        ),
-        GoRoute(
-          path: '/valuation',
-          pageBuilder: (context, state) =>
-              const NoTransitionPage(child: ValuationPage()),
-        ),
-        GoRoute(
-          path: '/news',
-          pageBuilder: (context, state) =>
-              const NoTransitionPage(child: NewsPage()),
-        ),
-        GoRoute(
-          path: '/policy',
-          pageBuilder: (context, state) =>
-              const NoTransitionPage(child: PolicyPage()),
-        ),
-        GoRoute(
-          path: '/calendar',
-          pageBuilder: (context, state) =>
-              const NoTransitionPage(child: CalendarPage()),
         ),
         GoRoute(
           path: '/settings',
