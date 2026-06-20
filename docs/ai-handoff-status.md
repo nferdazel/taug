@@ -137,7 +137,7 @@ Not the target:
 - sector/industry normalization tables (done — `sectors`, `industries` tables seeded with GICS)
 - `raw_financials`, `raw_macro`, `raw_ownership` tables
 - FRED integration (done — 5 series seeded: DFF, CPIAUCSL, UNRATE, GDP, DGS10)
-- Bank Indonesia, BPS integrations
+- BPS integration (done — worker built, 11 BPS macro variables seeded, WAF rate limiting requires staggered execution)
 - IDX issuer/reference data
 - home market preference model
 - `coverage_lists` table (done)

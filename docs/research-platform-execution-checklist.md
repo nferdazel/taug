@@ -172,7 +172,7 @@ Docs discipline for this repo:
 - `[done]` SEC EDGAR ingestion worker
 - `[done]` FRED integration
 - `[todo]` Bank Indonesia integration
-- `[todo]` BPS integration
+- `[done]` BPS integration
 - `[todo]` IDX issuer/reference data review
 
 ### Secondary sources
