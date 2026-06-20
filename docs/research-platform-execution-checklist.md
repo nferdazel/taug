@@ -234,8 +234,8 @@ Docs discipline for this repo:
   - `sec-companyfacts-sync-parse.yml` (daily companyfacts sync + parse)
   - `recompute-metrics.yml` (manual metrics recompute)
   - `sync-price-snapshots.yml` (weekday price sync)
-- `[todo]` price data backfill (wait for API credits reset)
-- `[todo]` recompute metrics after price data available
+- `[done]` price data backfill (Twelve Data synced, 10/10 securities)
+- `[done]` recompute metrics after price data available (PE, PB, PS, EV/EBIT, EV/EBITDA, market_cap, enterprise_value)
 
 ## L. Recommended Phase Order
 

@@ -147,8 +147,8 @@ Not the target:
 
 ### Operational
 
-- price data backfill (API credits need reset)
-- metrics recompute after price data available
+- price data backfill (done — Twelve Data synced, price-dependent metrics computed)
+- metrics recompute after price data available (done — PE, PB, PS, EV/EBIT, EV/EBITDA, market_cap, enterprise_value all computed)
 - key rotation, secret scan (pre-launch)
 
 ## Important Interpretation Rule
