@@ -23,17 +23,21 @@ class OverviewTab extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Research Status — primary object
-            _buildResearchSection(theses, notes),
+            // Decision prompt — primary object
+            _buildDecisionPrompt(theses, notes),
             const SizedBox(height: 24),
 
-            // Key Metrics — decision-relevant
+            // Research state — secondary
+            _buildResearchState(theses, notes),
+            const SizedBox(height: 24),
+
+            // Key metrics — supporting
             _buildMetricsSection(metrics),
             const SizedBox(height: 24),
 
-            // Company Summary — secondary
+            // Company summary — background
             if (profile?.description != null) ...[
-              _buildSectionHeader('About'),
+              const Text('ABOUT', style: AppTypography.monoSection),
               const SizedBox(height: 8),
               Text(profile!.description!, style: AppTypography.body),
             ],
@@ -43,7 +47,41 @@ class OverviewTab extends StatelessWidget {
     });
   }
 
-  Widget _buildResearchSection(List<dynamic> theses, List<dynamic> notes) {
+  Widget _buildDecisionPrompt(List<dynamic> theses, List<dynamic> notes) {
+    final status = _getResearchStatus(theses, notes);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: status.color.withValues(alpha: 0.08),
+        border: Border.all(color: status.color.withValues(alpha: 0.3)),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        children: [
+          Icon(status.icon, size: 20, color: status.color),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(status.title, style: AppTypography.subheading.copyWith(color: status.color)),
+                const SizedBox(height: 2),
+                Text(status.description, style: AppTypography.caption),
+              ],
+            ),
+          ),
+          if (status.actionLabel != null)
+            _ActionChip(
+              label: status.actionLabel!,
+              color: status.color,
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildResearchState(List<dynamic> theses, List<dynamic> notes) {
     return Container(
       decoration: BoxDecoration(
         border: Border.all(color: AppThemeColors.border),
@@ -58,30 +96,35 @@ class OverviewTab extends StatelessWidget {
               color: AppThemeColors.surfaceMuted,
               border: Border(bottom: BorderSide(color: AppThemeColors.border)),
             ),
-            child: Row(
+            child: const Row(
               children: [
-                const Icon(Icons.lightbulb_outline, size: 14, color: AppThemeColors.textSecondary),
-                const SizedBox(width: 8),
-                const Text('RESEARCH', style: AppTypography.monoSection),
-                const Spacer(),
-                Text('${notes.length} notes', style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary)),
+                Icon(Icons.science_outlined, size: 14, color: AppThemeColors.textSecondary),
+                SizedBox(width: 8),
+                Text('RESEARCH STATE', style: AppTypography.monoSection),
               ],
             ),
           ),
+          // Thesis
           if (theses.isNotEmpty)
-            _buildThesisSummary(theses.first)
+            _buildThesisRow(theses.first)
           else
-            _buildNoThesisPrompt(),
+            _buildEmptyRow(Icons.lightbulb_outline, 'No thesis', 'Create a thesis to formalize your investment thesis'),
+          // Notes
           if (notes.isNotEmpty)
-            _buildRecentNotes(notes.take(3).toList()),
+            _buildNotesSummary(notes)
+          else
+            _buildEmptyRow(Icons.note_outlined, 'No notes', 'Start documenting your research'),
         ],
       ),
     );
   }
 
-  Widget _buildThesisSummary(dynamic thesis) {
-    return Padding(
+  Widget _buildThesisRow(dynamic thesis) {
+    return Container(
       padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: AppThemeColors.border.withValues(alpha: 0.5))),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -92,75 +135,54 @@ class OverviewTab extends StatelessWidget {
               _ConvictionChip(conviction: thesis.conviction),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(
-                  thesis.title,
-                  style: AppTypography.subheading,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                child: Text(thesis.title, style: AppTypography.body.copyWith(fontWeight: FontWeight.w500)),
               ),
             ],
           ),
           if (thesis.summary != null && thesis.summary!.isNotEmpty) ...[
             const SizedBox(height: 8),
-            Text(
-              thesis.summary!,
-              style: AppTypography.body,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-            ),
+            Text(thesis.summary!, style: AppTypography.caption, maxLines: 2, overflow: TextOverflow.ellipsis),
           ],
         ],
       ),
     );
   }
 
-  Widget _buildNoThesisPrompt() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
+  Widget _buildNotesSummary(List<dynamic> notes) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
         children: [
-          const Icon(Icons.lightbulb_outline, size: 16, color: AppThemeColors.textTertiary),
+          const Icon(Icons.note_outlined, size: 14, color: AppThemeColors.textTertiary),
           const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'No thesis yet. Create one in the Research tab to track your investment thesis.',
-              style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
-            ),
+          Text('${notes.length} research notes', style: AppTypography.caption),
+          const Spacer(),
+          Text(
+            'Latest: ${_formatDate(notes.first.updatedAt)}',
+            style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildRecentNotes(List<dynamic> notes) {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: AppThemeColors.border.withValues(alpha: 0.5))),
-      ),
-      child: Column(
-        children: notes.map((note) => Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            border: Border(bottom: BorderSide(color: AppThemeColors.border.withValues(alpha: 0.3))),
+  Widget _buildEmptyRow(IconData icon, String title, String description) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: AppThemeColors.textTertiary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: AppTypography.body.copyWith(color: AppThemeColors.textTertiary)),
+                Text(description, style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary)),
+              ],
+            ),
           ),
-          child: Row(
-            children: [
-              const Icon(Icons.note_outlined, size: 12, color: AppThemeColors.textTertiary),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  note.title,
-                  style: AppTypography.body,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              Text(
-                _formatDate(note.updatedAt),
-                style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
-              ),
-            ],
-          ),
-        )).toList(),
+        ],
       ),
     );
   }
@@ -216,8 +238,32 @@ class OverviewTab extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
-    return Text(title.toUpperCase(), style: AppTypography.monoSection);
+  _ResearchStatus _getResearchStatus(List<dynamic> theses, List<dynamic> notes) {
+    if (theses.isNotEmpty) {
+      return _ResearchStatus(
+        title: 'Thesis Active',
+        description: 'Thesis "${theses.first.title}" is active. Consider updating or creating a position.',
+        icon: Icons.lightbulb,
+        color: AppThemeColors.success,
+        actionLabel: 'Review Thesis',
+      );
+    }
+    if (notes.isNotEmpty) {
+      return _ResearchStatus(
+        title: 'Research in Progress',
+        description: '${notes.length} notes created. Consider formalizing your research into a thesis.',
+        icon: Icons.edit_note,
+        color: AppThemeColors.accent,
+        actionLabel: 'Create Thesis',
+      );
+    }
+    return _ResearchStatus(
+      title: 'Not Yet Researched',
+      description: 'Start by creating research notes about this company.',
+      icon: Icons.science_outlined,
+      color: AppThemeColors.textTertiary,
+      actionLabel: 'Create Note',
+    );
   }
 
   String _metricLabel(String code) {
@@ -236,7 +282,7 @@ class OverviewTab extends StatelessWidget {
     switch (code) {
       case 'market_cap': return 'Total market value of outstanding shares.';
       case 'pe': return 'Price-to-Earnings ratio.';
-      case 'roe': return 'Return on Equity. Profitability relative to equity.';
+      case 'roe': return 'Return on Equity.';
       case 'gross_margin': return 'Gross profit as % of revenue.';
       case 'net_margin': return 'Net income as % of revenue.';
       case 'debt_equity': return 'Total debt ÷ shareholders equity.';
@@ -265,6 +311,42 @@ class OverviewTab extends StatelessWidget {
 
   String _formatDate(DateTime dt) {
     return '${dt.month.toString().padLeft(2, '0')}/${dt.day.toString().padLeft(2, '0')}';
+  }
+}
+
+class _ResearchStatus {
+  final String title;
+  final String description;
+  final IconData icon;
+  final Color color;
+  final String? actionLabel;
+
+  _ResearchStatus({
+    required this.title,
+    required this.description,
+    required this.icon,
+    required this.color,
+    this.actionLabel,
+  });
+}
+
+class _ActionChip extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _ActionChip({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color)),
+    );
   }
 }
 
