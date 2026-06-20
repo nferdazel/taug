@@ -261,7 +261,8 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
                                 searchResults = List<Map<String, dynamic>>.from(response as List);
                               });
                             } catch (e) {
-                              // Silently fail
+                              debugPrint('[Portfolio] Company search error: $e');
+                              setDialogState(() => searchResults = []);
                             }
                           },
                         ),

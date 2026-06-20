@@ -68,7 +68,7 @@ class AuthProvider {
     isLoading.value = false;
 
     if (result.isSuccess && context.mounted) {
-      context.go('/brief');
+      context.go('/companies');
     } else if (result.isFailure) {
       error.value = _extractError(result.error);
     }
@@ -106,7 +106,7 @@ class AuthProvider {
     isLoading.value = false;
 
     if (result.isSuccess && context.mounted) {
-      context.go('/brief');
+      context.go('/companies');
     } else if (result.isFailure) {
       error.value = _extractError(result.error);
     }

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:signals/signals.dart';
 
 import '../../../../core/errors/result.dart';
@@ -11,6 +12,7 @@ class ResearchProvider {
   final theses = ListSignal<ResearchThesisIndex>([]);
   final notes = ListSignal<ResearchNoteIndex>([]);
   final isLoading = Signal<bool>(false);
+  final error = Signal<String?>(null);
   final searchQuery = Signal<String>('');
   final activeTab = Signal<int>(0);
 
@@ -19,20 +21,26 @@ class ResearchProvider {
 
   Future<void> loadAll() async {
     isLoading.value = true;
+    error.value = null;
 
-    final results = await Future.wait([
-      _repository.getResearchCompanies(),
-      _repository.getAllTheses(),
-      _repository.getAllNotes(),
-    ]);
+    try {
+      final results = await Future.wait([
+        _repository.getResearchCompanies(),
+        _repository.getAllTheses(),
+        _repository.getAllNotes(),
+      ]);
 
-    final companiesResult = results[0] as Result<List<ResearchCompany>>;
-    final thesesResult = results[1] as Result<List<ResearchThesisIndex>>;
-    final notesResult = results[2] as Result<List<ResearchNoteIndex>>;
+      final companiesResult = results[0] as Result<List<ResearchCompany>>;
+      final thesesResult = results[1] as Result<List<ResearchThesisIndex>>;
+      final notesResult = results[2] as Result<List<ResearchNoteIndex>>;
 
-    if (companiesResult.isSuccess) companies.value = companiesResult.data!;
-    if (thesesResult.isSuccess) theses.value = thesesResult.data!;
-    if (notesResult.isSuccess) notes.value = notesResult.data!;
+      if (companiesResult.isSuccess) companies.value = companiesResult.data!;
+      if (thesesResult.isSuccess) theses.value = thesesResult.data!;
+      if (notesResult.isSuccess) notes.value = notesResult.data!;
+    } catch (e) {
+      debugPrint('[ResearchProvider] loadAll error: $e');
+      error.value = e.toString();
+    }
 
     isLoading.value = false;
   }

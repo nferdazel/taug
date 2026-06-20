@@ -44,7 +44,7 @@ class ResearchTab extends StatelessWidget {
             _ThesisCard(
               thesis: theses.first,
               onEdit: () => _showThesisDialog(context, thesis: theses.first),
-              onDelete: () => provider.deleteThesis(theses.first.id),
+              onDelete: () => _confirmDelete(context, 'thesis', () => provider.deleteThesis(theses.first.id)),
             ),
           const SizedBox(height: 24),
 
@@ -74,12 +74,37 @@ class ResearchTab extends StatelessWidget {
               (note) => _NoteCard(
                 note: note,
                 onEdit: () => _showNoteDialog(context, note: note),
-                onDelete: () => provider.deleteNote(note.id),
+                onDelete: () => _confirmDelete(context, 'note', () => provider.deleteNote(note.id)),
               ),
             ),
         ],
       );
     });
+  }
+
+  void _confirmDelete(BuildContext context, String type, VoidCallback onConfirm) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppThemeColors.surface,
+        title: Text('Delete $type', style: AppTypography.heading),
+        content: Text('Are you sure you want to delete this $type? This cannot be undone.', style: AppTypography.body),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel', style: TextStyle(color: AppThemeColors.textSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              onConfirm();
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppThemeColors.critical),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showNoteDialog(BuildContext context, {CompanyNote? note}) {
@@ -504,7 +529,7 @@ class _NoteCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(note.title, style: AppTypography.subheading),
+                child: Text(note.title, style: AppTypography.subheading, maxLines: 1, overflow: TextOverflow.ellipsis),
               ),
               PopupMenuButton<String>(
                 icon: const Icon(

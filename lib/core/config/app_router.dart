@@ -96,9 +96,9 @@ final router = GoRouter(
                 ),
               ),
               routes: [
-                GoRoute(path: 'overview', builder: (_, _) => const SizedBox()),
-                GoRoute(path: 'financials', builder: (_, _) => const SizedBox()),
-                GoRoute(path: 'research', builder: (_, _) => const SizedBox()),
+                GoRoute(path: 'overview', redirect: (_, _) => null),
+                GoRoute(path: 'financials', redirect: (_, _) => null),
+                GoRoute(path: 'research', redirect: (_, _) => null),
               ],
             ),
           ],
