@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
+
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/errors/result.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/extensions.dart';
 import '../../../../shared/models/data_origin.dart';
 import '../../../../shared/models/price_data.dart';
 import '../../../../shared/widgets/data_status_badge.dart';
 import '../../../../shared/widgets/price_cell.dart';
-import '../../../../core/utils/extensions.dart';
 import '../../data/chart_repository.dart';
 import 'panels.dart';
 
