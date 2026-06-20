@@ -132,6 +132,14 @@ def run_compute_company_metrics(
     metadata={"company_count": len(company_ids)},
   )
 
+  recalc_run_id: str = supabase_client.insert_recalculation_run(
+    run_type="single_company" if len(company_ids) == 1 else "full_recompute",
+    trigger_reason="manual",
+    worker_version=__version__,
+    scope={"company_ids": company_ids},
+    metadata={"company_count": len(company_ids)},
+  )
+
   success_count: int = 0
   failure_count: int = 0
   total_computed: int = 0
@@ -287,6 +295,17 @@ def run_compute_company_metrics(
         "failed_company_ids": failed_ids,
       },
     )
+    supabase_client.update_recalculation_run(
+      run_id=recalc_run_id,
+      status=final_status,
+      processed_entities=len(company_ids),
+      succeeded_entities=success_count,
+      failed_entities=failure_count,
+      metadata={
+        "computed_snapshots": total_computed,
+        "skipped_snapshots": total_skipped,
+      },
+    )
   except Exception as exc:
     supabase_client.update_metric_calculation_run(
       run_id=run_id,
@@ -298,6 +317,13 @@ def run_compute_company_metrics(
         "computed_snapshots": total_computed,
         "skipped_snapshots": total_skipped,
       },
+    )
+    supabase_client.update_recalculation_run(
+      run_id=recalc_run_id,
+      status="failed",
+      processed_entities=len(company_ids),
+      succeeded_entities=success_count,
+      failed_entities=failure_count,
     )
     raise
 

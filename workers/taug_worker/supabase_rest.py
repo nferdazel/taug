@@ -1773,6 +1773,66 @@ class SupabaseRestClient:
       payload=payload,
     )
 
+  def insert_recalculation_run(
+    self,
+    *,
+    run_type: str,
+    trigger_reason: str,
+    worker_version: str,
+    trigger_reference_type: str | None = None,
+    trigger_reference_id: str | None = None,
+    scope: dict[str, object] | None = None,
+    metadata: dict[str, object] | None = None,
+  ) -> str:
+    payload: dict[str, object] = {
+      "run_type": run_type,
+      "trigger_reason": trigger_reason,
+      "worker_version": worker_version,
+      "status": "running",
+    }
+    if trigger_reference_type is not None:
+      payload["trigger_reference_type"] = trigger_reference_type
+    if trigger_reference_id is not None:
+      payload["trigger_reference_id"] = trigger_reference_id
+    if scope is not None:
+      payload["scope"] = scope
+    if metadata is not None:
+      payload["metadata"] = metadata
+    rows: list[dict[str, Any]] = self._request(
+      "POST",
+      "recalculation_runs",
+      headers={"Prefer": "return=representation"},
+      payload=[payload],
+    )
+    return str(rows[0]["id"])
+
+  def update_recalculation_run(
+    self,
+    *,
+    run_id: str,
+    status: str,
+    processed_entities: int = 0,
+    succeeded_entities: int = 0,
+    failed_entities: int = 0,
+    metadata: dict[str, object] | None = None,
+  ) -> None:
+    payload: dict[str, object] = {
+      "status": status,
+      "finished_at": datetime.now(timezone.utc).isoformat(),
+      "processed_entities": processed_entities,
+      "succeeded_entities": succeeded_entities,
+      "failed_entities": failed_entities,
+    }
+    if metadata is not None:
+      payload["metadata"] = metadata
+    self._request(
+      "PATCH",
+      "recalculation_runs",
+      query={"id": f"eq.{run_id}"},
+      headers={"Prefer": "return=minimal"},
+      payload=payload,
+    )
+
   def upsert_security_metric_snapshot(
     self,
     *,

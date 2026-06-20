@@ -150,7 +150,7 @@ Docs discipline for this repo:
 - `[done]` `audit_events`
 - `[done]` `validation_events`
 - `[done]` `ingestion_checkpoints`
-- `[done]` `recalculation_runs`
+- `[done]` `recalculation_runs` (integrated into compute-company-metrics)
 - `[done]` `restatement_events`
 - `[done]` data quality scoring model
 
