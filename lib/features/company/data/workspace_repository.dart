@@ -9,7 +9,7 @@ class WorkspaceRepository {
   final SupabaseClient _client;
 
   WorkspaceRepository({SupabaseClient? client})
-      : _client = client ?? Supabase.instance.client;
+    : _client = client ?? Supabase.instance.client;
 
   Future<Result<CompanyProfile>> getCompanyProfile(String companyId) async {
     try {
@@ -30,12 +30,14 @@ class WorkspaceRepository {
         ticker = secResponse[0]['ticker'] as String?;
       }
 
-      return Result.success(CompanyProfile(
-        id: response['id'] as String,
-        displayName: response['display_name'] as String? ?? '',
-        ticker: ticker,
-        domicileCountryCode: response['domicile_country_code'] as String?,
-      ));
+      return Result.success(
+        CompanyProfile(
+          id: response['id'] as String,
+          displayName: response['display_name'] as String? ?? '',
+          ticker: ticker,
+          domicileCountryCode: response['domicile_country_code'] as String?,
+        ),
+      );
     } catch (e) {
       debugPrint('[WorkspaceRepo] getCompanyProfile: $e');
       return Result.failure(Exception(e.toString()));
@@ -46,18 +48,25 @@ class WorkspaceRepository {
     try {
       final response = await _client
           .from(AppSchema.companyMetricSnapshot)
-          .select('metric_code, metric_name, metric_category, value_numeric, computation_status, unit_type, display_precision')
+          .select(
+            'metric_code, metric_name, metric_category, value_numeric, computation_status, unit_type, display_precision',
+          )
           .eq('company_id', companyId);
 
-      final metrics = (response as List).map((m) => MetricSnapshot(
-        metricCode: m['metric_code'] as String? ?? '',
-        metricName: m['metric_name'] as String? ?? '',
-        metricCategory: m['metric_category'] as String? ?? '',
-        valueNumeric: (m['value_numeric'] as num?)?.toDouble(),
-        computationStatus: m['computation_status'] as String? ?? 'unknown',
-        unitType: m['unit_type'] as String?,
-        displayPrecision: m['display_precision'] as int? ?? 2,
-      )).toList();
+      final metrics = (response as List)
+          .map(
+            (m) => MetricSnapshot(
+              metricCode: m['metric_code'] as String? ?? '',
+              metricName: m['metric_name'] as String? ?? '',
+              metricCategory: m['metric_category'] as String? ?? '',
+              valueNumeric: (m['value_numeric'] as num?)?.toDouble(),
+              computationStatus:
+                  m['computation_status'] as String? ?? 'unknown',
+              unitType: m['unit_type'] as String?,
+              displayPrecision: m['display_precision'] as int? ?? 2,
+            ),
+          )
+          .toList();
 
       return Result.success(metrics);
     } catch (e) {
@@ -66,7 +75,9 @@ class WorkspaceRepository {
     }
   }
 
-  Future<Result<List<StatementRow>>> getFinancialStatements(String companyId) async {
+  Future<Result<List<StatementRow>>> getFinancialStatements(
+    String companyId,
+  ) async {
     try {
       final response = await _client
           .from(AppSchema.companyStatementHistory)
@@ -78,10 +89,19 @@ class WorkspaceRepository {
       final rows = (response as List).map((r) {
         final items = <String, double?>{};
         for (final key in [
-          'revenue', 'gross_profit', 'operating_income', 'net_income',
-          'total_assets', 'total_liabilities', 'stockholders_equity',
-          'cash_and_equivalents', 'operating_cash_flow', 'capex',
-          'long_term_debt', 'current_assets', 'current_liabilities',
+          'revenue',
+          'gross_profit',
+          'operating_income',
+          'net_income',
+          'total_assets',
+          'total_liabilities',
+          'stockholders_equity',
+          'cash_and_equivalents',
+          'operating_cash_flow',
+          'capex',
+          'long_term_debt',
+          'current_assets',
+          'current_liabilities',
         ]) {
           items[key] = (r[key] as num?)?.toDouble();
         }
@@ -110,14 +130,18 @@ class WorkspaceRepository {
           .eq('company_id', companyId)
           .order('updated_at', ascending: false);
 
-      final notes = (response as List).map((n) => CompanyNote(
-        id: n['id'] as String,
-        companyId: n['company_id'] as String,
-        title: n['title'] as String? ?? '',
-        body: n['body'] as String? ?? '',
-        createdAt: DateTime.parse(n['created_at'] as String),
-        updatedAt: DateTime.parse(n['updated_at'] as String),
-      )).toList();
+      final notes = (response as List)
+          .map(
+            (n) => CompanyNote(
+              id: n['id'] as String,
+              companyId: n['company_id'] as String,
+              title: n['title'] as String? ?? '',
+              body: n['body'] as String? ?? '',
+              createdAt: DateTime.parse(n['created_at'] as String),
+              updatedAt: DateTime.parse(n['updated_at'] as String),
+            ),
+          )
+          .toList();
 
       return Result.success(notes);
     } catch (e) {
@@ -138,14 +162,16 @@ class WorkspaceRepository {
           .select()
           .single();
 
-      return Result.success(CompanyNote(
-        id: response['id'] as String,
-        companyId: response['company_id'] as String,
-        title: response['title'] as String? ?? '',
-        body: response['body'] as String? ?? '',
-        createdAt: DateTime.parse(response['created_at'] as String),
-        updatedAt: DateTime.parse(response['updated_at'] as String),
-      ));
+      return Result.success(
+        CompanyNote(
+          id: response['id'] as String,
+          companyId: response['company_id'] as String,
+          title: response['title'] as String? ?? '',
+          body: response['body'] as String? ?? '',
+          createdAt: DateTime.parse(response['created_at'] as String),
+          updatedAt: DateTime.parse(response['updated_at'] as String),
+        ),
+      );
     } catch (e) {
       debugPrint('[WorkspaceRepo] createNote: $e');
       return Result.failure(Exception(e.toString()));
@@ -160,7 +186,11 @@ class WorkspaceRepository {
     try {
       await _client
           .from(AppSchema.researchNotes)
-          .update({'title': title, 'body': body, 'updated_at': DateTime.now().toIso8601String()})
+          .update({
+            'title': title,
+            'body': body,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
           .eq('id', noteId);
       return const Result.success(null);
     } catch (e) {
@@ -187,18 +217,22 @@ class WorkspaceRepository {
           .eq('company_id', companyId)
           .order('updated_at', ascending: false);
 
-      final theses = (response as List).map((t) => CompanyThesis(
-        id: t['id'] as String,
-        companyId: t['company_id'] as String,
-        title: t['title'] as String? ?? '',
-        stance: t['stance'] as String? ?? 'neutral',
-        summary: t['summary'] as String?,
-        bullCase: t['bull_case'] as String?,
-        bearCase: t['bear_case'] as String?,
-        conviction: t['conviction'] as String? ?? 'low',
-        createdAt: DateTime.parse(t['created_at'] as String),
-        updatedAt: DateTime.parse(t['updated_at'] as String),
-      )).toList();
+      final theses = (response as List)
+          .map(
+            (t) => CompanyThesis(
+              id: t['id'] as String,
+              companyId: t['company_id'] as String,
+              title: t['title'] as String? ?? '',
+              stance: t['stance'] as String? ?? 'neutral',
+              summary: t['summary'] as String?,
+              bullCase: t['bull_case'] as String?,
+              bearCase: t['bear_case'] as String?,
+              conviction: t['conviction'] as String? ?? 'low',
+              createdAt: DateTime.parse(t['created_at'] as String),
+              updatedAt: DateTime.parse(t['updated_at'] as String),
+            ),
+          )
+          .toList();
 
       return Result.success(theses);
     } catch (e) {
@@ -231,18 +265,20 @@ class WorkspaceRepository {
           .select()
           .single();
 
-      return Result.success(CompanyThesis(
-        id: response['id'] as String,
-        companyId: response['company_id'] as String,
-        title: response['title'] as String? ?? '',
-        stance: response['stance'] as String? ?? 'neutral',
-        summary: response['summary'] as String?,
-        bullCase: response['bull_case'] as String?,
-        bearCase: response['bear_case'] as String?,
-        conviction: response['conviction'] as String? ?? 'low',
-        createdAt: DateTime.parse(response['created_at'] as String),
-        updatedAt: DateTime.parse(response['updated_at'] as String),
-      ));
+      return Result.success(
+        CompanyThesis(
+          id: response['id'] as String,
+          companyId: response['company_id'] as String,
+          title: response['title'] as String? ?? '',
+          stance: response['stance'] as String? ?? 'neutral',
+          summary: response['summary'] as String?,
+          bullCase: response['bull_case'] as String?,
+          bearCase: response['bear_case'] as String?,
+          conviction: response['conviction'] as String? ?? 'low',
+          createdAt: DateTime.parse(response['created_at'] as String),
+          updatedAt: DateTime.parse(response['updated_at'] as String),
+        ),
+      );
     } catch (e) {
       debugPrint('[WorkspaceRepo] createThesis: $e');
       return Result.failure(Exception(e.toString()));
@@ -283,7 +319,10 @@ class WorkspaceRepository {
 
   Future<Result<void>> deleteThesis(String thesisId) async {
     try {
-      await _client.from(AppSchema.investmentTheses).delete().eq('id', thesisId);
+      await _client
+          .from(AppSchema.investmentTheses)
+          .delete()
+          .eq('id', thesisId);
       return const Result.success(null);
     } catch (e) {
       debugPrint('[WorkspaceRepo] deleteThesis: $e');
@@ -304,7 +343,7 @@ class WorkspaceRepository {
       return Result.success((response[0]['overall_score'] as num?)?.toDouble());
     } catch (e) {
       debugPrint('[WorkspaceRepo] getQualityScore: $e');
-      return Result.success(null);
+      return const Result.success(null);
     }
   }
 
@@ -320,7 +359,7 @@ class WorkspaceRepository {
       return Result.success(response[0]['statement_freshness'] as String?);
     } catch (e) {
       debugPrint('[WorkspaceRepo] getFreshnessStatus: $e');
-      return Result.success(null);
+      return const Result.success(null);
     }
   }
 }

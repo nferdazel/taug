@@ -24,7 +24,9 @@ class ResearchTab extends StatelessWidget {
           // Thesis Section
           Row(
             children: [
-              Expanded(child: Text('MY THESIS', style: AppTypography.monoSection)),
+              const Expanded(
+                child: Text('MY THESIS', style: AppTypography.monoSection),
+              ),
               IconButton(
                 icon: const Icon(Icons.add, size: 18),
                 onPressed: () => _showThesisDialog(context),
@@ -34,7 +36,10 @@ class ResearchTab extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           if (theses.isEmpty)
-            _EmptyCard(message: 'No thesis yet. Create one to track your investment thesis.')
+            const _EmptyCard(
+              message:
+                  'No thesis yet. Create one to track your investment thesis.',
+            )
           else
             _ThesisCard(
               thesis: theses.first,
@@ -46,7 +51,12 @@ class ResearchTab extends StatelessWidget {
           // Notes Section
           Row(
             children: [
-              Expanded(child: Text('NOTES (${notes.length})', style: AppTypography.monoSection)),
+              Expanded(
+                child: Text(
+                  'NOTES (${notes.length})',
+                  style: AppTypography.monoSection,
+                ),
+              ),
               IconButton(
                 icon: const Icon(Icons.add, size: 18),
                 onPressed: () => _showNoteDialog(context),
@@ -56,13 +66,17 @@ class ResearchTab extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           if (notes.isEmpty)
-            _EmptyCard(message: 'No notes yet. Create one to record your research.')
+            const _EmptyCard(
+              message: 'No notes yet. Create one to record your research.',
+            )
           else
-            ...notes.map((note) => _NoteCard(
-              note: note,
-              onEdit: () => _showNoteDialog(context, note: note),
-              onDelete: () => provider.deleteNote(note.id),
-            )),
+            ...notes.map(
+              (note) => _NoteCard(
+                note: note,
+                onEdit: () => _showNoteDialog(context, note: note),
+                onDelete: () => provider.deleteNote(note.id),
+              ),
+            ),
         ],
       );
     });
@@ -76,7 +90,10 @@ class ResearchTab extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppThemeColors.surface,
-        title: Text(note == null ? 'New Note' : 'Edit Note', style: AppTypography.heading),
+        title: Text(
+          note == null ? 'New Note' : 'Edit Note',
+          style: AppTypography.heading,
+        ),
         content: SizedBox(
           width: 500,
           child: Column(
@@ -85,12 +102,18 @@ class ResearchTab extends StatelessWidget {
               TextField(
                 controller: titleController,
                 style: AppTypography.body,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   hintText: 'Title',
                   hintStyle: AppTypography.caption,
-                  border: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.border)),
-                  enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.border)),
-                  focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.accent)),
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide(color: AppThemeColors.border),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: AppThemeColors.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: AppThemeColors.accent),
+                  ),
                   filled: true,
                   fillColor: AppThemeColors.surfaceMuted,
                 ),
@@ -100,12 +123,18 @@ class ResearchTab extends StatelessWidget {
                 controller: bodyController,
                 style: AppTypography.body,
                 maxLines: 8,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   hintText: 'Write your research note...',
                   hintStyle: AppTypography.caption,
-                  border: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.border)),
-                  enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.border)),
-                  focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.accent)),
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide(color: AppThemeColors.border),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: AppThemeColors.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: AppThemeColors.accent),
+                  ),
                   filled: true,
                   fillColor: AppThemeColors.surfaceMuted,
                 ),
@@ -116,7 +145,10 @@ class ResearchTab extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: AppThemeColors.textSecondary)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: AppThemeColors.textSecondary),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -140,9 +172,15 @@ class ResearchTab extends StatelessWidget {
 
   void _showThesisDialog(BuildContext context, {CompanyThesis? thesis}) {
     final titleController = TextEditingController(text: thesis?.title ?? '');
-    final summaryController = TextEditingController(text: thesis?.summary ?? '');
-    final bullCaseController = TextEditingController(text: thesis?.bullCase ?? '');
-    final bearCaseController = TextEditingController(text: thesis?.bearCase ?? '');
+    final summaryController = TextEditingController(
+      text: thesis?.summary ?? '',
+    );
+    final bullCaseController = TextEditingController(
+      text: thesis?.bullCase ?? '',
+    );
+    final bearCaseController = TextEditingController(
+      text: thesis?.bearCase ?? '',
+    );
     String stance = thesis?.stance ?? 'neutral';
     String conviction = thesis?.conviction ?? 'low';
 
@@ -151,7 +189,10 @@ class ResearchTab extends StatelessWidget {
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
           backgroundColor: AppThemeColors.surface,
-          title: Text(thesis == null ? 'New Thesis' : 'Edit Thesis', style: AppTypography.heading),
+          title: Text(
+            thesis == null ? 'New Thesis' : 'Edit Thesis',
+            style: AppTypography.heading,
+          ),
           content: SizedBox(
             width: 500,
             child: SingleChildScrollView(
@@ -162,12 +203,18 @@ class ResearchTab extends StatelessWidget {
                   TextField(
                     controller: titleController,
                     style: AppTypography.body,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       hintText: 'Thesis title (e.g., "NVIDIA — Bullish")',
                       hintStyle: AppTypography.caption,
-                      border: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.border)),
-                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.border)),
-                      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.accent)),
+                      border: OutlineInputBorder(
+                        borderSide: BorderSide(color: AppThemeColors.border),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: AppThemeColors.border),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: AppThemeColors.accent),
+                      ),
                       filled: true,
                       fillColor: AppThemeColors.surfaceMuted,
                     ),
@@ -175,33 +222,39 @@ class ResearchTab extends StatelessWidget {
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      Text('Stance: ', style: AppTypography.body),
-                      ...['bullish', 'neutral', 'bearish'].map((s) => Padding(
-                        padding: const EdgeInsets.only(left: 4),
-                        child: ChoiceChip(
-                          label: Text(s[0].toUpperCase() + s.substring(1)),
-                          selected: stance == s,
-                          onSelected: (selected) {
-                            if (selected) setDialogState(() => stance = s);
-                          },
+                      const Text('Stance: ', style: AppTypography.body),
+                      ...['bullish', 'neutral', 'bearish'].map(
+                        (s) => Padding(
+                          padding: const EdgeInsets.only(left: 4),
+                          child: ChoiceChip(
+                            label: Text(s[0].toUpperCase() + s.substring(1)),
+                            selected: stance == s,
+                            onSelected: (selected) {
+                              if (selected) setDialogState(() => stance = s);
+                            },
+                          ),
                         ),
-                      )),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      Text('Conviction: ', style: AppTypography.body),
-                      ...['low', 'medium', 'high'].map((c) => Padding(
-                        padding: const EdgeInsets.only(left: 4),
-                        child: ChoiceChip(
-                          label: Text(c[0].toUpperCase() + c.substring(1)),
-                          selected: conviction == c,
-                          onSelected: (selected) {
-                            if (selected) setDialogState(() => conviction = c);
-                          },
+                      const Text('Conviction: ', style: AppTypography.body),
+                      ...['low', 'medium', 'high'].map(
+                        (c) => Padding(
+                          padding: const EdgeInsets.only(left: 4),
+                          child: ChoiceChip(
+                            label: Text(c[0].toUpperCase() + c.substring(1)),
+                            selected: conviction == c,
+                            onSelected: (selected) {
+                              if (selected) {
+                                setDialogState(() => conviction = c);
+                              }
+                            },
+                          ),
                         ),
-                      )),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -209,12 +262,18 @@ class ResearchTab extends StatelessWidget {
                     controller: summaryController,
                     style: AppTypography.body,
                     maxLines: 3,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       hintText: 'Summary...',
                       hintStyle: AppTypography.caption,
-                      border: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.border)),
-                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.border)),
-                      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.accent)),
+                      border: OutlineInputBorder(
+                        borderSide: BorderSide(color: AppThemeColors.border),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: AppThemeColors.border),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: AppThemeColors.accent),
+                      ),
                       filled: true,
                       fillColor: AppThemeColors.surfaceMuted,
                     ),
@@ -224,12 +283,18 @@ class ResearchTab extends StatelessWidget {
                     controller: bullCaseController,
                     style: AppTypography.body,
                     maxLines: 3,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       hintText: 'Bull case...',
                       hintStyle: AppTypography.caption,
-                      border: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.border)),
-                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.border)),
-                      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.accent)),
+                      border: OutlineInputBorder(
+                        borderSide: BorderSide(color: AppThemeColors.border),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: AppThemeColors.border),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: AppThemeColors.accent),
+                      ),
                       filled: true,
                       fillColor: AppThemeColors.surfaceMuted,
                     ),
@@ -239,12 +304,18 @@ class ResearchTab extends StatelessWidget {
                     controller: bearCaseController,
                     style: AppTypography.body,
                     maxLines: 3,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       hintText: 'Bear case...',
                       hintStyle: AppTypography.caption,
-                      border: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.border)),
-                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.border)),
-                      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.accent)),
+                      border: OutlineInputBorder(
+                        borderSide: BorderSide(color: AppThemeColors.border),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: AppThemeColors.border),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: AppThemeColors.accent),
+                      ),
                       filled: true,
                       fillColor: AppThemeColors.surfaceMuted,
                     ),
@@ -256,7 +327,10 @@ class ResearchTab extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Cancel', style: TextStyle(color: AppThemeColors.textSecondary)),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: AppThemeColors.textSecondary),
+              ),
             ),
             ElevatedButton(
               onPressed: () {
@@ -265,7 +339,8 @@ class ResearchTab extends StatelessWidget {
 
                 if (thesis == null) {
                   provider.createThesis(
-                    title, stance,
+                    title,
+                    stance,
                     summary: summaryController.text.trim(),
                     bullCase: bullCaseController.text.trim(),
                     bearCase: bearCaseController.text.trim(),
@@ -273,7 +348,9 @@ class ResearchTab extends StatelessWidget {
                   );
                 } else {
                   provider.updateThesis(
-                    thesis.id, title, stance,
+                    thesis.id,
+                    title,
+                    stance,
                     summary: summaryController.text.trim(),
                     bullCase: bullCaseController.text.trim(),
                     bearCase: bearCaseController.text.trim(),
@@ -305,9 +382,7 @@ class _EmptyCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(6),
         border: Border.all(color: AppThemeColors.border),
       ),
-      child: Center(
-        child: Text(message, style: AppTypography.caption),
-      ),
+      child: Center(child: Text(message, style: AppTypography.caption)),
     );
   }
 }
@@ -337,13 +412,19 @@ class _ThesisCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(child: Text(thesis.title, style: AppTypography.subheading)),
+              Expanded(
+                child: Text(thesis.title, style: AppTypography.subheading),
+              ),
               _StanceBadge(stance: thesis.stance),
               const SizedBox(width: 8),
               _ConvictionBadge(conviction: thesis.conviction),
               const SizedBox(width: 8),
               PopupMenuButton<String>(
-                icon: Icon(Icons.more_vert, size: 16, color: AppThemeColors.textSecondary),
+                icon: const Icon(
+                  Icons.more_vert,
+                  size: 16,
+                  color: AppThemeColors.textSecondary,
+                ),
                 onSelected: (value) {
                   if (value == 'edit') onEdit();
                   if (value == 'delete') onDelete();
@@ -361,18 +442,30 @@ class _ThesisCard extends StatelessWidget {
           ],
           if (thesis.bullCase != null && thesis.bullCase!.isNotEmpty) ...[
             const SizedBox(height: 8),
-            Text('Bull Case', style: AppTypography.caption.copyWith(fontWeight: FontWeight.w600)),
+            Text(
+              'Bull Case',
+              style: AppTypography.caption.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             Text(thesis.bullCase!, style: AppTypography.body),
           ],
           if (thesis.bearCase != null && thesis.bearCase!.isNotEmpty) ...[
             const SizedBox(height: 8),
-            Text('Bear Case', style: AppTypography.caption.copyWith(fontWeight: FontWeight.w600)),
+            Text(
+              'Bear Case',
+              style: AppTypography.caption.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             Text(thesis.bearCase!, style: AppTypography.body),
           ],
           const SizedBox(height: 8),
           Text(
             'Updated: ${_formatDate(thesis.updatedAt)}',
-            style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
+            style: AppTypography.caption.copyWith(
+              color: AppThemeColors.textTertiary,
+            ),
           ),
         ],
       ),
@@ -410,9 +503,15 @@ class _NoteCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(child: Text(note.title, style: AppTypography.subheading)),
+              Expanded(
+                child: Text(note.title, style: AppTypography.subheading),
+              ),
               PopupMenuButton<String>(
-                icon: Icon(Icons.more_vert, size: 16, color: AppThemeColors.textSecondary),
+                icon: const Icon(
+                  Icons.more_vert,
+                  size: 16,
+                  color: AppThemeColors.textSecondary,
+                ),
                 onSelected: (value) {
                   if (value == 'edit') onEdit();
                   if (value == 'delete') onDelete();
@@ -426,12 +525,19 @@ class _NoteCard extends StatelessWidget {
           ),
           if (note.body.isNotEmpty) ...[
             const SizedBox(height: 4),
-            Text(note.body, style: AppTypography.body, maxLines: 3, overflow: TextOverflow.ellipsis),
+            Text(
+              note.body,
+              style: AppTypography.body,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
           ],
           const SizedBox(height: 4),
           Text(
             _formatDate(note.updatedAt),
-            style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
+            style: AppTypography.caption.copyWith(
+              color: AppThemeColors.textTertiary,
+            ),
           ),
         ],
       ),
@@ -472,7 +578,14 @@ class _StanceBadge extends StatelessWidget {
         color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(4),
       ),
-      child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color)),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
+      ),
     );
   }
 }

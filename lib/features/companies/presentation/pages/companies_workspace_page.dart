@@ -62,7 +62,7 @@ class _CompaniesWorkspacePageState extends State<CompaniesWorkspacePage> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Companies', style: AppTypography.heading),
+                const Text('Companies', style: AppTypography.heading),
                 const SizedBox(height: 2),
                 Text(
                   '$total companies available${queueCount > 0 ? ' · $queueCount in research queue' : ''}',
@@ -95,18 +95,21 @@ class _CompaniesWorkspacePageState extends State<CompaniesWorkspacePage> {
                   hintStyle: AppTypography.caption,
                   prefixIcon: const Icon(Icons.search, size: 16),
                   prefixIconColor: AppThemeColors.textTertiary,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(4),
-                    borderSide: BorderSide(color: AppThemeColors.border),
+                    borderSide: const BorderSide(color: AppThemeColors.border),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(4),
-                    borderSide: BorderSide(color: AppThemeColors.border),
+                    borderSide: const BorderSide(color: AppThemeColors.border),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(4),
-                    borderSide: BorderSide(color: AppThemeColors.accent),
+                    borderSide: const BorderSide(color: AppThemeColors.accent),
                   ),
                   filled: true,
                   fillColor: AppThemeColors.surfaceMuted,
@@ -151,7 +154,8 @@ class _CompaniesWorkspacePageState extends State<CompaniesWorkspacePage> {
         return const AppEmptyState(
           icon: Icons.business_outlined,
           title: 'No companies available',
-          description: 'Companies will appear after the first SEC ingestion completes.',
+          description:
+              'Companies will appear after the first SEC ingestion completes.',
         );
       }
 
@@ -167,10 +171,27 @@ class _CompaniesWorkspacePageState extends State<CompaniesWorkspacePage> {
         dataRowMinHeight: 40,
         dataRowMaxHeight: 40,
         columns: const [
-          DataColumn(label: Text('Company', style: TextStyle(fontWeight: FontWeight.w600))),
-          DataColumn(label: Text('Status', style: TextStyle(fontWeight: FontWeight.w600))),
-          DataColumn(label: Text('Quality', style: TextStyle(fontWeight: FontWeight.w600))),
-          DataColumn(label: Text('Fresh', style: TextStyle(fontWeight: FontWeight.w600))),
+          DataColumn(
+            label: Text(
+              'Company',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+          DataColumn(
+            label: Text(
+              'Status',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+          DataColumn(
+            label: Text(
+              'Quality',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+          DataColumn(
+            label: Text('Fresh', style: TextStyle(fontWeight: FontWeight.w600)),
+          ),
         ],
         rows: companies.map((company) => _buildRow(company)).toList(),
       ),

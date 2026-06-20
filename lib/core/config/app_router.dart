@@ -8,9 +8,9 @@ import '../../features/brief/presentation/pages/brief_page.dart';
 import '../../features/calendar/presentation/pages/calendar_page.dart';
 import '../../features/chart/presentation/pages/chart_page.dart';
 import '../../features/companies/presentation/pages/companies_workspace_page.dart';
+import '../../features/company/presentation/pages/company_page.dart';
 import '../../features/company/presentation/pages/company_workspace_page.dart';
 import '../../features/data/presentation/pages/data_workspace_page.dart';
-import '../../features/company/presentation/pages/company_page.dart';
 import '../../features/layout/presentation/pages/main_layout.dart';
 import '../../features/market/presentation/pages/market_page.dart';
 import '../../features/news/presentation/pages/news_page.dart';
@@ -75,9 +75,12 @@ final router = GoRouter(
                 ),
               ),
               routes: [
-                GoRoute(path: 'overview', builder: (_, __) => const SizedBox()),
-                GoRoute(path: 'financials', builder: (_, __) => const SizedBox()),
-                GoRoute(path: 'research', builder: (_, __) => const SizedBox()),
+                GoRoute(path: 'overview', builder: (_, _) => const SizedBox()),
+                GoRoute(
+                  path: 'financials',
+                  builder: (_, _) => const SizedBox(),
+                ),
+                GoRoute(path: 'research', builder: (_, _) => const SizedBox()),
               ],
             ),
           ],

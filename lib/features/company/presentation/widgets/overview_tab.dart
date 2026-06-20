@@ -24,20 +24,20 @@ class OverviewTab extends StatelessWidget {
         children: [
           // Company Summary
           if (profile?.description != null) ...[
-            _SectionHeader(title: 'Company Summary'),
+            const _SectionHeader(title: 'Company Summary'),
             const SizedBox(height: 8),
             Text(profile!.description!, style: AppTypography.body),
             const SizedBox(height: 24),
           ],
 
           // Key Metrics
-          _SectionHeader(title: 'Key Metrics'),
+          const _SectionHeader(title: 'Key Metrics'),
           const SizedBox(height: 8),
           _buildMetricsGrid(metrics),
           const SizedBox(height: 24),
 
           // Thesis Snapshot
-          _SectionHeader(title: 'Thesis Snapshot'),
+          const _SectionHeader(title: 'Thesis Snapshot'),
           const SizedBox(height: 8),
           _buildThesisSnapshot(theses),
           const SizedBox(height: 24),
@@ -48,7 +48,12 @@ class OverviewTab extends StatelessWidget {
 
   Widget _buildMetricsGrid(List<dynamic> metrics) {
     final keyMetrics = [
-      'market_cap', 'pe', 'roe', 'gross_margin', 'net_margin', 'debt_equity',
+      'market_cap',
+      'pe',
+      'roe',
+      'gross_margin',
+      'net_margin',
+      'debt_equity',
     ];
 
     final metricMap = <String, dynamic>{};
@@ -64,7 +69,11 @@ class OverviewTab extends StatelessWidget {
       children: keyMetrics.map((code) {
         final m = metricMap[code];
         if (m == null) {
-          return _MetricCard(label: _metricLabel(code), value: '—', isOk: false);
+          return _MetricCard(
+            label: _metricLabel(code),
+            value: '—',
+            isOk: false,
+          );
         }
         return _MetricCard(
           label: m.metricName,
@@ -83,11 +92,13 @@ class OverviewTab extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              Text('No thesis yet', style: AppTypography.caption),
+              const Text('No thesis yet', style: AppTypography.caption),
               const SizedBox(height: 8),
               Text(
                 'Create a thesis in the Research tab',
-                style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
+                style: AppTypography.caption.copyWith(
+                  color: AppThemeColors.textTertiary,
+                ),
               ),
             ],
           ),
@@ -133,7 +144,9 @@ class OverviewTab extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               'Updated: ${_formatDate(thesis.updatedAt)}',
-              style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
+              style: AppTypography.caption.copyWith(
+                color: AppThemeColors.textTertiary,
+              ),
             ),
           ],
         ),
@@ -143,13 +156,20 @@ class OverviewTab extends StatelessWidget {
 
   String _metricLabel(String code) {
     switch (code) {
-      case 'market_cap': return 'Market Cap';
-      case 'pe': return 'PE';
-      case 'roe': return 'ROE';
-      case 'gross_margin': return 'Gross Margin';
-      case 'net_margin': return 'Net Margin';
-      case 'debt_equity': return 'D/E';
-      default: return code;
+      case 'market_cap':
+        return 'Market Cap';
+      case 'pe':
+        return 'PE';
+      case 'roe':
+        return 'ROE';
+      case 'gross_margin':
+        return 'Gross Margin';
+      case 'net_margin':
+        return 'Net Margin';
+      case 'debt_equity':
+        return 'D/E';
+      default:
+        return code;
     }
   }
 
@@ -216,12 +236,18 @@ class _MetricCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: AppTypography.caption, overflow: TextOverflow.ellipsis),
+          Text(
+            label,
+            style: AppTypography.caption,
+            overflow: TextOverflow.ellipsis,
+          ),
           const SizedBox(height: 4),
           Text(
             value,
             style: AppTypography.monoData.copyWith(
-              color: isOk ? AppThemeColors.textPrimary : AppThemeColors.textTertiary,
+              color: isOk
+                  ? AppThemeColors.textPrimary
+                  : AppThemeColors.textTertiary,
             ),
           ),
         ],
@@ -259,7 +285,14 @@ class _StanceBadge extends StatelessWidget {
         color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(4),
       ),
-      child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color)),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
+      ),
     );
   }
 }

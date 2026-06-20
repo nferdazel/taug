@@ -18,7 +18,10 @@ class FinancialsTab extends StatelessWidget {
 
       if (statements.isEmpty) {
         return const Center(
-          child: Text('No financial data available', style: TextStyle(color: Colors.grey)),
+          child: Text(
+            'No financial data available',
+            style: TextStyle(color: Colors.grey),
+          ),
         );
       }
 
@@ -36,19 +39,19 @@ class FinancialsTab extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         children: [
           if (incomeStatements.isNotEmpty) ...[
-            _SectionHeader(title: 'Income Statement'),
+            const _SectionHeader(title: 'Income Statement'),
             const SizedBox(height: 8),
             _buildStatementTable(incomeStatements, _incomeStatementKeys),
             const SizedBox(height: 24),
           ],
           if (balanceSheets.isNotEmpty) ...[
-            _SectionHeader(title: 'Balance Sheet'),
+            const _SectionHeader(title: 'Balance Sheet'),
             const SizedBox(height: 8),
             _buildStatementTable(balanceSheets, _balanceSheetKeys),
             const SizedBox(height: 24),
           ],
           if (cashFlows.isNotEmpty) ...[
-            _SectionHeader(title: 'Cash Flow'),
+            const _SectionHeader(title: 'Cash Flow'),
             const SizedBox(height: 8),
             _buildStatementTable(cashFlows, _cashFlowKeys),
             const SizedBox(height: 24),
@@ -56,7 +59,9 @@ class FinancialsTab extends StatelessWidget {
           // Source attribution
           Text(
             'Source: SEC EDGAR · Last updated: ${_formatDate(DateTime.now())}',
-            style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
+            style: AppTypography.caption.copyWith(
+              color: AppThemeColors.textTertiary,
+            ),
           ),
         ],
       );
@@ -87,10 +92,12 @@ class FinancialsTab extends StatelessWidget {
         dataRowMaxHeight: 28,
         columns: [
           const DataColumn(label: Text('')),
-          ...displayPeriods.map((p) => DataColumn(
-            label: Text(p.substring(0, 4), style: AppTypography.monoLabel),
-            numeric: true,
-          )),
+          ...displayPeriods.map(
+            (p) => DataColumn(
+              label: Text(p.substring(0, 4), style: AppTypography.monoLabel),
+              numeric: true,
+            ),
+          ),
         ],
         rows: keys.map((key) {
           return DataRow(
@@ -102,7 +109,9 @@ class FinancialsTab extends StatelessWidget {
                   Text(
                     value != null ? _formatValue(value) : '—',
                     style: AppTypography.monoData.copyWith(
-                      color: value != null ? AppThemeColors.textPrimary : AppThemeColors.textTertiary,
+                      color: value != null
+                          ? AppThemeColors.textPrimary
+                          : AppThemeColors.textTertiary,
                     ),
                   ),
                 );
@@ -116,20 +125,34 @@ class FinancialsTab extends StatelessWidget {
 
   String _labelForKey(String key) {
     switch (key) {
-      case 'revenue': return 'Revenue';
-      case 'gross_profit': return 'Gross Profit';
-      case 'operating_income': return 'Operating Income';
-      case 'net_income': return 'Net Income';
-      case 'total_assets': return 'Total Assets';
-      case 'total_liabilities': return 'Total Liabilities';
-      case 'stockholders_equity': return 'Stockholders Equity';
-      case 'cash_and_equivalents': return 'Cash & Equivalents';
-      case 'operating_cash_flow': return 'Operating Cash Flow';
-      case 'capex': return 'Capital Expenditure';
-      case 'long_term_debt': return 'Long-Term Debt';
-      case 'current_assets': return 'Current Assets';
-      case 'current_liabilities': return 'Current Liabilities';
-      default: return key;
+      case 'revenue':
+        return 'Revenue';
+      case 'gross_profit':
+        return 'Gross Profit';
+      case 'operating_income':
+        return 'Operating Income';
+      case 'net_income':
+        return 'Net Income';
+      case 'total_assets':
+        return 'Total Assets';
+      case 'total_liabilities':
+        return 'Total Liabilities';
+      case 'stockholders_equity':
+        return 'Stockholders Equity';
+      case 'cash_and_equivalents':
+        return 'Cash & Equivalents';
+      case 'operating_cash_flow':
+        return 'Operating Cash Flow';
+      case 'capex':
+        return 'Capital Expenditure';
+      case 'long_term_debt':
+        return 'Long-Term Debt';
+      case 'current_assets':
+        return 'Current Assets';
+      case 'current_liabilities':
+        return 'Current Liabilities';
+      default:
+        return key;
     }
   }
 
@@ -146,18 +169,23 @@ class FinancialsTab extends StatelessWidget {
   }
 
   static const _incomeStatementKeys = [
-    'revenue', 'gross_profit', 'operating_income', 'net_income',
+    'revenue',
+    'gross_profit',
+    'operating_income',
+    'net_income',
   ];
 
   static const _balanceSheetKeys = [
-    'total_assets', 'total_liabilities', 'stockholders_equity',
-    'cash_and_equivalents', 'long_term_debt',
-    'current_assets', 'current_liabilities',
+    'total_assets',
+    'total_liabilities',
+    'stockholders_equity',
+    'cash_and_equivalents',
+    'long_term_debt',
+    'current_assets',
+    'current_liabilities',
   ];
 
-  static const _cashFlowKeys = [
-    'operating_cash_flow', 'capex',
-  ];
+  static const _cashFlowKeys = ['operating_cash_flow', 'capex'];
 }
 
 class _SectionHeader extends StatelessWidget {

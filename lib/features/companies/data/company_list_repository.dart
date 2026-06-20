@@ -10,7 +10,7 @@ class CompanyListRepository {
   final SupabaseClient _client;
 
   CompanyListRepository({SupabaseClient? client})
-      : _client = client ?? Supabase.instance.client;
+    : _client = client ?? Supabase.instance.client;
 
   Future<Result<CompanyListData>> getCompanies() async {
     try {
@@ -48,10 +48,9 @@ class CompanyListRepository {
         );
       }).toList();
 
-      return Result.success(CompanyListData(
-        companies: companies,
-        totalCompanies: companies.length,
-      ));
+      return Result.success(
+        CompanyListData(companies: companies, totalCompanies: companies.length),
+      );
     } catch (e) {
       debugPrint('[CompanyListRepo] getCompanies: $e');
       return Result.failure(ServerFailure(message: e.toString()));
@@ -75,7 +74,7 @@ class CompanyListRepository {
       return Result.success(scores);
     } catch (e) {
       debugPrint('[CompanyListRepo] getQualityScores: $e');
-      return Result.success({});
+      return const Result.success({});
     }
   }
 
@@ -96,7 +95,7 @@ class CompanyListRepository {
       return Result.success(statuses);
     } catch (e) {
       debugPrint('[CompanyListRepo] getFreshnessStatuses: $e');
-      return Result.success({});
+      return const Result.success({});
     }
   }
 }

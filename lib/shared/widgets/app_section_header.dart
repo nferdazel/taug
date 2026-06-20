@@ -6,11 +6,7 @@ class AppSectionHeader extends StatelessWidget {
   final String title;
   final Widget? trailing;
 
-  const AppSectionHeader({
-    super.key,
-    required this.title,
-    this.trailing,
-  });
+  const AppSectionHeader({super.key, required this.title, this.trailing});
 
   @override
   Widget build(BuildContext context) {
@@ -18,12 +14,9 @@ class AppSectionHeader extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: Row(
         children: [
-          Text(
-            title.toUpperCase(),
-            style: AppTypography.monoSection,
-          ),
+          Text(title.toUpperCase(), style: AppTypography.monoSection),
           const Spacer(),
-          if (trailing != null) trailing!,
+          ?trailing,
         ],
       ),
     );
@@ -69,10 +62,7 @@ class AppWorkspaceHeader extends StatelessWidget {
               ],
             ),
           ),
-          if (actions != null) ...[
-            const SizedBox(width: 12),
-            ...actions!,
-          ],
+          if (actions != null) ...[const SizedBox(width: 12), ...actions!],
         ],
       ),
     );
