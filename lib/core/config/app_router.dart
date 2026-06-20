@@ -9,7 +9,7 @@ import '../../features/company/presentation/pages/company_workspace_page.dart';
 import '../../features/data/presentation/pages/data_workspace_page.dart';
 import '../../features/layout/presentation/pages/main_layout.dart';
 import '../../features/portfolio/presentation/pages/portfolio_workspace_page.dart';
-import '../../features/research/presentation/pages/research_page.dart';
+import '../../features/research/presentation/pages/research_workspace_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -106,7 +106,7 @@ final router = GoRouter(
         GoRoute(
           path: '/research',
           pageBuilder: (context, state) =>
-              const NoTransitionPage(child: ResearchPage()),
+              const NoTransitionPage(child: ResearchWorkspacePage()),
         ),
         GoRoute(
           path: '/portfolio-workspace',
