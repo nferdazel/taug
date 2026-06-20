@@ -73,12 +73,14 @@ class OverviewTab extends StatelessWidget {
             label: _metricLabel(code),
             value: '—',
             isOk: false,
+            tooltip: _metricTooltip(code),
           );
         }
         return _MetricCard(
           label: m.metricName,
           value: _formatMetric(m),
           isOk: true,
+          tooltip: _metricTooltip(code),
         );
       }).toList(),
     );
@@ -173,6 +175,25 @@ class OverviewTab extends StatelessWidget {
     }
   }
 
+  String _metricTooltip(String code) {
+    switch (code) {
+      case 'market_cap':
+        return 'Total market value of outstanding shares. Share price × shares outstanding.';
+      case 'pe':
+        return 'Price-to-Earnings ratio. How much investors pay per dollar of earnings.';
+      case 'roe':
+        return 'Return on Equity. Profitability relative to shareholders\' equity.';
+      case 'gross_margin':
+        return 'Gross profit as % of revenue. Revenue remaining after cost of goods sold.';
+      case 'net_margin':
+        return 'Net income as % of revenue. Overall profitability after all expenses.';
+      case 'debt_equity':
+        return 'Total debt ÷ shareholders\' equity. Financial leverage measure.';
+      default:
+        return code;
+    }
+  }
+
   String _formatMetric(dynamic m) {
     if (m.valueNumeric == null) return '—';
     final v = m.valueNumeric as double;
@@ -216,41 +237,61 @@ class _MetricCard extends StatelessWidget {
   final String label;
   final String value;
   final bool isOk;
+  final String? tooltip;
 
   const _MetricCard({
     required this.label,
     required this.value,
     required this.isOk,
+    this.tooltip,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 140,
-      padding: const EdgeInsets.all(10),
+    return Tooltip(
+      message: tooltip ?? label,
+      preferBelow: true,
       decoration: BoxDecoration(
-        color: AppThemeColors.surface,
+        color: AppThemeColors.surfaceLight,
         borderRadius: BorderRadius.circular(6),
         border: Border.all(color: AppThemeColors.border),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: AppTypography.caption,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: AppTypography.monoData.copyWith(
-              color: isOk
-                  ? AppThemeColors.textPrimary
-                  : AppThemeColors.textTertiary,
+      textStyle: AppTypography.caption.copyWith(color: AppThemeColors.textPrimary),
+      child: Container(
+        width: 140,
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: AppThemeColors.surface,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: AppThemeColors.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    label,
+                    style: AppTypography.caption,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (tooltip != null)
+                  Icon(Icons.info_outline, size: 10, color: AppThemeColors.textTertiary),
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: AppTypography.monoData.copyWith(
+                color: isOk
+                    ? AppThemeColors.textPrimary
+                    : AppThemeColors.textTertiary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

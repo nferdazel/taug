@@ -116,3 +116,85 @@ class AppErrorState extends StatelessWidget {
     );
   }
 }
+
+class MetricExplainer extends StatelessWidget {
+  final String metric;
+  final String explanation;
+
+  const MetricExplainer({
+    super.key,
+    required this.metric,
+    required this.explanation,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: explanation,
+      preferBelow: true,
+      decoration: BoxDecoration(
+        color: AppThemeColors.surfaceLight,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: AppThemeColors.border),
+      ),
+      textStyle: AppTypography.caption.copyWith(color: AppThemeColors.textPrimary),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(metric, style: AppTypography.body),
+          const SizedBox(width: 4),
+          Icon(Icons.info_outline, size: 12, color: AppThemeColors.textTertiary),
+        ],
+      ),
+    );
+  }
+}
+
+class TrustExplainer extends StatelessWidget {
+  final String label;
+  final String explanation;
+  final Color color;
+
+  const TrustExplainer({
+    super.key,
+    required this.label,
+    required this.explanation,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: explanation,
+      preferBelow: true,
+      decoration: BoxDecoration(
+        color: AppThemeColors.surfaceLight,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: AppThemeColors.border),
+      ),
+      textStyle: AppTypography.caption.copyWith(color: AppThemeColors.textPrimary),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.circle, size: 7, color: color),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
