@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals/signals_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
@@ -182,12 +183,14 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
   }
 
   void _showAddPositionDialog(BuildContext context) {
-    final companyController = TextEditingController();
     final entryPriceController = TextEditingController();
     final notesController = TextEditingController();
     String conviction = 'low';
     DateTime entryDate = DateTime.now();
     String? selectedCompanyId;
+    String? selectedCompanyName;
+    final searchController = TextEditingController();
+    List<Map<String, dynamic>> searchResults = [];
 
     showDialog(
       context: context,
@@ -202,22 +205,96 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Company ID', style: AppTypography.caption),
+                  const Text('Company', style: AppTypography.caption),
                   const SizedBox(height: 4),
-                  TextField(
-                    controller: companyController,
-                    style: AppTypography.body,
-                    decoration: const InputDecoration(
-                      hintText: 'Enter company UUID',
-                      hintStyle: AppTypography.caption,
-                      border: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.border)),
-                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.border)),
-                      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.accent)),
-                      filled: true,
-                      fillColor: AppThemeColors.surfaceMuted,
+                  if (selectedCompanyId != null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppThemeColors.accent),
+                        borderRadius: BorderRadius.circular(4),
+                        color: AppThemeColors.surfaceMuted,
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(child: Text(selectedCompanyName ?? selectedCompanyId!, style: AppTypography.body)),
+                          GestureDetector(
+                            onTap: () {
+                              setDialogState(() {
+                                selectedCompanyId = null;
+                                selectedCompanyName = null;
+                              });
+                            },
+                            child: const Icon(Icons.close, size: 16, color: AppThemeColors.textTertiary),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    Column(
+                      children: [
+                        TextField(
+                          controller: searchController,
+                          style: AppTypography.body,
+                          decoration: const InputDecoration(
+                            hintText: 'Search by company name or ticker...',
+                            hintStyle: AppTypography.caption,
+                            border: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.border)),
+                            enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.border)),
+                            focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.accent)),
+                            filled: true,
+                            fillColor: AppThemeColors.surfaceMuted,
+                          ),
+                          onChanged: (query) async {
+                            if (query.length < 2) {
+                              setDialogState(() => searchResults = []);
+                              return;
+                            }
+                            try {
+                              final client = Supabase.instance.client;
+                              final response = await client
+                                  .from('companies')
+                                  .select('id, display_name')
+                                  .ilike('display_name', '%$query%')
+                                  .limit(5);
+                              setDialogState(() {
+                                searchResults = List<Map<String, dynamic>>.from(response as List);
+                              });
+                            } catch (e) {
+                              // Silently fail
+                            }
+                          },
+                        ),
+                        if (searchResults.isNotEmpty)
+                          Container(
+                            margin: const EdgeInsets.only(top: 4),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: AppThemeColors.border),
+                              borderRadius: BorderRadius.circular(4),
+                              color: AppThemeColors.surface,
+                            ),
+                            child: Column(
+                              children: searchResults.map((r) => InkWell(
+                                onTap: () {
+                                  setDialogState(() {
+                                    selectedCompanyId = r['id'] as String;
+                                    selectedCompanyName = r['display_name'] as String;
+                                    searchResults = [];
+                                    searchController.clear();
+                                  });
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    border: Border(bottom: BorderSide(color: AppThemeColors.border.withValues(alpha: 0.5))),
+                                  ),
+                                  child: Text(r['display_name'] as String, style: AppTypography.body),
+                                ),
+                              )).toList(),
+                            ),
+                          ),
+                      ],
                     ),
-                    onChanged: (v) => selectedCompanyId = v,
-                  ),
                   const SizedBox(height: 12),
                   const Text('Conviction', style: AppTypography.caption),
                   const SizedBox(height: 4),

@@ -75,6 +75,7 @@ class OverviewTab extends StatelessWidget {
             _ActionChip(
               label: status.actionLabel!,
               color: status.color,
+              onTap: () => provider.activeTab.value = 2, // Switch to Research tab
             ),
         ],
       ),
@@ -82,6 +83,8 @@ class OverviewTab extends StatelessWidget {
   }
 
   Widget _buildResearchState(List<dynamic> theses, List<dynamic> notes) {
+    final state = _getResearchState(theses, notes);
+
     return Container(
       decoration: BoxDecoration(
         border: Border.all(color: AppThemeColors.border),
@@ -96,11 +99,19 @@ class OverviewTab extends StatelessWidget {
               color: AppThemeColors.surfaceMuted,
               border: Border(bottom: BorderSide(color: AppThemeColors.border)),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.science_outlined, size: 14, color: AppThemeColors.textSecondary),
-                SizedBox(width: 8),
-                Text('RESEARCH STATE', style: AppTypography.monoSection),
+                const Icon(Icons.science_outlined, size: 14, color: AppThemeColors.textSecondary),
+                const SizedBox(width: 8),
+                const Text('RESEARCH STATE', style: AppTypography.monoSection),
+                const Spacer(),
+                _StateChip(label: state.current, color: state.color),
+                if (state.next != null) ...[
+                  const SizedBox(width: 4),
+                  const Icon(Icons.arrow_forward, size: 12, color: AppThemeColors.textTertiary),
+                  const SizedBox(width: 4),
+                  Text(state.next!, style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary)),
+                ],
               ],
             ),
           ),
@@ -266,6 +277,16 @@ class OverviewTab extends StatelessWidget {
     );
   }
 
+  _ResearchState _getResearchState(List<dynamic> theses, List<dynamic> notes) {
+    if (theses.isNotEmpty) {
+      return _ResearchState(current: 'Thesis Active', next: 'Create Position', color: AppThemeColors.success);
+    }
+    if (notes.isNotEmpty) {
+      return _ResearchState(current: 'Research In Progress', next: 'Write Thesis', color: AppThemeColors.accent);
+    }
+    return _ResearchState(current: 'Not Researched', next: 'Create Notes', color: AppThemeColors.textTertiary);
+  }
+
   String _metricLabel(String code) {
     switch (code) {
       case 'market_cap': return 'Market Cap';
@@ -330,22 +351,54 @@ class _ResearchStatus {
   });
 }
 
-class _ActionChip extends StatelessWidget {
+class _ResearchState {
+  final String current;
+  final String? next;
+  final Color color;
+
+  _ResearchState({required this.current, this.next, required this.color});
+}
+
+class _StateChip extends StatelessWidget {
   final String label;
   final Color color;
 
-  const _ActionChip({required this.label, required this.color});
+  const _StateChip({required this.label, required this.color});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
-      child: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color)),
+      child: Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color)),
+    );
+  }
+}
+
+class _ActionChip extends StatelessWidget {
+  final String label;
+  final Color color;
+  final VoidCallback? onTap;
+
+  const _ActionChip({required this.label, required this.color, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(4),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
+        ),
+        child: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color)),
+      ),
     );
   }
 }

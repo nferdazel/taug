@@ -110,20 +110,41 @@ class _ResearchWorkspacePageState extends State<ResearchWorkspacePage> {
       final theses = _provider.filteredTheses;
       final notes = _provider.filteredNotes;
 
+      // Prioritize: companies with notes but no thesis need attention
+      final needsThesis = companies.where((c) => c.notesCount > 0 && c.thesesCount == 0).toList();
+      final activeResearch = companies.where((c) => c.thesesCount > 0).toList();
+
       return SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Active Research — primary focus
+            // Needs Thesis — highest priority
+            if (needsThesis.isNotEmpty) ...[
+              _buildSection(
+                title: 'NEEDS THESIS',
+                icon: Icons.warning_amber,
+                count: needsThesis.length,
+                color: AppThemeColors.warning,
+                child: Column(
+                  children: needsThesis.map((c) => _ResearchCompanyCard(
+                    company: c,
+                    onTap: () => context.go('/companies/${c.companyId}'),
+                  )).toList(),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+
+            // Active Research — has thesis
             _buildSection(
               title: 'ACTIVE RESEARCH',
               icon: Icons.science_outlined,
-              count: companies.length,
-              child: companies.isEmpty
+              count: activeResearch.length,
+              child: activeResearch.isEmpty
                   ? _buildEmptyResearch()
                   : Column(
-                      children: companies.map((c) => _ResearchCompanyCard(
+                      children: activeResearch.map((c) => _ResearchCompanyCard(
                         company: c,
                         onTap: () => context.go('/companies/${c.companyId}'),
                       )).toList(),
@@ -172,10 +193,12 @@ class _ResearchWorkspacePageState extends State<ResearchWorkspacePage> {
     required IconData icon,
     required int count,
     required Widget child,
+    Color? color,
   }) {
+    final headerColor = color ?? AppThemeColors.textSecondary;
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: AppThemeColors.border),
+        border: Border.all(color: color != null ? color.withValues(alpha: 0.3) : AppThemeColors.border),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Column(
@@ -183,15 +206,15 @@ class _ResearchWorkspacePageState extends State<ResearchWorkspacePage> {
         children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: const BoxDecoration(
-              color: AppThemeColors.surfaceMuted,
-              border: Border(bottom: BorderSide(color: AppThemeColors.border)),
+            decoration: BoxDecoration(
+              color: color != null ? color.withValues(alpha: 0.08) : AppThemeColors.surfaceMuted,
+              border: Border(bottom: BorderSide(color: color != null ? color.withValues(alpha: 0.3) : AppThemeColors.border)),
             ),
             child: Row(
               children: [
-                Icon(icon, size: 14, color: AppThemeColors.textSecondary),
+                Icon(icon, size: 14, color: headerColor),
                 const SizedBox(width: 8),
-                Text(title, style: AppTypography.monoSection),
+                Text(title, style: AppTypography.monoSection.copyWith(color: headerColor)),
                 const Spacer(),
                 Text('$count', style: AppTypography.monoLabel.copyWith(color: AppThemeColors.textTertiary)),
               ],
