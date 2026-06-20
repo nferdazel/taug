@@ -27,6 +27,7 @@ class WorkerConfig:
   raw_documents_bucket: str
   twelve_data_api_key: str
   fred_api_key: str
+  bps_api_key: str
 
   @classmethod
   def from_env(cls) -> "WorkerConfig":
@@ -39,4 +40,5 @@ class WorkerConfig:
       or "raw-documents",
       twelve_data_api_key=os.getenv("TWELVE_DATA_API_KEY", "").strip(),
       fred_api_key=os.getenv("FRED_API_KEY", "").strip(),
+      bps_api_key=os.getenv("BPS_API_KEY", "").strip(),
     )

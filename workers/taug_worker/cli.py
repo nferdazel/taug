@@ -12,6 +12,7 @@ from .jobs.fetch_sec_filing_documents import run_fetch_sec_filing_documents
 from .jobs.compute_company_metrics import run_compute_company_metrics
 from .jobs.compute_data_quality import run_compute_data_quality
 from .jobs.execute_screener import run_execute_screener
+from .jobs.sync_bps_series import run_sync_bps_series
 from .jobs.sync_fred_series import run_sync_fred_series
 from .jobs.sync_price_snapshots import run_sync_price_snapshots
 from .jobs.sync_sec_submissions import run_sync_sec_submissions
@@ -87,6 +88,7 @@ def main() -> int:
     required=True,
     help="UUID of the saved screener to execute.",
   )
+  subparsers.add_parser("sync-bps-series")
   subparsers.add_parser("compute-data-quality")
   fred_parser = subparsers.add_parser("sync-fred-series")
   fred_parser.add_argument(
@@ -379,6 +381,36 @@ def main() -> int:
           "failed": summary.failed,
           "inserted_observations": summary.inserted_observations,
           "failed_series_ids": summary.failed_series_ids,
+        },
+        ensure_ascii=True,
+        sort_keys=True,
+      )
+    )
+    return 0
+
+  if args.command == "sync-bps-series":
+    if not config.bps_api_key:
+      raise ValueError("BPS_API_KEY is required for sync-bps-series")
+
+    http_client = HttpClient()
+    supabase_client = SupabaseRestClient(
+      http_client=http_client,
+      supabase_url=config.supabase_url,
+      service_role_key=config.supabase_service_role_key,
+    )
+    summary = run_sync_bps_series(
+      supabase_client=supabase_client,
+      http_client=http_client,
+      bps_api_key=config.bps_api_key,
+    )
+    print(
+      json.dumps(
+        {
+          "processed_variables": summary.processed_variables,
+          "succeeded": summary.succeeded,
+          "failed": summary.failed,
+          "inserted_observations": summary.inserted_observations,
+          "failed_var_ids": summary.failed_var_ids,
         },
         ensure_ascii=True,
         sort_keys=True,
