@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals/signals.dart';
@@ -15,7 +16,7 @@ class AuthProvider {
   StreamSubscription<AuthState>? _authSubscription;
 
   AuthProvider({AuthRepository? repository})
-      : _repository = repository ?? AuthRepository() {
+    : _repository = repository ?? AuthRepository() {
     _init();
   }
 

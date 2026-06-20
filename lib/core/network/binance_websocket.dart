@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class BinanceWebSocketService {
@@ -38,20 +39,30 @@ class BinanceWebSocketService {
     );
   }
 
-  void subscribeTicker(String symbol, void Function(Map<String, dynamic>) onData) {
+  void subscribeTicker(
+    String symbol,
+    void Function(Map<String, dynamic>) onData,
+  ) {
     final streamName = '${symbol.toLowerCase()}@ticker';
 
     if (!_controllers.containsKey(streamName)) {
-      _controllers[streamName] = StreamController<Map<String, dynamic>>.broadcast();
+      _controllers[streamName] =
+          StreamController<Map<String, dynamic>>.broadcast();
     }
 
     _subscriptions[streamName]?.cancel();
-    _subscriptions[streamName] = _controllers[streamName]!.stream.listen(onData);
+    _subscriptions[streamName] = _controllers[streamName]!.stream.listen(
+      onData,
+    );
 
     _sendSubscription('SUBSCRIBE', [streamName]);
   }
 
-  void subscribeKline(String symbol, String interval, void Function(Map<String, dynamic>) onData) {
+  void subscribeKline(
+    String symbol,
+    String interval,
+    void Function(Map<String, dynamic>) onData,
+  ) {
     final intervalMap = {
       '1m': '1m',
       '5m': '5m',
@@ -64,11 +75,14 @@ class BinanceWebSocketService {
     final streamName = '${symbol.toLowerCase()}@kline_$binanceInterval';
 
     if (!_controllers.containsKey(streamName)) {
-      _controllers[streamName] = StreamController<Map<String, dynamic>>.broadcast();
+      _controllers[streamName] =
+          StreamController<Map<String, dynamic>>.broadcast();
     }
 
     _subscriptions[streamName]?.cancel();
-    _subscriptions[streamName] = _controllers[streamName]!.stream.listen(onData);
+    _subscriptions[streamName] = _controllers[streamName]!.stream.listen(
+      onData,
+    );
 
     _sendSubscription('SUBSCRIBE', [streamName]);
   }
@@ -93,10 +107,7 @@ class BinanceWebSocketService {
 
   void _sendSubscription(String method, List<String> streams) {
     if (_channel != null) {
-      _channel!.sink.add(jsonEncode({
-        'method': method,
-        'params': streams,
-      }));
+      _channel!.sink.add(jsonEncode({'method': method, 'params': streams}));
     }
   }
 
