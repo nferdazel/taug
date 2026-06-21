@@ -77,6 +77,7 @@ class PortfolioProvider {
   ) async {
     if (_isMutating) return;
     _isMutating = true;
+    error.value = null;
     try {
       final result = await _repository.addHolding(
         symbolId: symbolId,
@@ -102,6 +103,7 @@ class PortfolioProvider {
   ) async {
     if (_isMutating) return;
     _isMutating = true;
+    error.value = null;
     try {
       final result = await _repository.updateHolding(
         holdingId: holdingId,
@@ -123,6 +125,7 @@ class PortfolioProvider {
   Future<void> removeHolding(String holdingId) async {
     if (_isMutating) return;
     _isMutating = true;
+    error.value = null;
     try {
       final result = await _repository.removeHolding(holdingId);
       if (result.isSuccess) {

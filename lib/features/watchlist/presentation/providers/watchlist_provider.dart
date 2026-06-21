@@ -107,6 +107,7 @@ class WatchlistProvider {
   Future<void> createWatchlist(String name) async {
     if (_isMutating) return;
     _isMutating = true;
+    error.value = null;
     try {
       final result = await _repository.createWatchlist(name);
       if (result.isSuccess) {
@@ -123,6 +124,7 @@ class WatchlistProvider {
   Future<void> deleteWatchlist(String watchlistId) async {
     if (_isMutating) return;
     _isMutating = true;
+    error.value = null;
     try {
       final result = await _repository.deleteWatchlist(watchlistId);
       if (result.isSuccess) {
@@ -145,6 +147,7 @@ class WatchlistProvider {
     if (currentWatchlist.value == null) return;
     if (_isMutating) return;
     _isMutating = true;
+    error.value = null;
     try {
       final result = await _repository.addToWatchlist(
         currentWatchlist.value!.id,
@@ -165,6 +168,7 @@ class WatchlistProvider {
   Future<void> removeFromWatchlist(String itemId) async {
     if (_isMutating) return;
     _isMutating = true;
+    error.value = null;
     try {
       final result = await _repository.removeFromWatchlist(itemId);
       if (result.isSuccess && currentWatchlist.value != null) {

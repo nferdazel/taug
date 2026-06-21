@@ -11,6 +11,7 @@ class SettingsProvider {
   final densityMode = Signal<String>('compact');
   final isLoading = Signal<bool>(false);
   final error = Signal<String?>(null);
+  bool _isMutating = false;
 
   SettingsProvider({SettingsRepository? repository})
     : _repository = repository ?? SettingsRepository();
@@ -36,22 +37,36 @@ class SettingsProvider {
   }
 
   Future<void> updateTimezone(String tz) async {
-    final result = await _repository.updateProfile({'timezone': tz});
-    if (result.isSuccess) {
-      timezone.value = tz;
-    } else {
-      debugPrint('[SettingsProvider] updateTimezone failed: ${result.error}');
-      error.value = result.error.toString();
+    if (_isMutating) return;
+    _isMutating = true;
+    error.value = null;
+    try {
+      final result = await _repository.updateProfile({'timezone': tz});
+      if (result.isSuccess) {
+        timezone.value = tz;
+      } else {
+        debugPrint('[SettingsProvider] updateTimezone failed: ${result.error}');
+        error.value = result.error.toString();
+      }
+    } finally {
+      _isMutating = false;
     }
   }
 
   Future<void> updateDensityMode(String mode) async {
-    final result = await _repository.updateSettings({'density_mode': mode});
-    if (result.isSuccess) {
-      densityMode.value = mode;
-    } else {
-      debugPrint('[SettingsProvider] updateDensityMode failed: ${result.error}');
-      error.value = result.error.toString();
+    if (_isMutating) return;
+    _isMutating = true;
+    error.value = null;
+    try {
+      final result = await _repository.updateSettings({'density_mode': mode});
+      if (result.isSuccess) {
+        densityMode.value = mode;
+      } else {
+        debugPrint('[SettingsProvider] updateDensityMode failed: ${result.error}');
+        error.value = result.error.toString();
+      }
+    } finally {
+      _isMutating = false;
     }
   }
 }

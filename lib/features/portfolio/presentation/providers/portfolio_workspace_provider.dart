@@ -50,6 +50,7 @@ class PortfolioProvider {
   }) async {
     if (_isMutating) return;
     _isMutating = true;
+    error.value = null;
     try {
       final result = await _repository.createPosition(
         companyId: companyId,
@@ -79,6 +80,7 @@ class PortfolioProvider {
   }) async {
     if (_isMutating) return;
     _isMutating = true;
+    error.value = null;
     try {
       final result = await _repository.updatePosition(
         positionId: positionId,
@@ -107,6 +109,7 @@ class PortfolioProvider {
   }) async {
     if (_isMutating) return;
     _isMutating = true;
+    error.value = null;
     try {
       final result = await _repository.closePosition(
         positionId: positionId,

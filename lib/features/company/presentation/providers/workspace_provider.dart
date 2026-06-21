@@ -18,6 +18,7 @@ class WorkspaceProvider {
   final freshnessStatus = Signal<String?>(null);
   final isLoading = Signal<bool>(false);
   final error = Signal<String?>(null);
+  final mutationError = Signal<String?>(null);
   final activeTab = Signal<int>(0);
   bool _isMutating = false;
 
@@ -64,6 +65,7 @@ class WorkspaceProvider {
   Future<void> createNote(String title, String body) async {
     if (_isMutating) return;
     _isMutating = true;
+    mutationError.value = null;
     try {
       final result = await _repository.createNote(
         companyId: companyId, title: title, body: body,
@@ -72,7 +74,7 @@ class WorkspaceProvider {
         notes.value = [result.data!, ...notes];
       } else {
         debugPrint('[WorkspaceProvider] createNote failed: ${result.error}');
-        error.value = result.error.toString();
+        mutationError.value = result.error.toString();
       }
     } finally {
       _isMutating = false;
@@ -82,6 +84,7 @@ class WorkspaceProvider {
   Future<void> updateNote(String noteId, String title, String body) async {
     if (_isMutating) return;
     _isMutating = true;
+    mutationError.value = null;
     try {
       final result = await _repository.updateNote(noteId: noteId, title: title, body: body);
       if (result.isSuccess) {
@@ -90,7 +93,7 @@ class WorkspaceProvider {
             : n).toList();
       } else {
         debugPrint('[WorkspaceProvider] updateNote failed: ${result.error}');
-        error.value = result.error.toString();
+        mutationError.value = result.error.toString();
       }
     } finally {
       _isMutating = false;
@@ -100,13 +103,14 @@ class WorkspaceProvider {
   Future<void> deleteNote(String noteId) async {
     if (_isMutating) return;
     _isMutating = true;
+    mutationError.value = null;
     try {
       final result = await _repository.deleteNote(noteId);
       if (result.isSuccess) {
         notes.value = notes.where((n) => n.id != noteId).toList();
       } else {
         debugPrint('[WorkspaceProvider] deleteNote failed: ${result.error}');
-        error.value = result.error.toString();
+        mutationError.value = result.error.toString();
       }
     } finally {
       _isMutating = false;
@@ -116,6 +120,7 @@ class WorkspaceProvider {
   Future<void> createThesis(String title, String stance, {String? summary, String? bullCase, String? bearCase, String conviction = 'low'}) async {
     if (_isMutating) return;
     _isMutating = true;
+    mutationError.value = null;
     try {
       final result = await _repository.createThesis(
         companyId: companyId, title: title, stance: stance, summary: summary, bullCase: bullCase, bearCase: bearCase, conviction: conviction,
@@ -124,7 +129,7 @@ class WorkspaceProvider {
         theses.value = [result.data!, ...theses];
       } else {
         debugPrint('[WorkspaceProvider] createThesis failed: ${result.error}');
-        error.value = result.error.toString();
+        mutationError.value = result.error.toString();
       }
     } finally {
       _isMutating = false;
@@ -134,6 +139,7 @@ class WorkspaceProvider {
   Future<void> updateThesis(String thesisId, String title, String stance, {String? summary, String? bullCase, String? bearCase, String? conviction}) async {
     if (_isMutating) return;
     _isMutating = true;
+    mutationError.value = null;
     try {
       final result = await _repository.updateThesis(
         thesisId: thesisId, title: title, stance: stance, summary: summary, bullCase: bullCase, bearCase: bearCase, conviction: conviction,
@@ -144,7 +150,7 @@ class WorkspaceProvider {
             : t).toList();
       } else {
         debugPrint('[WorkspaceProvider] updateThesis failed: ${result.error}');
-        error.value = result.error.toString();
+        mutationError.value = result.error.toString();
       }
     } finally {
       _isMutating = false;
@@ -154,13 +160,14 @@ class WorkspaceProvider {
   Future<void> deleteThesis(String thesisId) async {
     if (_isMutating) return;
     _isMutating = true;
+    mutationError.value = null;
     try {
       final result = await _repository.deleteThesis(thesisId);
       if (result.isSuccess) {
         theses.value = theses.where((t) => t.id != thesisId).toList();
       } else {
         debugPrint('[WorkspaceProvider] deleteThesis failed: ${result.error}');
-        error.value = result.error.toString();
+        mutationError.value = result.error.toString();
       }
     } finally {
       _isMutating = false;
