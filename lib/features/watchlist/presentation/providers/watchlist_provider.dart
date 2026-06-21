@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:signals/signals.dart';
 
 import '../../../../shared/models/price_data.dart';
@@ -17,6 +18,7 @@ class WatchlistProvider {
   final error = Signal<String?>(null);
   final lastUpdated = Signal<DateTime?>(null);
   bool _isLoadingPrices = false;
+  bool _isMutating = false;
 
   Timer? _refreshTimer;
 
@@ -103,41 +105,76 @@ class WatchlistProvider {
   }
 
   Future<void> createWatchlist(String name) async {
-    final result = await _repository.createWatchlist(name);
-    if (result.isSuccess) {
-      await loadWatchlists();
+    if (_isMutating) return;
+    _isMutating = true;
+    try {
+      final result = await _repository.createWatchlist(name);
+      if (result.isSuccess) {
+        await loadWatchlists();
+      } else {
+        debugPrint('[WatchlistProvider] createWatchlist failed: ${result.error}');
+        error.value = result.error.toString();
+      }
+    } finally {
+      _isMutating = false;
     }
   }
 
   Future<void> deleteWatchlist(String watchlistId) async {
-    final result = await _repository.deleteWatchlist(watchlistId);
-    if (result.isSuccess) {
-      if (currentWatchlist.value?.id == watchlistId) {
-        currentWatchlist.value = null;
-        watchlistItems.value = [];
-        stopAutoRefresh();
+    if (_isMutating) return;
+    _isMutating = true;
+    try {
+      final result = await _repository.deleteWatchlist(watchlistId);
+      if (result.isSuccess) {
+        if (currentWatchlist.value?.id == watchlistId) {
+          currentWatchlist.value = null;
+          watchlistItems.value = [];
+          stopAutoRefresh();
+        }
+        await loadWatchlists();
+      } else {
+        debugPrint('[WatchlistProvider] deleteWatchlist failed: ${result.error}');
+        error.value = result.error.toString();
       }
-      await loadWatchlists();
+    } finally {
+      _isMutating = false;
     }
   }
 
   Future<void> addToWatchlist(int symbolId) async {
     if (currentWatchlist.value == null) return;
+    if (_isMutating) return;
+    _isMutating = true;
+    try {
+      final result = await _repository.addToWatchlist(
+        currentWatchlist.value!.id,
+        symbolId,
+      );
 
-    final result = await _repository.addToWatchlist(
-      currentWatchlist.value!.id,
-      symbolId,
-    );
-
-    if (result.isSuccess) {
-      await loadWatchlistItems(currentWatchlist.value!.id);
+      if (result.isSuccess) {
+        await loadWatchlistItems(currentWatchlist.value!.id);
+      } else {
+        debugPrint('[WatchlistProvider] addToWatchlist failed: ${result.error}');
+        error.value = result.error.toString();
+      }
+    } finally {
+      _isMutating = false;
     }
   }
 
   Future<void> removeFromWatchlist(String itemId) async {
-    final result = await _repository.removeFromWatchlist(itemId);
-    if (result.isSuccess && currentWatchlist.value != null) {
-      await loadWatchlistItems(currentWatchlist.value!.id);
+    if (_isMutating) return;
+    _isMutating = true;
+    try {
+      final result = await _repository.removeFromWatchlist(itemId);
+      if (result.isSuccess && currentWatchlist.value != null) {
+        await loadWatchlistItems(currentWatchlist.value!.id);
+      } else if (!result.isSuccess) {
+        debugPrint('[WatchlistProvider] removeFromWatchlist failed: ${result.error}');
+        error.value = result.error.toString();
+      }
+    } finally {
+      _isMutating = false;
     }
   }
 

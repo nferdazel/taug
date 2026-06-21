@@ -407,7 +407,7 @@ class _WatchlistPageState extends State<WatchlistPage> {
     });
   }
 
-  void _showDeleteConfirmation(dynamic item) {
+  void _showDeleteConfirmation(WatchlistItem item) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -423,9 +423,11 @@ class _WatchlistPageState extends State<WatchlistPage> {
             child: const Text(AppStrings.cancel),
           ),
           ElevatedButton(
-            onPressed: () {
-              _provider.removeFromWatchlist(item.id);
-              Navigator.pop(context);
+            onPressed: () async {
+              await _provider.removeFromWatchlist(item.id);
+              if (context.mounted && _provider.error.value == null) {
+                Navigator.pop(context);
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppThemeColors.bearish,
