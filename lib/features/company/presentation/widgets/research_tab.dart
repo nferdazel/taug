@@ -206,6 +206,18 @@ class ResearchTab extends StatelessWidget {
     final bearCaseController = TextEditingController(
       text: thesis?.bearCase ?? '',
     );
+    final assumptionsController = TextEditingController(
+      text: thesis?.assumptions ?? '',
+    );
+    final catalystsController = TextEditingController(
+      text: thesis?.catalysts ?? '',
+    );
+    final risksController = TextEditingController(
+      text: thesis?.risks ?? '',
+    );
+    final exitConditionsController = TextEditingController(
+      text: thesis?.exitConditions ?? '',
+    );
     String stance = thesis?.stance ?? 'neutral';
     String conviction = thesis?.conviction ?? 'low';
 
@@ -345,6 +357,90 @@ class ResearchTab extends StatelessWidget {
                       fillColor: AppThemeColors.surfaceMuted,
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: assumptionsController,
+                    style: AppTypography.body,
+                    maxLines: 2,
+                    decoration: const InputDecoration(
+                      hintText: 'Key assumptions...',
+                      hintStyle: AppTypography.caption,
+                      border: OutlineInputBorder(
+                        borderSide: BorderSide(color: AppThemeColors.border),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: AppThemeColors.border),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: AppThemeColors.accent),
+                      ),
+                      filled: true,
+                      fillColor: AppThemeColors.surfaceMuted,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: catalystsController,
+                    style: AppTypography.body,
+                    maxLines: 2,
+                    decoration: const InputDecoration(
+                      hintText: 'Catalysts...',
+                      hintStyle: AppTypography.caption,
+                      border: OutlineInputBorder(
+                        borderSide: BorderSide(color: AppThemeColors.border),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: AppThemeColors.border),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: AppThemeColors.accent),
+                      ),
+                      filled: true,
+                      fillColor: AppThemeColors.surfaceMuted,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: risksController,
+                    style: AppTypography.body,
+                    maxLines: 2,
+                    decoration: const InputDecoration(
+                      hintText: 'Key risks...',
+                      hintStyle: AppTypography.caption,
+                      border: OutlineInputBorder(
+                        borderSide: BorderSide(color: AppThemeColors.border),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: AppThemeColors.border),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: AppThemeColors.accent),
+                      ),
+                      filled: true,
+                      fillColor: AppThemeColors.surfaceMuted,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: exitConditionsController,
+                    style: AppTypography.body,
+                    maxLines: 2,
+                    decoration: const InputDecoration(
+                      hintText: 'Exit conditions...',
+                      hintStyle: AppTypography.caption,
+                      border: OutlineInputBorder(
+                        borderSide: BorderSide(color: AppThemeColors.border),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: AppThemeColors.border),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: AppThemeColors.accent),
+                      ),
+                      filled: true,
+                      fillColor: AppThemeColors.surfaceMuted,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -369,6 +465,10 @@ class ResearchTab extends StatelessWidget {
                     summary: summaryController.text.trim(),
                     bullCase: bullCaseController.text.trim(),
                     bearCase: bearCaseController.text.trim(),
+                    assumptions: assumptionsController.text.trim(),
+                    catalysts: catalystsController.text.trim(),
+                    risks: risksController.text.trim(),
+                    exitConditions: exitConditionsController.text.trim(),
                     conviction: conviction,
                   );
                 } else {
@@ -379,6 +479,10 @@ class ResearchTab extends StatelessWidget {
                     summary: summaryController.text.trim(),
                     bullCase: bullCaseController.text.trim(),
                     bearCase: bearCaseController.text.trim(),
+                    assumptions: assumptionsController.text.trim(),
+                    catalysts: catalystsController.text.trim(),
+                    risks: risksController.text.trim(),
+                    exitConditions: exitConditionsController.text.trim(),
                     conviction: conviction,
                   );
                 }
@@ -484,6 +588,46 @@ class _ThesisCard extends StatelessWidget {
               ),
             ),
             Text(thesis.bearCase!, style: AppTypography.body),
+          ],
+          if (thesis.assumptions != null && thesis.assumptions!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Assumptions',
+              style: AppTypography.caption.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            Text(thesis.assumptions!, style: AppTypography.body),
+          ],
+          if (thesis.catalysts != null && thesis.catalysts!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Catalysts',
+              style: AppTypography.caption.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            Text(thesis.catalysts!, style: AppTypography.body),
+          ],
+          if (thesis.risks != null && thesis.risks!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Risks',
+              style: AppTypography.caption.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            Text(thesis.risks!, style: AppTypography.body),
+          ],
+          if (thesis.exitConditions != null && thesis.exitConditions!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Exit Conditions',
+              style: AppTypography.caption.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            Text(thesis.exitConditions!, style: AppTypography.body),
           ],
           const SizedBox(height: 8),
           Text(
