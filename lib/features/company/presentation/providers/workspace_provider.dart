@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:signals/signals.dart';
 
 import '../../../../core/errors/result.dart';
@@ -18,6 +19,7 @@ class WorkspaceProvider {
   final isLoading = Signal<bool>(false);
   final error = Signal<String?>(null);
   final activeTab = Signal<int>(0);
+  bool _isMutating = false;
 
   WorkspaceProvider({required this.companyId, WorkspaceRepository? repository})
       : _repository = repository ?? WorkspaceRepository();
@@ -60,47 +62,109 @@ class WorkspaceProvider {
   }
 
   Future<void> createNote(String title, String body) async {
-    final result = await _repository.createNote(
-      companyId: companyId, title: title, body: body,
-    );
-    if (result.isSuccess) notes.value = [result.data!, ...notes];
+    if (_isMutating) return;
+    _isMutating = true;
+    try {
+      final result = await _repository.createNote(
+        companyId: companyId, title: title, body: body,
+      );
+      if (result.isSuccess) {
+        notes.value = [result.data!, ...notes];
+      } else {
+        debugPrint('[WorkspaceProvider] createNote failed: ${result.error}');
+        error.value = result.error.toString();
+      }
+    } finally {
+      _isMutating = false;
+    }
   }
 
   Future<void> updateNote(String noteId, String title, String body) async {
-    final result = await _repository.updateNote(noteId: noteId, title: title, body: body);
-    if (result.isSuccess) {
-      notes.value = notes.map((n) => n.id == noteId
-          ? CompanyNote(id: n.id, companyId: n.companyId, title: title, body: body, createdAt: n.createdAt, updatedAt: DateTime.now())
-          : n).toList();
+    if (_isMutating) return;
+    _isMutating = true;
+    try {
+      final result = await _repository.updateNote(noteId: noteId, title: title, body: body);
+      if (result.isSuccess) {
+        notes.value = notes.map((n) => n.id == noteId
+            ? CompanyNote(id: n.id, companyId: n.companyId, title: title, body: body, createdAt: n.createdAt, updatedAt: DateTime.now())
+            : n).toList();
+      } else {
+        debugPrint('[WorkspaceProvider] updateNote failed: ${result.error}');
+        error.value = result.error.toString();
+      }
+    } finally {
+      _isMutating = false;
     }
   }
 
   Future<void> deleteNote(String noteId) async {
-    final result = await _repository.deleteNote(noteId);
-    if (result.isSuccess) notes.value = notes.where((n) => n.id != noteId).toList();
+    if (_isMutating) return;
+    _isMutating = true;
+    try {
+      final result = await _repository.deleteNote(noteId);
+      if (result.isSuccess) {
+        notes.value = notes.where((n) => n.id != noteId).toList();
+      } else {
+        debugPrint('[WorkspaceProvider] deleteNote failed: ${result.error}');
+        error.value = result.error.toString();
+      }
+    } finally {
+      _isMutating = false;
+    }
   }
 
   Future<void> createThesis(String title, String stance, {String? summary, String? bullCase, String? bearCase, String conviction = 'low'}) async {
-    final result = await _repository.createThesis(
-      companyId: companyId, title: title, stance: stance, summary: summary, bullCase: bullCase, bearCase: bearCase, conviction: conviction,
-    );
-    if (result.isSuccess) theses.value = [result.data!, ...theses];
+    if (_isMutating) return;
+    _isMutating = true;
+    try {
+      final result = await _repository.createThesis(
+        companyId: companyId, title: title, stance: stance, summary: summary, bullCase: bullCase, bearCase: bearCase, conviction: conviction,
+      );
+      if (result.isSuccess) {
+        theses.value = [result.data!, ...theses];
+      } else {
+        debugPrint('[WorkspaceProvider] createThesis failed: ${result.error}');
+        error.value = result.error.toString();
+      }
+    } finally {
+      _isMutating = false;
+    }
   }
 
   Future<void> updateThesis(String thesisId, String title, String stance, {String? summary, String? bullCase, String? bearCase, String? conviction}) async {
-    final result = await _repository.updateThesis(
-      thesisId: thesisId, title: title, stance: stance, summary: summary, bullCase: bullCase, bearCase: bearCase, conviction: conviction,
-    );
-    if (result.isSuccess) {
-      theses.value = theses.map((t) => t.id == thesisId
-          ? CompanyThesis(id: t.id, companyId: t.companyId, title: title, stance: stance, summary: summary ?? t.summary, bullCase: bullCase ?? t.bullCase, bearCase: bearCase ?? t.bearCase, assumptions: t.assumptions, catalysts: t.catalysts, risks: t.risks, exitConditions: t.exitConditions, conviction: conviction ?? t.conviction, createdAt: t.createdAt, updatedAt: DateTime.now())
-          : t).toList();
+    if (_isMutating) return;
+    _isMutating = true;
+    try {
+      final result = await _repository.updateThesis(
+        thesisId: thesisId, title: title, stance: stance, summary: summary, bullCase: bullCase, bearCase: bearCase, conviction: conviction,
+      );
+      if (result.isSuccess) {
+        theses.value = theses.map((t) => t.id == thesisId
+            ? CompanyThesis(id: t.id, companyId: t.companyId, title: title, stance: stance, summary: summary ?? t.summary, bullCase: bullCase ?? t.bullCase, bearCase: bearCase ?? t.bearCase, assumptions: t.assumptions, catalysts: t.catalysts, risks: t.risks, exitConditions: t.exitConditions, conviction: conviction ?? t.conviction, createdAt: t.createdAt, updatedAt: DateTime.now())
+            : t).toList();
+      } else {
+        debugPrint('[WorkspaceProvider] updateThesis failed: ${result.error}');
+        error.value = result.error.toString();
+      }
+    } finally {
+      _isMutating = false;
     }
   }
 
   Future<void> deleteThesis(String thesisId) async {
-    final result = await _repository.deleteThesis(thesisId);
-    if (result.isSuccess) theses.value = theses.where((t) => t.id != thesisId).toList();
+    if (_isMutating) return;
+    _isMutating = true;
+    try {
+      final result = await _repository.deleteThesis(thesisId);
+      if (result.isSuccess) {
+        theses.value = theses.where((t) => t.id != thesisId).toList();
+      } else {
+        debugPrint('[WorkspaceProvider] deleteThesis failed: ${result.error}');
+        error.value = result.error.toString();
+      }
+    } finally {
+      _isMutating = false;
+    }
   }
 
   String get researchStatus {
