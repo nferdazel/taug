@@ -1,290 +1,308 @@
 # TAUG Decision Log
 
-**Created:** 2026-06-21
+**Date:** 2026-06-22
 **Purpose:** Record every meaningful decision with context, options, and reasoning.
 
 ---
 
-## Decision 1: Use MutationState Pattern vs Simple Error Propagation
+## Decision 1: Surface Lessons in Thesis Dialog
 
-**Date:** 2026-06-21
-**Phase:** B1.1
-**Context:** 17 mutation methods silently swallow failures. Users get zero feedback when operations fail.
+**Context:** Lessons are siloed in Portfolio → Lessons tab. When creating a new thesis, users cannot access prior lessons. The learning loop is broken.
 
-**Options Considered:**
-1. Create `MutationState<T>` sealed class with 28 per-mutation signals
-2. Simple `error.value` propagation with `_isMutating` guards
-3. MutationState with 1 signal per provider (6 total)
-
-**Proposed By:** Plan Agent
-**Challenged By:** God-1, Reviewer
+**Alternatives:**
+1. Inline collapsible section at top of thesis dialog
+2. Sidebar panel next to thesis dialog
+3. Notification/toast when thesis dialog opens
+4. Separate "Lessons" page (already exists)
 
 **Arguments For (Option 1):**
-- Complete state tracking per mutation
-- Type-safe error handling
-- Future-proof for concurrent mutations
+- Context where decisions are made
+- One glance away from thesis creation
+- Keeps dialog clean (collapsible)
+- No layout changes required
 
 **Arguments Against (Option 1):**
-- 28 new signals is over-engineered
-- UI is modal — only 1 mutation runs at a time per provider
-- Maintenance burden outweighs benefit
-- Builds on dead infrastructure (Failure types unused)
+- Adds height to dialog
+- May distract from thesis creation
 
-**Arguments For (Option 2):**
-- Minimal changes, maximum impact
-- Fixes the actual bug (silent failures)
-- No new abstractions in a hotfix
-- Can upgrade later if needed
+**Final Choice:** Option 1 (Inline collapsible section)
 
-**Arguments Against (Option 2):**
-- Less granular state tracking
-- Error signal overloaded with read errors
-
-**Final Decision:** Option 2 (Simple error propagation)
-**Decision Owner:** Build Orchestrator
-**Reasoning:** Reviewer correctly identified that both plans miss the root cause — mutations silently swallow failures. The hotfix should fix bugs, not add architecture. MutationState can be added in B1.2 if needed.
 **Consequences:**
-- 17 mutations now propagate errors with debugPrint
-- `_isMutating` guards prevent double-submit
-- Stale errors cleared before each mutation
-- Separate `mutationError` signal for WorkspaceProvider to avoid full-page error regression
+- New repository method: `getLessonsForCompany()`
+- New signal in WorkspaceProvider: `companyLessons`
+- New widget: `_LessonsSection` in thesis dialog
+- ~100 lines of code across 3 files
 
 ---
 
-## Decision 2: Dialog Behavior on Mutation Failure
+## Decision 2: Pre-populate Position Dialog from Thesis
 
-**Date:** 2026-06-21
-**Phase:** B1.1
-**Context:** Dialogs close immediately on fire-and-forget mutations, even on failure.
+**Context:** "Create Position" button navigates to `/portfolio-workspace` with no parameters. User must re-find company and re-select thesis. ~60 seconds of wasted effort.
 
-**Options Considered:**
-1. All dialogs stay open on failure
-2. All dialogs close with error snackbar
-3. Split by mutation type (forms stay open, confirmations close)
+**Alternatives:**
+1. Pass context via query parameters (companyId, thesisId, conviction)
+2. Pass context via route state
+3. Open dialog inline on company page
+4. Store context in global signal
 
-**Proposed By:** God-1
-**Challenged By:** Reviewer
+**Arguments For (Option 1):**
+- Simple, stateless, URL-shareable
+- Works with go_router existing patterns
+- No new state management needed
+- User can bookmark/share pre-populated URLs
+
+**Arguments Against (Option 1):**
+- URL length limits (unlikely to hit)
+- Query parameters visible in URL
+
+**Final Choice:** Option 1 (Query parameters)
+
+**Consequences:**
+- `onCreatePosition` builds URI with query parameters
+- Add Position dialog reads parameters on open
+- Auto-fetches theses for pre-selected company
+- Zero re-work for user
+
+---
+
+## Decision 3: Wire markReviewNeeded to Position Lifecycle
+
+**Context:** `markReviewNeeded()` method exists in repository but is never called from UI. Review workflow is half-implemented.
+
+**Alternatives:**
+1. Add "Mark for Review" to position card menu
+2. Auto-trigger on time-based threshold
+3. Auto-trigger on thesis update
+4. Remove the feature (dead code)
+
+**Arguments For (Option 1):**
+- User control over review timing
+- Minimal implementation (menu item + provider method)
+- Immediate visual feedback (warning border + badge)
+- Consistent with existing PopupMenuButton pattern
+
+**Arguments Against (Option 1):**
+- Manual only (no automation)
+
+**Final Choice:** Option 1 (Manual "Mark for Review")
+
+**Consequences:**
+- `markReviewNeeded()` method added to PortfolioWorkspaceProvider
+- "Mark for Review" added to position card PopupMenuButton
+- Position immediately gets warning border + "Review Needed" badge
+- Count increments in header
+
+---
+
+## Decision 4: Add "Apply to New Research" on Lesson Cards
+
+**Context:** Lessons tab shows lessons with no path back to company or thesis. Lessons are historical records, not active intelligence.
+
+**Alternatives:**
+1. "Apply to New Research" button → navigates to company Research tab
+2. "Create New Thesis" button → opens thesis dialog with lesson context
+3. "View Company" button (already exists) → user manually navigates to Research
+4. Lesson linking to thesis fields
+
+**Arguments For (Option 1):**
+- Simple navigation to company Research tab
+- User can create new thesis informed by lesson
+- Minimal implementation (button + navigation)
+- Closes learning → research loop
+
+**Arguments Against (Option 1):**
+- Doesn't pre-populate thesis dialog with lesson content
+- User still needs to manually reference lesson
+
+**Final Choice:** Option 1 (Navigate to company Research tab)
+
+**Consequences:**
+- `onNewResearch` callback added to `_LessonCard`
+- "Apply to New Research" button with science icon
+- Navigates to `/companies/${companyId}/research`
+- Lessons become active intelligence, not dead-end records
+
+---
+
+## Decision 5: Company-First Lesson Cascade
+
+**Context:** When surfacing lessons during thesis creation, what lessons are relevant?
+
+**Alternatives:**
+1. Same company + same stance → most relevant
+2. Same company, any stance → company history
+3. Same stance, different company → stance patterns
+4. All lessons → global patterns
+5. ML-based relevance ranking
+
+**Arguments For (Option 1-4 cascade):**
+- Company-specific lessons most actionable
+- Stance patterns help calibrate confidence
+- Global stats provide baseline context
+- No ML complexity
+
+**Arguments Against (Option 1-4 cascade):**
+- May miss cross-company patterns
+- No intelligent ranking
+
+**Final Choice:** Prioritized cascade (1→2→3→4)
+
+**Consequences:**
+- Lessons sorted by relevance (company > stance > all)
+- Micro-summaries at each level
+- "Your prior bullish NVDA thesis was correct"
+- "Your bullish theses are correct 65% of the time"
+
+---
+
+## Decision 6: Micro-summaries Over Dashboards
+
+**Context:** How should lesson patterns be surfaced?
+
+**Alternatives:**
+1. Micro-summaries (inline text, 1-2 lines)
+2. Mini-charts (sparklines, bar charts)
+3. Separate analytics dashboard
+4. Notification/toast
+
+**Arguments For (Option 1):**
+- Dense information, no decoration
+- Consistent with terminal aesthetic
+- No new chart dependencies
+- Immediate comprehension
+
+**Arguments Against (Option 1):**
+- Limited visual appeal
+- May miss complex patterns
+
+**Final Choice:** Option 1 (Micro-summaries)
+
+**Consequences:**
+- "3 prior NVDA positions: 2 correct, 1 partial"
+- "Your high-conviction theses: 70% correct"
+- No new dependencies
+- Consistent with design philosophy
+
+---
+
+## Decision 7: Passive Monitoring in MVP
+
+**Context:** Should TAUG actively monitor metrics against invalidation thresholds?
+
+**Alternatives:**
+1. Passive monitoring (view-based, user visits thesis)
+2. Active polling (Edge Function on cron)
+3. Real-time monitoring (WebSocket)
+4. No monitoring (manual only)
+
+**Arguments For (Option 1):**
+- No new infrastructure
+- No API costs
+- User sees breaches when they visit thesis
+- Can upgrade to active later
+
+**Arguments Against (Option 1):**
+- User may miss breaches
+- No proactive alerts
+
+**Final Choice:** Option 1 (Passive monitoring)
+
+**Consequences:**
+- `assumption_check_v` view computes breach status
+- Client fetches view when thesis is displayed
+- Breach indicators shown inline
+- Can add Edge Function cron later
+
+---
+
+## Decision 8: Thesis Lifecycle with Freshness
+
+**Context:** Theses have no status field in Dart model. Research ages silently.
+
+**Alternatives:**
+1. Add `status` field (open/under_review/closed/archived)
+2. Add `last_reviewed_at` column + compute freshness
+3. Add both status and freshness
+4. Keep current (no lifecycle)
 
 **Arguments For (Option 3):**
-- Form data is sacred — never discard user input on transient network error
-- Confirmation dialogs have no data to preserve — close with snackbar
-- Settings toggles — revert UI state, show snackbar
+- Status enables workflow transitions
+- Freshness enables visual indicators
+- "NEEDS REVIEW" section possible
+- "Mark Reviewed" action possible
 
 **Arguments Against (Option 3):**
-- More complex implementation
-- Two patterns to maintain
+- More schema changes
+- More UI complexity
 
-**Final Decision:** Option 3 (Split by mutation type)
-**Decision Owner:** Build Orchestrator
-**Reasoning:** Bloomberg and professional terminals use this pattern. Form data preservation is critical for research workflow.
+**Final Choice:** Option 3 (Status + freshness)
+
 **Consequences:**
-- `_showDeleteConfirmation` now awaits mutation and checks error before closing
-- `_AddHoldingDialog` stays open on failure (not yet implemented)
-- Settings toggles revert on failure (not yet implemented)
+- `last_reviewed_at` column on `investment_theses`
+- `researchFreshness` getter (fresh/aging/stale/expired)
+- Status badge + freshness badge on thesis cards
+- "NEEDS REVIEW" section in Research Workspace
+- "Mark Reviewed" action resets freshness
 
 ---
 
-## Decision 3: Thesis Dialog Field Completeness
+## Decision 9: MVP Scope — P0 Only
 
-**Date:** 2026-06-21
-**Phase:** B2
-**Context:** CompanyThesis model has 10 fields but dialog only captures 6.
+**Context:** Research intelligence has 5 major features (Questions, Evidence, Invalidation, Lifecycle, Freshness). What ships first?
 
-**Options Considered:**
-1. Add all 4 missing fields (assumptions, catalysts, risks, exitConditions)
-2. Consolidate fields (e.g., "risks & assumptions" as one)
-3. Keep dialog minimal, add fields later
-
-**Proposed By:** Plan Agent
-**Challenged By:** God-3
+**Alternatives:**
+1. P0 only (expose fields, freshness, Mark Reviewed)
+2. P0 + P1 (add Questions, Assumptions, Conditions)
+3. P0 + P1 + P2 (add Evidence linking, Reviews)
+4. Everything at once
 
 **Arguments For (Option 1):**
-- These fields are critical for Research → Decision workflow
-- Without them, thesis is just a summary with stance
-- Model already has the fields — just wire them up
+- Fastest to ship
+- 60% of perceived intelligence upgrade
+- No new tables (except `last_reviewed_at`)
+- Can validate with users before building more
 
 **Arguments Against (Option 1):**
-- Dialog becomes more complex
-- More fields = more friction to create thesis
+- Missing structured invalidation
+- Missing research questions
 
-**Final Decision:** Option 1 (Add all 4 missing fields)
-**Decision Owner:** Build Orchestrator
-**Reasoning:** The difference between a "note" and a structured investment thesis is these fields. Research → Decision transition requires structured thinking.
+**Final Choice:** Option 1 (P0 only)
+
 **Consequences:**
-- Thesis dialog now captures all 10 fields
-- ThesisCard displays all populated sections
-- All fields optional except title, stance, conviction
+- 1 migration + 9 file modifications
+- No new tables, no new pages
+- Ships in 1-2 sprints
+- Validates intelligence approach before deeper investment
 
 ---
 
-## Decision 4: Thesis → Position Bridge Implementation
+## Decision 10: Deduplicate Stance Badges
 
-**Date:** 2026-06-21
-**Phase:** B2
-**Context:** Portfolio positions have thesisId but no way to link them in UI.
+**Context:** Three stance badge implementations exist: `_StanceBadge`, `_StanceChipSmall`, `_StanceChip`. Maintenance burden and inconsistency.
 
-**Options Considered:**
-1. Thesis selector in Add Position dialog
-2. "Create Position" button on thesis cards
-3. Both (full bridge)
-
-**Proposed By:** God-3
-**Challenged By:** Reviewer
-
-**Arguments For (Option 3):**
-- Closes the Research → Decision → Portfolio loop
-- Two entry points serve different user flows
-- Maximum workflow connectivity
-
-**Arguments Against (Option 3):**
-- More UI to maintain
-- Thesis selector adds complexity to Add Position dialog
-
-**Final Decision:** Option 3 (Full bridge)
-**Decision Owner:** Build Orchestrator
-**Reasoning:** This is the single most important missing piece in the research workflow. Both entry points are needed for different contexts.
-**Consequences:**
-- Add Position dialog fetches theses for selected company
-- Thesis selector auto-populates conviction
-- ThesisCard has "Create Position" button
-- Research → Decision → Portfolio workflow is now continuous
-
----
-
-## Decision 5: PortfolioProvider Naming Collision
-
-**Date:** 2026-06-21
-**Phase:** B2
-**Context:** Two classes named `PortfolioProvider` in the same feature.
-
-**Options Considered:**
-1. Rename workspace variant to `PortfolioWorkspaceProvider`
-2. Rename holdings variant to `PortfolioHoldingsProvider`
-3. Keep both, use import aliases
-
-**Proposed By:** God-3
-**Challenged By:** Reviewer
+**Alternatives:**
+1. Single `StanceBadge` widget with size enum
+2. Keep separate implementations
+3. Use existing `ConvictionBadge` pattern
 
 **Arguments For (Option 1):**
-- Workspace variant is the new canonical implementation
-- Holdings variant is legacy
-- Clear naming indicates purpose
+- Single source of truth
+- Consistent rendering
+- -123 lines net reduction
+- Easier to maintain
 
 **Arguments Against (Option 1):**
-- Breaking change for imports
-- Need to update all references
+- Breaking change for existing imports
+- Need to update 4 files
 
-**Final Decision:** Option 1 (Rename workspace variant)
-**Decision Owner:** Build Orchestrator
-**Reasoning:** The workspace variant is the primary implementation for the research workflow. Clear naming prevents confusion.
+**Final Choice:** Option 1 (Single `StanceBadge` widget)
+
 **Consequences:**
-- `PortfolioWorkspaceProvider` class name
-- Updated imports in portfolio_workspace_page.dart
-- Legacy holdings provider unchanged
-
----
-
-## Decision 6: Quality Score Breakdown Granularity
-
-**Date:** 2026-06-21
-**Phase:** B3
-**Context:** `getQualityScore` only fetches `overall_score`. Users can't understand WHY quality is low.
-
-**Options Considered:**
-1. Fetch all 7 component scores + component_details
-2. Fetch only overall_score + freshness_score
-3. Keep current, add explanation text
-
-**Proposed By:** Plan Agent
-**Challenged By:** God-2
-
-**Arguments For (Option 1):**
-- Users need to understand the WHY behind quality scores
-- Component_details has period_count, item_count, etc.
-- Backend already stores all components
-
-**Arguments Against (Option 1):**
-- More data to fetch and display
-- UI becomes more complex
-
-**Final Decision:** Option 1 (Fetch all components)
-**Decision Owner:** Build Orchestrator
-**Reasoning:** A quality score of "65%" is meaningless without context. Is it low because of missing data, failed validations, or staleness? Users need the breakdown.
-**Consequences:**
-- QualityScoreDetail model with 7 scores + component_details
-- QualityBreakdownPopover widget
-- Tappable quality badge in company header
-- 3 micro-commits for implementation
-
----
-
-## Decision 7: Performance Optimization Priority
-
-**Date:** 2026-06-21
-**Phase:** B5
-**Context:** Multiple performance issues identified in analysis.
-
-**Options Considered:**
-1. Fix --wasm flag only (minimal)
-2. Fix --wasm + RepaintBoundary + itemExtent
-3. Fix all performance issues (including compute() offloading)
-
-**Proposed By:** Plan Agent
-**Challenged By:** Perf Agent
-
-**Arguments For (Option 3):**
-- WASM compilation is non-negotiable
-- RepaintBoundary on price cells is highest-impact rendering fix
-- itemExtent eliminates per-child measurement passes
-- compute() offloading prevents main thread blocking
-
-**Arguments Against (Option 3):**
-- More changes = more risk
-- Some optimizations may not be needed yet
-
-**Final Decision:** Option 3 (Fix all performance issues)
-**Decision Owner:** Build Orchestrator
-**Reasoning:** Performance is critical for a financial terminal. All identified issues should be fixed before production.
-**Consequences:**
-- --wasm flag in deploy workflow
-- RepaintBoundary on PriceCell, ChangeCell, VolumeCell, StatusDot
-- itemExtent on ListView.builder (news: 80px, portfolio: 120px)
-- compute() offloading for getTopMovers
-
----
-
-## Decision 8: Agent Delegation Strategy
-
-**Date:** 2026-06-21
-**Phase:** B3, B5
-**Context:** Multiple independent tasks can be parallelized.
-
-**Options Considered:**
-1. Sequential implementation (one agent at a time)
-2. Parallel delegation (multiple agents simultaneously)
-3. Mixed (sequential for dependencies, parallel for independent)
-
-**Proposed By:** Build Orchestrator
-**Challenged By:** None
-
-**Arguments For (Option 2):**
-- Independent tasks can be parallelized
-- Faster completion
-- Better resource utilization
-
-**Arguments Against (Option 2):**
-- More coordination needed
-- Potential conflicts if agents modify same files
-- Need to verify all changes compile together
-
-**Final Decision:** Option 2 (Parallel delegation)
-**Decision Owner:** Build Orchestrator
-**Reasoning:** Tasks are independent and touch different files. Parallel delegation maximizes throughput.
-**Consequences:**
-- B3: 3 agents (frontend-1, frontend-2, god-1) worked in parallel
-- B5: 4 agents (devops, frontend-1, frontend-2, backend-1) worked in parallel
-- All changes compiled successfully together
-- 16 micro-commits total
+- `StanceBadge` widget in `status_badges.dart`
+- `StanceBadgeSize` enum (regular/small)
+- Removed 3 private implementations
+- Updated 4 files
+- -123 lines net
 
 ---
 

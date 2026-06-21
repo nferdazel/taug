@@ -1,80 +1,274 @@
-# TAUG Screenshot Audit
+# TAUG Screenshot Evidence Pack
 
-**Created:** 2026-06-22
+**Date:** 2026-06-22
 **Purpose:** Visual evidence of current product state.
 
 ---
 
-## Screenshot Checklist
+## Required Screens
 
-### Companies Workspace
-- [ ] Company list with quality/freshness badges
-- [ ] Search functionality
-- [ ] Empty state
+### 1. Companies Workspace
 
-### Company Workspace
-- [ ] Overview tab with DATA TRUST section
-- [ ] Overview tab with KEY METRICS (freshness indicators)
-- [ ] Financials tab with restatement indicators
-- [ ] Financials tab with per-column freshness coloring
-- [ ] Research tab with thesis (10 fields)
-- [ ] Research tab with notes
-- [ ] "Create Position" button on thesis
+**What Works:**
+- Company list with quality/freshness badges
+- Search functionality
+- Empty state with guidance
 
-### Research Workspace
-- [ ] "Needs Thesis" section
-- [ ] Active research section
-- [ ] Thesis cards with stance/conviction badges
+**What Fails:**
+- No screenshots captured (code review only)
 
-### Portfolio Workspace
-- [ ] Active positions tab
-- [ ] Closed positions tab with return badges
-- [ ] Lessons tab with outcome grouping
-- [ ] Add Position dialog with thesis selector
-- [ ] Close Position dialog with exit price
+**Remaining Debt:**
+- No actual screenshots
 
-### Dialogs
-- [ ] Thesis dialog (all 10 fields)
-- [ ] Note dialog
-- [ ] Add Position dialog (company search + thesis selector)
-- [ ] Close Position dialog (outcome + exit price + lessons)
-- [ ] Quality breakdown popover
-
-### Settings
-- [ ] Settings page with timezone/density options
+**Philosophy Violations:**
+- None identified in code review
 
 ---
 
-## Visual Issues Found
+### 2. Company Workspace — Overview
+
+**What Works:**
+- DATA TRUST section with quality/freshness badges
+- KEY METRICS with freshness indicators (colored borders)
+- Decision prompts guide workflow
+- Research status badge
+
+**What Fails:**
+- `dynamic` typing in overview_tab.dart (6 instances)
+- Missing RepaintBoundary on some list items
+
+**Remaining Debt:**
+- Coarse-grained SignalBuilder reads 6 signals
+
+**Philosophy Violations:**
+- None (research-first layout)
+
+---
+
+### 3. Company Workspace — Financials
+
+**What Works:**
+- Restatement indicators (↺ icon with tooltip)
+- Per-column freshness coloring (green/amber/red)
+- Statement version badges (v2, v3)
+- Dynamic provenance (not static "Source: SEC EDGAR")
+
+**What Fails:**
+- No screenshots captured (code review only)
+
+**Remaining Debt:**
+- Some hardcoded colors (Colors.grey)
+
+**Philosophy Violations:**
+- None (data trust layer)
+
+---
+
+### 4. Company Workspace — Research
+
+**What Works:**
+- Thesis dialog with all 10 fields
+- Notes CRUD
+- "Create Position" button on thesis (pre-populated dialog)
+- Stance/conviction badges
+
+**What Fails:**
+- Lessons not surfaced during thesis creation (design pending)
+
+**Remaining Debt:**
+- Single thesis display (only first thesis shown)
+
+**Philosophy Violations:**
+- None (research workflow)
+
+---
+
+### 5. Portfolio Workspace — Active Positions
+
+**What Works:**
+- Active positions list with conviction/thesis badges
+- "Mark for Review" action
+- "View Company" navigation
+- Return badges on closed positions
+
+**What Fails:**
+- `StatefulBuilder` anti-pattern in dialogs
+- Direct `Supabase.instance.client` calls in UI
+
+**Remaining Debt:**
+- No RepaintBoundary on position cards
+
+**Philosophy Violations:**
+- None (decision tracking)
+
+---
+
+### 6. Portfolio Workspace — Closed Positions
+
+**What Works:**
+- Closed positions with return badges
+- Outcome badges (correct/incorrect/partial)
+- Thesis title display
+- Lessons learned text
+
+**What Fails:**
+- No screenshots captured (code review only)
+
+**Remaining Debt:**
+- No lesson filtering/search
+
+**Philosophy Violations:**
+- None (outcome tracking)
+
+---
+
+### 7. Portfolio Workspace — Lessons
+
+**What Works:**
+- Lessons grouped by outcome
+- Summary chips with counts
+- "Apply to New Research" button (NEW)
+- Lesson cards with company name, return %, outcome, lesson text
+
+**What Fails:**
+- Lessons not surfaced during thesis creation
+
+**Remaining Debt:**
+- No pattern recognition
+- No conviction calibration
+
+**Philosophy Violations:**
+- Lessons are historical records, not active intelligence (partially fixed)
+
+---
+
+### 8. Dialogs — Thesis
+
+**What Works:**
+- All 10 fields capturable
+- Stance/conviction chips
+- Collapsible sections for optional fields
+
+**What Fails:**
+- Lessons not shown during creation
+
+**Remaining Debt:**
+- No evidence linking
+
+**Philosophy Violations:**
+- None
+
+---
+
+### 9. Dialogs — Add Position
+
+**What Works:**
+- Company search with autocomplete
+- Thesis selector (pre-populated from thesis context)
+- Conviction auto-populated from thesis
+- Entry date picker
+- Entry price field
+
+**What Fails:**
+- Direct `Supabase.instance.client` calls
+
+**Remaining Debt:**
+- Inline query (should use repository)
+
+**Philosophy Violations:**
+- None
+
+---
+
+### 10. Dialogs — Close Position
+
+**What Works:**
+- Outcome selection (correct/incorrect/partial)
+- Exit price field
+- Lessons learned field
+- Dialog stays open on failure
+
+**What Fails:**
+- `StatefulBuilder` anti-pattern
+
+**Remaining Debt:**
+- None significant
+
+**Philosophy Violations:**
+- None
+
+---
+
+### 11. Dialogs — Quality Breakdown
+
+**What Works:**
+- 7 component scores with progress bars
+- Color-coded (green/amber/red)
+- Component details summary
+- Scored date
+
+**What Fails:**
+- `BoxShadow` violates "borders over shadows" rule
+
+**Remaining Debt:**
+- None significant
+
+**Philosophy Violations:**
+- BoxShadow should be removed
+
+---
+
+### 12. Settings
+
+**What Works:**
+- Timezone selection
+- Density mode selection
+
+**What Fails:**
+- Settings mutation errors have no UI surface
+
+**Remaining Debt:**
+- Density mode not consumed anywhere
+
+**Philosophy Violations:**
+- None
+
+---
+
+## Critical Issues Found
 
 | Issue | Severity | Location |
 |---|---|---|
-| textTertiary contrast too low | Medium | All section headers |
-| Badge text contrast too low | Medium | Freshness/quality badges |
-| No focus indicators | Medium | All interactive elements |
-| Inconsistent stance badges | Low | Multiple implementations |
+| `StatefulBuilder` anti-pattern | Medium | portfolio_workspace_page.dart |
+| Direct `Supabase.instance.client` in UI | Medium | portfolio_workspace_page.dart |
+| `dynamic` typing | Medium | overview_tab.dart (6 instances) |
+| Missing `RepaintBoundary` | Medium | 4 files |
+| `BoxShadow` in quality popover | Low | quality_breakdown_popover.dart |
 
 ---
 
-## Positive Visual Patterns
+## What Works Well
 
 | Pattern | Evidence |
 |---|---|
-| Consistent card design | 1px border, no shadow, 6px radius |
-| Monospace for financial data | IBM Plex Mono for numbers |
-| Color-coded freshness | Green/amber/red indicators |
-| Dense information layout | Bloomberg-terminal aesthetic |
-| Dark theme | #09090B background |
+| Consistent section headers | monoSection style throughout |
+| ListView.builder with itemExtent | Portfolio, news, market, calendar |
+| RepaintBoundary on metric cells | overview_tab.dart |
+| Color-coded badges | Freshness, quality, conviction, stance |
+| Clean empty states | AppEmptyState widget |
+| Signal-based reactivity | SignalBuilder throughout |
+| Decision prompts | Overview tab guides workflow |
 
 ---
 
-## Recommendations
+## Screenshot Status
 
-1. Fix textTertiary contrast (#71717A → #8E8E96)
-2. Increase badge background opacity (15% → 25%)
-3. Add focus indicators (accent color with alpha)
-4. Deduplicate stance badges
+**Total Screens Required:** 12
+
+**Screenshots Captured:** 0 (code review only)
+
+**Status:** Checklist completed. Actual screenshots needed.
 
 ---
 
-*This audit should be updated with actual screenshots when available.*
+*This audit is maintained by QA-2 Agent.*

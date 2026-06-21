@@ -1,450 +1,171 @@
 # TAUG Agent Contribution Report
 
-**Created:** 2026-06-21
+**Date:** 2026-06-22
 **Purpose:** Track who contributed what.
 
 ---
 
-## Build Orchestrator (Primary Agent)
+## Agent Contributions
 
-**Responsibility:** Main orchestrator, implementation, coordination
+### UX Agent
+
+**Responsibility:** Learning loop design, workflow maturity audit
+
 **Deliverables:**
-- All 16 micro-commits
-- Agent delegation and coordination
-- Final plan decisions
-- Documentation updates
+- Learning loop design document
+- Workflow maturity audit
+- Product maturity audit
 
 **Accepted Work:**
-- All proposed work accepted by agents
-- Final decision authority on all disagreements
+- Surface company lessons in thesis dialog (design)
+- Company-first lesson cascade (design)
+- Micro-summaries over dashboards (design)
 
 **Rejected Work:**
-- MutationState<T> pattern (over-engineered)
-- 28 per-mutation signals (maintenance burden)
+- Sidebar panel for lessons (too complex)
+- ML-based relevance ranking (over-engineered)
 
-**Open Concerns:**
-- Zero test coverage (deferred)
-- Inline Supabase queries (deferred)
+**Open Risks:**
+- Learning loop not yet implemented
+- Pattern recognition not yet implemented
 
 ---
 
-## Plan Agent
+### God-2 Agent
 
-**Responsibility:** Read-only planning and architecture
+**Responsibility:** Workflow continuity fixes
+
 **Deliverables:**
-- B1.1 strategy (mutation feedback)
-- B2 strategy (product maturity)
-- B3 strategy (data trust layer)
-- B5 strategy (performance & scale)
+- Thesis → Position context loss fix
+- markReviewNeeded activation
+- Lessons → Research navigation
 
 **Accepted Work:**
-- All strategies accepted as foundation
-- Priority ordering accepted
+- Pre-populate position dialog via query parameters
+- "Mark for Review" in position menu
+- "Apply to New Research" on lesson cards
 
 **Rejected Work:**
-- MutationState<T> pattern (challenged by God-1, Reviewer)
-- 28 per-mutation signals (challenged by God-1, Reviewer)
+- Global signal for context (query parameters simpler)
+- Auto-trigger for review (manual is sufficient)
 
-**Open Concerns:**
-- None — all plans were refined through review
+**Open Risks:**
+- Position → Company context loss not fixed
 
 ---
 
-## God-1 Agent
+### God-3 Agent
 
-**Responsibility:** All-rounder supervisor, review, implementation
+**Responsibility:** Research intelligence design
+
 **Deliverables:**
-- B1.1 strategy review (signal count reduction)
-- B3 data trust panel implementation
-- Quality progress bars in overview tab
+- Research intelligence design document
+- Research Questions schema
+- Evidence Tracking schema
+- Invalidation Conditions schema
+- Thesis Lifecycle design
+- MVP specification
 
 **Accepted Work:**
-- Signal count reduction recommendation accepted
-- Dialog behavior split recommendation accepted
-- Data trust panel implementation accepted
+- Research Questions as new entity
+- Invalidation Conditions as structured triggers
+- Thesis Lifecycle with freshness
+- Passive monitoring in MVP
 
 **Rejected Work:**
-- None — all contributions accepted
+- Active polling (too complex for MVP)
+- ML-based invalidation (over-engineered)
+- Real-time monitoring (not needed)
 
-**Open Concerns:**
-- None
+**Open Risks:**
+- No implementation of any research intelligence features
 
 ---
 
-## God-2 Agent
+### Designer Agent
 
-**Responsibility:** All-rounder supervisor, review
+**Responsibility:** Design maturity fixes
+
 **Deliverables:**
-- B3 strategy review (quality granularity)
+- textTertiary contrast fix
+- Badge contrast improvement
+- Stance badges deduplication
+- Design maturity audit
 
 **Accepted Work:**
-- Quality granularity decision accepted
+- textTertiary color change (#71717A → #8E8E96)
+- Badge alpha increase (0.15 → 0.20)
+- Single StanceBadge widget with size enum
 
 **Rejected Work:**
-- Simpler quality fetch (challenged by Plan Agent)
-
-**Open Concerns:**
-- None
-
----
-
-## God-3 Agent
-
-**Responsibility:** All-rounder supervisor, review
-**Deliverables:**
-- B2 strategy review (Thesis → Position bridge)
-- Critical missing piece identification
-
-**Accepted Work:**
-- Thesis → Position bridge prioritization accepted
-- Full bridge implementation (selector + button)
-
-**Rejected Work:**
-- None — all contributions accepted
-
-**Open Concerns:**
-- None
-
----
-
-## Reviewer Agent
-
-**Responsibility:** Independent code review
-**Deliverables:**
-- B1.1 challenge (6 findings)
-- B1.1 audit
-- B2 audit
-- B3 audit
-- B5 audit
-
-**Accepted Work:**
-- Stale error clearing recommendation accepted
-- Naming collision fix recommendation accepted
-- mutationError signal separation accepted
-
-**Rejected Work:**
-- MutationState<T> pattern (over-engineered)
-- 28 per-mutation signals (maintenance burden)
-
-**Open Concerns:**
-- Zero test coverage (high severity)
-- Settings mutation errors invisible (medium severity)
-- Inline Supabase queries (medium severity)
-
----
-
-## Frontend-1 Agent
-
-**Responsibility:** UI implementation, RepaintBoundary
-**Deliverables:**
-- B3 freshness indicators (DATA TRUST section, metric freshness)
-- B5 RepaintBoundary on price cells
-
-**Accepted Work:**
-- DATA TRUST section implementation accepted
-- RepaintBoundary wrapping accepted
-
-**Rejected Work:**
-- None — all contributions accepted
-
-**Open Concerns:**
-- None
-
----
-
-## Frontend-2 Agent
-
-**Responsibility:** UI implementation, itemExtent
-**Deliverables:**
-- B3 restatement indicators (financials tab)
-- B5 itemExtent on ListView.builder
-
-**Accepted Work:**
-- Restatement indicators accepted
-- itemExtent values accepted (news: 80px, portfolio: 120px)
-
-**Rejected Work:**
-- None — all contributions accepted
-
-**Open Concerns:**
-- None
-
----
-
-## Frontend-3 Agent
-
-**Responsibility:** UI implementation (not used in this session)
-**Deliverables:**
-- None — not delegated
-
-**Accepted Work:**
-- N/A
-
-**Rejected Work:**
-- N/A
-
-**Open Concerns:**
-- None
-
----
-
-## Backend-1 Agent
-
-**Responsibility:** Backend implementation, compute() offloading
-**Deliverables:**
-- B5 compute() offloading for getTopMovers
-
-**Accepted Work:**
-- compute() implementation accepted
-- Top-level function extraction accepted
-
-**Rejected Work:**
-- None — all contributions accepted
-
-**Open Concerns:**
-- None
-
----
-
-## Backend-2 Agent
-
-**Responsibility:** Backend implementation (not used in this session)
-**Deliverables:**
-- None — not delegated
-
-**Accepted Work:**
-- N/A
-
-**Rejected Work:**
-- N/A
-
-**Open Concerns:**
-- None
-
----
-
-## Backend-3 Agent
-
-**Responsibility:** Backend implementation (not used in this session)
-**Deliverables:**
-- None — not delegated
-
-**Accepted Work:**
-- N/A
-
-**Rejected Work:**
-- N/A
-
-**Open Concerns:**
-- None
-
----
-
-## DevOps Agent
-
-**Responsibility:** CI/CD, deployment
-**Deliverables:**
-- B5 --wasm flag in deploy workflow
-
-**Accepted Work:**
-- --wasm flag addition accepted
-
-**Rejected Work:**
-- None — all contributions accepted
-
-**Open Concerns:**
-- --wasm build not yet tested
-
----
-
-## QA Agent
-
-**Responsibility:** Testing, validation
-**Deliverables:**
-- QA report for all phases
-- Flutter analyze validation
-
-**Accepted Work:**
-- All features passed validation
-
-**Rejected Work:**
-- None — all features accepted
-
-**Open Concerns:**
-- Zero unit tests (critical gap)
-- Network failure scenarios not tested
-- Race conditions partially tested
-
----
-
-## Security Agent
-
-**Responsibility:** Security audit (not used in this session)
-**Deliverables:**
-- None — not delegated
-
-**Accepted Work:**
-- N/A
-
-**Rejected Work:**
-- N/A
-
-**Open Concerns:**
-- Data leak in portfolio positions (pre-existing)
-- Inline Supabase queries bypass repository pattern
-
----
-
-## Data Agent
-
-**Responsibility:** Data engineering (not used in this session)
-**Deliverables:**
-- None — not delegated
-
-**Accepted Work:**
-- N/A
-
-**Rejected Work:**
-- N/A
-
-**Open Concerns:**
-- Per-metric freshness not available from backend
-
----
-
-## Migration Agent
-
-**Responsibility:** Schema migrations (not used in this session)
-**Deliverables:**
-- None — not delegated
-
-**Accepted Work:**
-- N/A
-
-**Rejected Work:**
-- N/A
-
-**Open Concerns:**
-- None
-
----
-
-## UX Agent
-
-**Responsibility:** User experience research (not used in this session)
-**Deliverables:**
-- None — not delegated
-
-**Accepted Work:**
-- N/A
-
-**Rejected Work:**
-- N/A
-
-**Open Concerns:**
-- No keyboard shortcuts
-- Lessons view has no filtering/search
-
----
-
-## Designer Agent
-
-**Responsibility:** Visual design (not used in this session)
-**Deliverables:**
-- None — not delegated
-
-**Accepted Work:**
-- N/A
-
-**Rejected Work:**
-- N/A
-
-**Open Concerns:**
-- None
-
----
-
-## A11y Agent
-
-**Responsibility:** Accessibility audit (not used in this session)
-**Deliverables:**
-- None — not delegated
-
-**Accepted Work:**
-- N/A
-
-**Rejected Work:**
-- N/A
-
-**Open Concerns:**
-- No accessibility audit performed
-- No ARIA labels
+- Mini-charts for patterns (density over decoration)
+- Separate analytics dashboard (violates philosophy)
+
+**Open Risks:**
+- No focus indicators
 - No keyboard navigation
-- No screen reader testing
 
 ---
 
-## Writer-1 Agent
+### QA-2 Agent
 
-**Responsibility:** Technical documentation (not used in this session)
+**Responsibility:** Screenshot evidence
+
 **Deliverables:**
-- None — not delegated
+- Screenshot evidence document (20+ screenshots)
+- Critical issues found
 
 **Accepted Work:**
-- N/A
+- Comprehensive screenshot checklist
+- What works/fails/incomplete for each screen
+- Philosophy violations identified
 
 **Rejected Work:**
-- N/A
+- Actual screenshots (can't run app)
 
-**Open Concerns:**
-- None
+**Open Risks:**
+- No actual screenshots captured
+- Visual state not verified
 
 ---
 
-## Writer-2 Agent
+### Build Orchestrator
 
-**Responsibility:** Technical documentation (not used in this session)
+**Responsibility:** Coordination, final decisions, governance
+
 **Deliverables:**
-- None — not delegated
+- Executive status report
+- Production scorecard
+- Decision log
+- Disagreement log
+- Research OS evaluation
 
 **Accepted Work:**
-- N/A
+- All agent deliverables
+- P0.1 Phase 1 scope
+- MVP-only approach
 
 **Rejected Work:**
-- N/A
+- Full research intelligence implementation (too much for one phase)
 
-**Open Concerns:**
-- None
+**Open Risks:**
+- Learning loop not implemented
+- Research intelligence not implemented
 
 ---
 
 ## Summary
 
-| Agent | Used | Deliverables | Accepted | Rejected |
+| Agent | Deliverables | Accepted | Rejected | Risks |
 |---|---|---|---|---|
-| Build Orchestrator | ✅ | 16 commits | All | 2 |
-| Plan Agent | ✅ | 4 strategies | All | 0 |
-| God-1 | ✅ | 2 reviews, 1 impl | All | 0 |
-| God-2 | ✅ | 1 review | All | 0 |
-| God-3 | ✅ | 1 review | All | 0 |
-| Reviewer | ✅ | 4 audits | All | 2 |
-| Frontend-1 | ✅ | 2 impls | All | 0 |
-| Frontend-2 | ✅ | 2 impls | All | 0 |
-| Frontend-3 | ❌ | 0 | N/A | N/A |
-| Backend-1 | ✅ | 1 impl | All | 0 |
-| Backend-2 | ❌ | 0 | N/A | N/A |
-| Backend-3 | ❌ | 0 | N/A | N/A |
-| DevOps | ✅ | 1 impl | All | 0 |
-| QA | ✅ | 1 report | All | 0 |
-| Security | ❌ | 0 | N/A | N/A |
-| Data | ❌ | 0 | N/A | N/A |
-| Migration | ❌ | 0 | N/A | N/A |
-| UX | ❌ | 0 | N/A | N/A |
-| Designer | ❌ | 0 | N/A | N/A |
-| A11y | ❌ | 0 | N/A | N/A |
-| Writer-1 | ❌ | 0 | N/A | N/A |
-| Writer-2 | ❌ | 0 | N/A | N/A |
+| UX | 3 | 3 | 2 | 2 |
+| God-2 | 3 | 3 | 2 | 1 |
+| God-3 | 7 | 4 | 3 | 1 |
+| Designer | 4 | 3 | 2 | 2 |
+| QA-2 | 2 | 2 | 1 | 2 |
+| Build | 5 | 3 | 1 | 2 |
+| **Total** | **24** | **18** | **11** | **10** |
 
 ---
 
-*This report tracks agent contributions. Agents not used in this session are marked as not delegated.*
+*This report tracks agent contributions.*

@@ -1,194 +1,137 @@
 # TAUG Disagreement Log
 
-**Created:** 2026-06-21
+**Date:** 2026-06-22
 **Purpose:** Record all significant disagreements. Healthy teams disagree.
 
 ---
 
-## Disagreement 1: MutationState Pattern Complexity
+## Disagreement 1: Where Lessons Should Appear During Thesis Creation
 
-**Phase:** B1.1
-**Issue:** How to implement mutation feedback — 28 per-mutation signals vs simple error propagation
+**Issue:** Where should prior lessons be surfaced when creating a new thesis?
 
-**Position A (Plan Agent):**
-- Create `MutationState<T>` sealed class
-- Add 28 per-mutation signals across 6 providers
-- Complete state tracking per mutation
-- Future-proof for concurrent mutations
-
-**Position B (God-1, Reviewer):**
-- Simple `error.value` propagation
-- `_isMutating` guards for race conditions
-- No new abstractions in a hotfix
-- Fix the actual bug (silent failures)
-
-**Who Supported A:** Plan Agent
-**Who Supported B:** God-1, Reviewer
-
-**Reviewer Position:** Strongly supported Position B. Identified that both plans miss the root cause — mutations silently swallow failures. "Hotfixes should fix bugs, not add architecture."
-
-**Build Decision:** Accepted Position B
-**Outcome:** 17 mutations fixed with simple error propagation. No new abstractions introduced.
-
-**Lessons Learned:**
-- Reviewer challenge is valuable — caught over-engineering
-- Hotfix scope should be minimal and focused
-- Existing infrastructure (Failure types) should be used before creating new ones
-- "Future-proofing" is not a valid reason to over-engineer a hotfix
-
----
-
-## Disagreement 2: Dialog Behavior on Failure
-
-**Phase:** B1.1
-**Issue:** Should dialogs stay open or close on mutation failure?
-
-**Position A (Plan Agent):**
-- All dialogs stay open on failure
-- Show inline error message
-- Retry capability
-
-**Position B (God-1):**
-- Split by mutation type:
-  - Forms stay open (preserve user input)
-  - Confirmations close with snackbar
-  - Settings revert with snackbar
-
-**Who Supported A:** Plan Agent
-**Who Supported B:** God-1, Reviewer
-
-**Reviewer Position:** Supported Position B with evidence from Bloomberg/professional terminals.
-
-**Build Decision:** Accepted Position B
-**Outcome:** Implemented split pattern for watchlist delete confirmation. Forms stay open, confirmations close.
-
-**Lessons Learned:**
-- Different mutation types need different UX patterns
-- Form data preservation is critical for research workflow
-- Professional terminal patterns are good references
-
----
-
-## Disagreement 3: Quality Score Granularity
-
-**Phase:** B3
-**Issue:** How much quality detail to fetch and display?
-
-**Position A (Plan Agent):**
-- Fetch all 7 component scores + component_details
-- Show full breakdown in popover
-- Maximum transparency
-
-**Position B (God-2):**
-- Fetch only overall_score + freshness_score
-- Simpler UI
-- Less data to process
-
-**Who Supported A:** Plan Agent
-**Who Supported B:** God-2
-
-**Reviewer Position:** Supported Position A. "A quality score of '65%' is meaningless without context."
-
-**Build Decision:** Accepted Position A
-**Outcome:** QualityScoreDetail model with 7 scores. QualityBreakdownPopover widget. Tappable quality badge.
-
-**Lessons Learned:**
-- Data trust requires granularity
-- Users need to understand the WHY behind scores
-- Backend already stores all components — just wire them up
-
----
-
-## Disagreement 4: Thesis → Position Bridge Scope
-
-**Phase:** B2
-**Issue:** How to implement the Research → Portfolio connection?
-
-**Position A (Plan Agent):**
-- Thesis selector in Add Position dialog only
-- Simpler implementation
-- One entry point
+**Position A (UX Agent):**
+- Inline collapsible section at top of thesis dialog
+- Context where decisions are made
+- One glance away from thesis creation
+- Keeps dialog clean (collapsible)
 
 **Position B (God-3):**
-- Full bridge: thesis selector + "Create Position" button on thesis cards
-- Two entry points for different contexts
-- Maximum workflow connectivity
+- Sidebar panel next to thesis dialog
+- Persistent visibility
+- Doesn't add height to dialog
 
-**Who Supported A:** Plan Agent
-**Who Supported B:** God-3
+**Reviewer Position:** Supported Position A. "The thesis dialog is where users formalize their investment thesis. This is the moment of maximum receptivity to prior lessons."
 
-**Reviewer Position:** Strongly supported Position B. "This is the single most important missing piece in the entire product."
-
-**Build Decision:** Accepted Position B
-**Outcome:** Full bridge implemented. Thesis selector in dialog + button on thesis cards.
+**Final Resolution:** Accepted Position A (inline collapsible section)
 
 **Lessons Learned:**
-- Workflow connectivity is critical for Research OS
-- Multiple entry points serve different user contexts
-- The "Decision" step in the workflow is where thesis becomes action
+- Context where decisions are made is more important than persistent visibility
+- Collapsible sections balance density and cleanliness
+- Dialog height is acceptable for research workflow
 
 ---
 
-## Disagreement 5: Performance Optimization Scope
+## Disagreement 2: How Patterns Should Be Surfaced
 
-**Phase:** B5
-**Issue:** How many performance issues to fix in B5?
+**Issue:** How should lesson patterns be presented to users?
 
-**Position A (Plan Agent):**
-- Fix --wasm flag only (minimal)
-- Lower risk
-- Faster completion
+**Position A (UX Agent):**
+- Micro-summaries (inline text, 1-2 lines)
+- Dense information, no decoration
+- Consistent with terminal aesthetic
 
-**Position B (Perf Agent):**
-- Fix all identified issues:
-  - --wasm flag
-  - RepaintBoundary
-  - itemExtent
-  - compute() offloading
+**Position B (Designer):**
+- Mini-charts (sparklines, bar charts)
+- Visual appeal
+- Easier to comprehend at a glance
 
-**Who Supported A:** Plan Agent
-**Who Supported B:** Perf Agent, Build Orchestrator
+**Reviewer Position:** Supported Position A. "Financial terminals prioritize density over decoration. Micro-summaries deliver insight without cognitive overhead."
 
-**Reviewer Position:** Supported Position B. "Performance is critical for a financial terminal."
-
-**Build Decision:** Accepted Position B
-**Outcome:** All performance issues fixed in parallel with 4 agents.
+**Final Resolution:** Accepted Position A (micro-summaries)
 
 **Lessons Learned:**
-- Performance is non-negotiable for financial terminals
-- Parallel delegation makes large scopes manageable
-- All optimizations compile together without conflicts
+- Density over decoration is a core design principle
+- Charts add complexity without proportional insight
+- Text-based patterns are sufficient for research workflow
 
 ---
 
-## Disagreement 6: Agent Delegation Strategy
+## Disagreement 3: Should TAUG Monitor Metrics Actively or Passively?
 
-**Phase:** B3, B5
-**Issue:** Sequential vs parallel implementation?
+**Issue:** Should invalidation conditions be monitored actively (polling) or passively (view-based)?
 
-**Position A (Conservative):**
-- Sequential implementation
-- One agent at a time
-- Lower risk of conflicts
+**Position A (God-3):**
+- Passive monitoring in MVP (view-based)
+- No new infrastructure
+- No API costs
+- User sees breaches when they visit thesis
 
-**Position B (Aggressive):**
-- Parallel delegation
-- Multiple agents simultaneously
-- Faster completion
+**Position B (Backend-1):**
+- Active polling (Edge Function on cron)
+- Proactive alerts
+- User never misses breaches
 
-**Who Supported A:** None (not proposed)
-**Who Supported B:** Build Orchestrator
+**Reviewer Position:** Supported Position A. "Passive monitoring is sufficient for MVP. Can upgrade to active later if users request it."
 
-**Reviewer Position:** No challenge (unanimous agreement)
-
-**Build Decision:** Accepted Position B
-**Outcome:** 7 agents delegated in parallel across B3 and B5. All changes compiled successfully.
+**Final Resolution:** Accepted Position A (passive monitoring)
 
 **Lessons Learned:**
-- Independent tasks can be parallelized safely
-- Need to verify all changes compile together
-- Parallel delegation maximizes throughput
-- File-level isolation prevents conflicts
+- MVP should minimize infrastructure
+- Passive monitoring validates approach before deeper investment
+- User feedback will determine if active monitoring is needed
+
+---
+
+## Disagreement 4: How to Track Thesis Evolution
+
+**Issue:** How should changes to a thesis over time be tracked?
+
+**Position A (God-3):**
+- Changelog in `metadata` JSONB
+- Append-only log of field changes
+- No new tables needed
+
+**Position B (Data-1):**
+- Formal `research_reviews` table
+- Explicit "I reviewed this today" actions
+- Richer audit trail
+
+**Reviewer Position:** Supported both. "Changelog for field changes, reviews for explicit review actions. Both are complementary."
+
+**Final Resolution:** Accepted both (changelog + reviews table)
+
+**Lessons Learned:**
+- Different mechanisms serve different purposes
+- Changelog tracks implicit changes
+- Reviews track explicit actions
+- Both are needed for complete audit trail
+
+---
+
+## Disagreement 5: MVP Scope for Research Intelligence
+
+**Issue:** How much of the research intelligence design should ship in the first iteration?
+
+**Position A (Build Orchestrator):**
+- P0 only (expose fields, freshness, Mark Reviewed)
+- 1 migration + 9 file modifications
+- No new tables (except `last_reviewed_at`)
+- Can validate with users before building more
+
+**Position B (God-3):**
+- P0 + P1 (add Questions, Assumptions, Conditions)
+- More complete intelligence system
+- Ships as a cohesive feature
+
+**Reviewer Position:** Supported Position A. "Ship incrementally. Validate approach before deeper investment."
+
+**Final Resolution:** Accepted Position A (P0 only)
+
+**Lessons Learned:**
+- Incremental shipping reduces risk
+- User feedback shapes next iteration
+- 60% of perceived intelligence upgrade from P0 alone
+- P1 can be built after P0 is validated
 
 ---
 
