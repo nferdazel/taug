@@ -4,6 +4,7 @@ import 'package:signals/signals_flutter.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/widgets/app_state_widgets.dart';
+import '../../../../shared/widgets/quality_breakdown_popover.dart';
 import '../../../../shared/widgets/status_badges.dart';
 import '../../data/workspace_models.dart';
 import '../providers/workspace_provider.dart';
@@ -64,7 +65,7 @@ class _CompanyWorkspacePageState extends State<CompanyWorkspacePage> {
   }
 
   Widget _buildHeader(CompanyProfile profile) {
-    final quality = _provider.qualityScore.value;
+    final qualityDetail = _provider.qualityDetail.value;
     final freshness = _provider.freshnessStatus.value;
     final researchStatus = _provider.researchStatus;
 
@@ -116,7 +117,11 @@ class _CompanyWorkspacePageState extends State<CompanyWorkspacePage> {
                   Wrap(
                     spacing: 6,
                     children: [
-                      if (quality != null) QualityBadge(score: quality),
+                      if (qualityDetail != null)
+                        QualityBreakdownTooltip(
+                          quality: qualityDetail,
+                          child: QualityBadge(score: qualityDetail.overallScore),
+                        ),
                       if (freshness != null) FreshnessBadge(status: _mapFreshness(freshness)),
                     ],
                   ),
