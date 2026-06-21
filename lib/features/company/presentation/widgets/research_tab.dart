@@ -46,7 +46,21 @@ class ResearchTab extends StatelessWidget {
               thesis: theses.first,
               onEdit: () => _showThesisDialog(context, thesis: theses.first),
               onDelete: () => _confirmDelete(context, 'thesis', () => provider.deleteThesis(theses.first.id)),
-              onCreatePosition: () => context.go('/portfolio-workspace'),
+              onCreatePosition: () {
+                final thesis = theses.first;
+                final companyName = provider.profile.value?.displayName ?? '';
+                final uri = Uri(
+                  path: '/portfolio-workspace',
+                  queryParameters: {
+                    'companyId': thesis.companyId,
+                    'companyName': companyName,
+                    'thesisId': thesis.id,
+                    'thesisTitle': thesis.title,
+                    'conviction': thesis.conviction,
+                  },
+                );
+                context.go(uri.toString());
+              },
             ),
           const SizedBox(height: 24),
 
@@ -548,7 +562,7 @@ class _ThesisCard extends StatelessWidget {
               Expanded(
                 child: Text(thesis.title, style: AppTypography.subheading),
               ),
-              _StanceBadge(stance: thesis.stance),
+              StanceBadge(stance: thesis.stance),
               const SizedBox(width: 8),
               _ConvictionBadge(conviction: thesis.conviction),
               const SizedBox(width: 8),
@@ -733,47 +747,6 @@ class _NoteCard extends StatelessWidget {
 
   String _formatDate(DateTime dt) {
     return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
-  }
-}
-
-class _StanceBadge extends StatelessWidget {
-  final String stance;
-
-  const _StanceBadge({required this.stance});
-
-  @override
-  Widget build(BuildContext context) {
-    Color color;
-    String label;
-    switch (stance) {
-      case 'bullish':
-        color = AppThemeColors.success;
-        label = 'Bullish';
-        break;
-      case 'bearish':
-        color = AppThemeColors.critical;
-        label = 'Bearish';
-        break;
-      default:
-        color = AppThemeColors.neutral;
-        label = 'Neutral';
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
-    );
   }
 }
 

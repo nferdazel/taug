@@ -13,7 +13,7 @@ abstract final class AppColors {
   // Text
   static const int textPrimary = 0xFFFAFAFA;
   static const int textSecondary = 0xFFA1A1AA;
-  static const int textTertiary = 0xFF71717A;
+  static const int textTertiary = 0xFF8E8E96;
 
   // Semantic
   static const int bullish = 0xFF10B981;
@@ -32,7 +32,7 @@ abstract final class AppColors {
   static const int warningLight = 0xFFFBBF24;
   static const int critical = 0xFFF43F5E;
   static const int criticalLight = 0xFFFB7185;
-  static const int neutral = 0xFF71717A;
+  static const int neutral = 0xFF8E8E96;
 
   // Legacy aliases
   static const int neutral50 = 0xFFFAFAFA;
@@ -40,7 +40,7 @@ abstract final class AppColors {
   static const int neutral200 = 0xFFE4E4E7;
   static const int neutral300 = 0xFFD4D4D8;
   static const int neutral400 = 0xFFA1A1AA;
-  static const int neutral500 = 0xFF71717A;
+  static const int neutral500 = 0xFF8E8E96;
   static const int neutral600 = 0xFF52525B;
   static const int neutral700 = 0xFF3F3F46;
   static const int neutral800 = 0xFF27272A;

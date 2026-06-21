@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/widgets/app_state_widgets.dart';
+import '../../../../shared/widgets/status_badges.dart';
 import '../../data/portfolio_models.dart';
 import '../providers/portfolio_workspace_provider.dart';
 
@@ -24,6 +25,20 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
     super.initState();
     _provider = PortfolioWorkspaceProvider();
     _provider.loadPositions();
+
+    // Auto-open Add Position dialog if pre-population params are present
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final params = GoRouterState.of(context).uri.queryParameters;
+      if (params.containsKey('companyId') && params['companyId']!.isNotEmpty) {
+        _showAddPositionDialog(
+          preCompanyId: params['companyId'],
+          preCompanyName: params['companyName'],
+          preThesisId: params['thesisId'],
+          preThesisTitle: params['thesisTitle'],
+          preConviction: params['conviction'],
+        );
+      }
+    });
   }
 
   @override
@@ -78,7 +93,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
             ),
             const Spacer(),
             ElevatedButton.icon(
-              onPressed: () => _showAddPositionDialog(context),
+              onPressed: () => _showAddPositionDialog(),
               icon: const Icon(Icons.add, size: 16),
               label: const Text('Add Position'),
               style: ElevatedButton.styleFrom(
@@ -164,6 +179,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
             position: positions[index],
             onClose: () => _showClosePositionDialog(context, positions[index]),
             onViewCompany: () => context.go('/companies/${positions[index].companyId}'),
+            onMarkReview: () => _provider.markReviewNeeded(positions[index].id),
           );
         },
       );
@@ -258,6 +274,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
             ...correctLessons.map((p) => _LessonCard(
               position: p,
               onViewCompany: () => context.go('/companies/${p.companyId}'),
+              onNewResearch: () => context.go('/companies/${p.companyId}/research'),
             )),
             const SizedBox(height: 16),
           ],
@@ -269,6 +286,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
             ...incorrectLessons.map((p) => _LessonCard(
               position: p,
               onViewCompany: () => context.go('/companies/${p.companyId}'),
+              onNewResearch: () => context.go('/companies/${p.companyId}/research'),
             )),
             const SizedBox(height: 16),
           ],
@@ -280,6 +298,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
             ...partialLessons.map((p) => _LessonCard(
               position: p,
               onViewCompany: () => context.go('/companies/${p.companyId}'),
+              onNewResearch: () => context.go('/companies/${p.companyId}/research'),
             )),
           ],
         ],
@@ -287,17 +306,40 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
     });
   }
 
-  void _showAddPositionDialog(BuildContext context) {
+  void _showAddPositionDialog({
+    String? preCompanyId,
+    String? preCompanyName,
+    String? preThesisId,
+    String? preThesisTitle,
+    String? preConviction,
+  }) async {
     final entryPriceController = TextEditingController();
     final notesController = TextEditingController();
-    String conviction = 'low';
+    String conviction = preConviction ?? 'low';
     DateTime entryDate = DateTime.now();
-    String? selectedCompanyId;
-    String? selectedCompanyName;
-    String? selectedThesisId;
+    String? selectedCompanyId = preCompanyId;
+    String? selectedCompanyName = preCompanyName;
+    String? selectedThesisId = preThesisId;
     List<Map<String, dynamic>> availableTheses = [];
     final searchController = TextEditingController();
     List<Map<String, dynamic>> searchResults = [];
+
+    // Pre-fetch theses if company is pre-selected so dialog opens with data
+    if (preCompanyId != null && preCompanyId.isNotEmpty) {
+      try {
+        final client = Supabase.instance.client;
+        final response = await client
+            .from('theses')
+            .select('id, title, stance, conviction')
+            .eq('company_id', preCompanyId)
+            .eq('status', 'active')
+            .order('created_at', ascending: false);
+        availableTheses = List<Map<String, dynamic>>.from(response as List);
+      } catch (e) {
+        debugPrint('[Portfolio] Pre-fetch theses error: $e');
+        availableTheses = [];
+      }
+    }
 
     // Fetch theses for selected company
     Future<void> fetchTheses(String companyId) async {
@@ -315,6 +357,8 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
         availableTheses = [];
       }
     }
+
+    if (!mounted) return;
 
     showDialog(
       context: context,
@@ -454,7 +498,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
                               children: [
                                 Expanded(child: Text(title, style: AppTypography.body, overflow: TextOverflow.ellipsis)),
                                 const SizedBox(width: 8),
-                                _StanceChipSmall(stance: stance),
+                                StanceBadge(stance: stance, size: StanceBadgeSize.small),
                               ],
                             ),
                           );
@@ -716,11 +760,13 @@ class _ActivePositionCard extends StatelessWidget {
   final PortfolioPosition position;
   final VoidCallback onClose;
   final VoidCallback onViewCompany;
+  final VoidCallback onMarkReview;
 
   const _ActivePositionCard({
     required this.position,
     required this.onClose,
     required this.onViewCompany,
+    required this.onMarkReview,
   });
 
   @override
@@ -768,9 +814,12 @@ class _ActivePositionCard extends StatelessWidget {
                 onSelected: (value) {
                   if (value == 'view') onViewCompany();
                   if (value == 'close') onClose();
+                  if (value == 'review') onMarkReview();
                 },
                 itemBuilder: (context) => [
                   const PopupMenuItem(value: 'view', child: Text('View Company')),
+                  if (!position.isReviewNeeded)
+                    const PopupMenuItem(value: 'review', child: Text('Mark for Review')),
                   const PopupMenuItem(value: 'close', child: Text('Close Position')),
                 ],
               ),
@@ -968,39 +1017,6 @@ class _OutcomeBadge extends StatelessWidget {
   }
 }
 
-class _StanceChipSmall extends StatelessWidget {
-  final String stance;
-
-  const _StanceChipSmall({required this.stance});
-
-  @override
-  Widget build(BuildContext context) {
-    Color color;
-    switch (stance) {
-      case 'bullish':
-        color = AppThemeColors.success;
-        break;
-      case 'bearish':
-        color = AppThemeColors.critical;
-        break;
-      default:
-        color = AppThemeColors.textTertiary;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(3),
-      ),
-      child: Text(
-        stance[0].toUpperCase() + stance.substring(1),
-        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color),
-      ),
-    );
-  }
-}
-
 class _ReturnBadge extends StatelessWidget {
   final double returnPercent;
 
@@ -1066,10 +1082,12 @@ class _LessonSummaryChip extends StatelessWidget {
 class _LessonCard extends StatelessWidget {
   final PortfolioPosition position;
   final VoidCallback onViewCompany;
+  final VoidCallback onNewResearch;
 
   const _LessonCard({
     required this.position,
     required this.onViewCompany,
+    required this.onNewResearch,
   });
 
   @override
@@ -1114,6 +1132,20 @@ class _LessonCard extends StatelessWidget {
           Text('Lessons:', style: AppTypography.caption.copyWith(fontWeight: FontWeight.w600)),
           const SizedBox(height: 4),
           Text(position.lessonsLearned!, style: AppTypography.body),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 28,
+            child: OutlinedButton.icon(
+              onPressed: onNewResearch,
+              icon: const Icon(Icons.science_outlined, size: 14),
+              label: const Text('Apply to New Research'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppThemeColors.accent,
+                side: const BorderSide(color: AppThemeColors.accent),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+              ),
+            ),
+          ),
         ],
       ),
     );

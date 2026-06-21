@@ -8,7 +8,7 @@ enum FreshnessStatus {
   fresh(label: 'Fresh', colorValue: 0xFF10B981, tooltip: 'Data updated within the last 30 days'),
   aging(label: 'Aging', colorValue: 0xFFF59E0B, tooltip: 'Data is 30-90 days old. May need refresh.'),
   stale(label: 'Stale', colorValue: 0xFFF43F5E, tooltip: 'Data is 90-365 days old. Consider verifying.'),
-  expired(label: 'Expired', colorValue: 0xFF71717A, tooltip: 'Data is over 1 year old. Likely outdated.'),
+  expired(label: 'Expired', colorValue: 0xFF8E8E96, tooltip: 'Data is over 1 year old. Likely outdated.'),
   unknown(label: '—', colorValue: 0xFF52525B, tooltip: 'No freshness data available.');
 
   final String label;
@@ -105,7 +105,7 @@ class QualityBadge extends StatelessWidget {
 enum ConvictionLevel {
   high(label: 'High', colorValue: 0xFF3B82F6, tooltip: 'Strong conviction in this investment thesis.'),
   medium(label: 'Medium', colorValue: 0xFFF59E0B, tooltip: 'Moderate conviction. Thesis is forming.'),
-  low(label: 'Low', colorValue: 0xFF71717A, tooltip: 'Low conviction. Early research stage.');
+  low(label: 'Low', colorValue: 0xFF8E8E96, tooltip: 'Low conviction. Early research stage.');
 
   final String label;
   final int colorValue;
@@ -136,6 +136,54 @@ class ConvictionBadge extends StatelessWidget {
           label: level.label,
           color: level.color,
           icon: Icons.circle,
+        ),
+      ),
+    );
+  }
+}
+
+enum StanceBadgeSize { regular, small }
+
+class StanceBadge extends StatelessWidget {
+  final String stance;
+  final StanceBadgeSize size;
+
+  const StanceBadge({super.key, required this.stance, this.size = StanceBadgeSize.regular});
+
+  @override
+  Widget build(BuildContext context) {
+    final Color color;
+    final String label;
+    switch (stance) {
+      case 'bullish':
+        color = AppThemeColors.success;
+        label = 'Bullish';
+      case 'bearish':
+        color = AppThemeColors.critical;
+        label = 'Bearish';
+      default:
+        color = AppThemeColors.neutral;
+        label = 'Neutral';
+    }
+
+    final bool isSmall = size == StanceBadgeSize.small;
+    final double hPad = isSmall ? 6 : 8;
+    final double vPad = isSmall ? 2 : 3;
+    final double fontSize = isSmall ? 10 : 11;
+    final double radius = isSmall ? 3 : 4;
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(radius),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: fontSize,
+          fontWeight: FontWeight.w600,
+          color: color,
         ),
       ),
     );

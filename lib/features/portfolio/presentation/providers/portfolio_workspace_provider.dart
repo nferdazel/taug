@@ -128,4 +128,47 @@ class PortfolioWorkspaceProvider {
       _isMutating = false;
     }
   }
+
+  Future<void> markReviewNeeded(String positionId) async {
+    if (_isMutating) return;
+    _isMutating = true;
+    error.value = null;
+    try {
+      final result = await _repository.markReviewNeeded(positionId);
+      if (result.isSuccess) {
+        final index = positions.indexWhere((p) => p.id == positionId);
+        if (index != -1) {
+          final updated = PortfolioPosition(
+            id: positions[index].id,
+            companyId: positions[index].companyId,
+            companyName: positions[index].companyName,
+            ticker: positions[index].ticker,
+            thesisId: positions[index].thesisId,
+            thesisTitle: positions[index].thesisTitle,
+            thesisStance: positions[index].thesisStance,
+            conviction: positions[index].conviction,
+            entryDate: positions[index].entryDate,
+            entryPrice: positions[index].entryPrice,
+            notes: positions[index].notes,
+            status: PositionStatus.reviewNeeded,
+            exitDate: positions[index].exitDate,
+            exitPrice: positions[index].exitPrice,
+            outcome: positions[index].outcome,
+            lessonsLearned: positions[index].lessonsLearned,
+            createdAt: positions[index].createdAt,
+            updatedAt: DateTime.now(),
+          );
+          positions.value = [
+            for (int i = 0; i < positions.length; i++)
+              if (i == index) updated else positions[i],
+          ];
+        }
+      } else {
+        debugPrint('[PortfolioWorkspaceProvider] markReviewNeeded failed: ${result.error}');
+        error.value = result.error.toString();
+      }
+    } finally {
+      _isMutating = false;
+    }
+  }
 }

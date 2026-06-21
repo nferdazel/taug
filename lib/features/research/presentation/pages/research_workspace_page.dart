@@ -5,6 +5,7 @@ import 'package:signals/signals_flutter.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/widgets/app_state_widgets.dart';
+import '../../../../shared/widgets/status_badges.dart';
 import '../../../companies/presentation/widgets/research_status_badge.dart';
 import '../../data/research_models.dart';
 import '../providers/research_provider.dart';
@@ -376,7 +377,7 @@ class _ThesisCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            _StanceChip(stance: thesis.stance),
+            StanceBadge(stance: thesis.stance),
             const SizedBox(width: 8),
             Expanded(
               child: Column(
@@ -428,31 +429,6 @@ class _NoteCard extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _StanceChip extends StatelessWidget {
-  final String stance;
-
-  const _StanceChip({required this.stance});
-
-  @override
-  Widget build(BuildContext context) {
-    Color color;
-    String label;
-    switch (stance) {
-      case 'bullish': color = AppThemeColors.success; label = 'Bullish';
-      case 'bearish': color = AppThemeColors.critical; label = 'Bearish';
-      default: color = AppThemeColors.neutral; label = 'Neutral';
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color)),
     );
   }
 }
