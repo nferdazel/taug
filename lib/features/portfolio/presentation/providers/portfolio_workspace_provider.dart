@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:signals/signals.dart';
 
 import '../../data/portfolio_models.dart';
@@ -10,6 +11,7 @@ class PortfolioProvider {
   final isLoading = Signal<bool>(false);
   final error = Signal<String?>(null);
   final activeTab = Signal<int>(0);
+  bool _isMutating = false;
 
   PortfolioProvider({PortfolioRepository? repository})
       : _repository = repository ?? PortfolioRepository();
@@ -46,16 +48,25 @@ class PortfolioProvider {
     double? entryPrice,
     String? notes,
   }) async {
-    final result = await _repository.createPosition(
-      companyId: companyId,
-      thesisId: thesisId,
-      conviction: conviction,
-      entryDate: entryDate,
-      entryPrice: entryPrice,
-      notes: notes,
-    );
-    if (result.isSuccess) {
-      positions.value = [result.data!, ...positions];
+    if (_isMutating) return;
+    _isMutating = true;
+    try {
+      final result = await _repository.createPosition(
+        companyId: companyId,
+        thesisId: thesisId,
+        conviction: conviction,
+        entryDate: entryDate,
+        entryPrice: entryPrice,
+        notes: notes,
+      );
+      if (result.isSuccess) {
+        positions.value = [result.data!, ...positions];
+      } else {
+        debugPrint('[PortfolioWorkspaceProvider] addPosition failed: ${result.error}');
+        error.value = result.error.toString();
+      }
+    } finally {
+      _isMutating = false;
     }
   }
 
@@ -66,15 +77,24 @@ class PortfolioProvider {
     String? notes,
     String? thesisId,
   }) async {
-    final result = await _repository.updatePosition(
-      positionId: positionId,
-      conviction: conviction,
-      entryPrice: entryPrice,
-      notes: notes,
-      thesisId: thesisId,
-    );
-    if (result.isSuccess) {
-      await loadPositions();
+    if (_isMutating) return;
+    _isMutating = true;
+    try {
+      final result = await _repository.updatePosition(
+        positionId: positionId,
+        conviction: conviction,
+        entryPrice: entryPrice,
+        notes: notes,
+        thesisId: thesisId,
+      );
+      if (result.isSuccess) {
+        await loadPositions();
+      } else {
+        debugPrint('[PortfolioWorkspaceProvider] updatePosition failed: ${result.error}');
+        error.value = result.error.toString();
+      }
+    } finally {
+      _isMutating = false;
     }
   }
 
@@ -85,15 +105,24 @@ class PortfolioProvider {
     DateTime? exitDate,
     double? exitPrice,
   }) async {
-    final result = await _repository.closePosition(
-      positionId: positionId,
-      outcome: outcome,
-      lessonsLearned: lessonsLearned,
-      exitDate: exitDate,
-      exitPrice: exitPrice,
-    );
-    if (result.isSuccess) {
-      await loadPositions();
+    if (_isMutating) return;
+    _isMutating = true;
+    try {
+      final result = await _repository.closePosition(
+        positionId: positionId,
+        outcome: outcome,
+        lessonsLearned: lessonsLearned,
+        exitDate: exitDate,
+        exitPrice: exitPrice,
+      );
+      if (result.isSuccess) {
+        await loadPositions();
+      } else {
+        debugPrint('[PortfolioWorkspaceProvider] closePosition failed: ${result.error}');
+        error.value = result.error.toString();
+      }
+    } finally {
+      _isMutating = false;
     }
   }
 }

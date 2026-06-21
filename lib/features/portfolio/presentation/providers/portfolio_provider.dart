@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:signals/signals.dart';
 
 import '../../../../shared/models/price_data.dart';
@@ -15,6 +16,7 @@ class PortfolioProvider {
   final error = Signal<String?>(null);
   final lastUpdated = Signal<DateTime?>(null);
   bool _isLoadingPrices = false;
+  bool _isMutating = false;
 
   Timer? _refreshTimer;
 
@@ -73,14 +75,23 @@ class PortfolioProvider {
     double quantity,
     double avgPrice,
   ) async {
-    final result = await _repository.addHolding(
-      symbolId: symbolId,
-      quantity: quantity,
-      avgPrice: avgPrice,
-    );
+    if (_isMutating) return;
+    _isMutating = true;
+    try {
+      final result = await _repository.addHolding(
+        symbolId: symbolId,
+        quantity: quantity,
+        avgPrice: avgPrice,
+      );
 
-    if (result.isSuccess) {
-      await loadHoldings();
+      if (result.isSuccess) {
+        await loadHoldings();
+      } else {
+        debugPrint('[PortfolioProvider] addHolding failed: ${result.error}');
+        error.value = result.error.toString();
+      }
+    } finally {
+      _isMutating = false;
     }
   }
 
@@ -89,21 +100,39 @@ class PortfolioProvider {
     double quantity,
     double avgPrice,
   ) async {
-    final result = await _repository.updateHolding(
-      holdingId: holdingId,
-      quantity: quantity,
-      avgPrice: avgPrice,
-    );
+    if (_isMutating) return;
+    _isMutating = true;
+    try {
+      final result = await _repository.updateHolding(
+        holdingId: holdingId,
+        quantity: quantity,
+        avgPrice: avgPrice,
+      );
 
-    if (result.isSuccess) {
-      await loadHoldings();
+      if (result.isSuccess) {
+        await loadHoldings();
+      } else {
+        debugPrint('[PortfolioProvider] updateHolding failed: ${result.error}');
+        error.value = result.error.toString();
+      }
+    } finally {
+      _isMutating = false;
     }
   }
 
   Future<void> removeHolding(String holdingId) async {
-    final result = await _repository.removeHolding(holdingId);
-    if (result.isSuccess) {
-      await loadHoldings();
+    if (_isMutating) return;
+    _isMutating = true;
+    try {
+      final result = await _repository.removeHolding(holdingId);
+      if (result.isSuccess) {
+        await loadHoldings();
+      } else {
+        debugPrint('[PortfolioProvider] removeHolding failed: ${result.error}');
+        error.value = result.error.toString();
+      }
+    } finally {
+      _isMutating = false;
     }
   }
 
