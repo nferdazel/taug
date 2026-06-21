@@ -158,6 +158,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
       return ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: positions.length,
+        itemExtent: 120,
         itemBuilder: (context, index) {
           return _ActivePositionCard(
             position: positions[index],
@@ -184,6 +185,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
       return ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: positions.length,
+        itemExtent: 120,
         itemBuilder: (context, index) {
           return _ClosedPositionCard(
             position: positions[index],

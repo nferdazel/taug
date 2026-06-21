@@ -419,6 +419,7 @@ class _NewsPageState extends State<NewsPage> {
         onRefresh: _refreshNews,
         child: ListView.builder(
           itemCount: articles.length,
+          itemExtent: 80,
           itemBuilder: (context, index) => _buildNewsItem(articles[index]),
         ),
       );
