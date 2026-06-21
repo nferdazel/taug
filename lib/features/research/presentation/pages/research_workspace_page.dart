@@ -44,7 +44,7 @@ class _ResearchWorkspacePageState extends State<ResearchWorkspacePage> {
   }
 
   Widget _buildHeader() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final totalResearch = _provider.researchCompanies.length;
       final totalTheses = _provider.theses.length;
       final totalNotes = _provider.notes.length;
@@ -101,7 +101,7 @@ class _ResearchWorkspacePageState extends State<ResearchWorkspacePage> {
   }
 
   Widget _buildContent() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       if (_provider.isLoading.value) {
         return const AppLoadingState(message: 'Loading research...');
       }

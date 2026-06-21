@@ -31,7 +31,7 @@ Future<void> main() async {
   try {
     await Supabase.initialize(
       url: AppEnv.supabaseUrl,
-      anonKey: AppEnv.supabaseAnonKey,
+      publishableKey: AppEnv.supabaseAnonKey,
       postgrestOptions: const PostgrestClientOptions(schema: 'taug'),
     );
     runApp(const TaugApp());

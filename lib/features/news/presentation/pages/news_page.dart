@@ -94,7 +94,7 @@ class _NewsPageState extends State<NewsPage> {
   }
 
   Widget _buildTopImpactPanel() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final headlines = _topHeadlines.value;
       final isLoading = _isTopLoading.value;
 
@@ -252,7 +252,7 @@ class _NewsPageState extends State<NewsPage> {
   }
 
   Widget _buildCategoryFilter() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final categories = [
         'all',
         'markets',
@@ -301,7 +301,7 @@ class _NewsPageState extends State<NewsPage> {
   }
 
   Widget _buildPolicyToggle() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final selected = _policyOnly.value;
       return SizedBox(
         height: AppSpacing.buttonHeight,
@@ -331,7 +331,7 @@ class _NewsPageState extends State<NewsPage> {
   }
 
   Widget _buildRefreshButton() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final isLoading = _isLoading.value;
       return SizedBox(
         height: AppSpacing.buttonHeight,
@@ -352,7 +352,7 @@ class _NewsPageState extends State<NewsPage> {
   }
 
   Widget _buildContent() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final articles = _articles.value;
       final isLoading = _isLoading.value;
       final error = _error.value;

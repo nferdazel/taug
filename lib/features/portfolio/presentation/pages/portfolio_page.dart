@@ -52,7 +52,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
         children: [
           const Text('PORTFOLIO', style: AppTypography.monoSection),
           const Spacer(),
-          Watch((_) {
+          SignalBuilder(builder: (_) {
             final isLoading = _provider.isLoading.value;
             return SizedBox(
               height: AppSpacing.buttonHeight,
@@ -79,7 +79,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
   }
 
   Widget _buildSummary() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final totalValue = _provider.totalValue;
       final totalPnL = _provider.totalPnL;
       final totalPnLPercent = _provider.totalPnLPercent;
@@ -136,7 +136,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
   }
 
   Widget _buildContent() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final holdings = _provider.holdings.value;
       final isLoading = _provider.isLoading.value;
       final error = _provider.error.value;
@@ -272,7 +272,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
   }
 
   Widget _buildHoldingRow(PortfolioHolding holding) {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final price = _provider.prices.value[holding.ticker];
       final currentPrice = price?.price ?? 0;
       final pnl = (currentPrice - holding.avgPrice) * holding.quantity;

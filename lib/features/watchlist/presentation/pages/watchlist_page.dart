@@ -43,7 +43,7 @@ class _WatchlistPageState extends State<WatchlistPage> {
   }
 
   Widget _buildToolbar() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       return Container(
         height: AppSpacing.tabBarHeight,
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
@@ -74,7 +74,7 @@ class _WatchlistPageState extends State<WatchlistPage> {
   }
 
   Widget _buildWatchlistSelector() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final watchlists = _provider.watchlists.value;
       final current = _provider.currentWatchlist.value;
 
@@ -113,7 +113,7 @@ class _WatchlistPageState extends State<WatchlistPage> {
   }
 
   Widget _buildRefreshButton() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final isLoading = _provider.isLoading.value;
       return SizedBox(
         height: AppSpacing.buttonHeight,
@@ -134,7 +134,7 @@ class _WatchlistPageState extends State<WatchlistPage> {
   }
 
   Widget _buildContent() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final items = _provider.watchlistItems.value;
       final isLoading = _provider.isLoading.value;
       final error = _provider.error.value;
@@ -285,7 +285,7 @@ class _WatchlistPageState extends State<WatchlistPage> {
   }
 
   Widget _buildTableRow(WatchlistItem item, int index) {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final price = _provider.getPriceForSymbol(item.ticker ?? '');
 
       return Container(

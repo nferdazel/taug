@@ -59,7 +59,7 @@ class _BriefPageState extends State<BriefPage> {
   }
 
   Widget _buildToolbar() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final BriefSnapshot? snapshot = _snapshot.value;
       final bool isLoading = _isLoading.value;
 
@@ -107,7 +107,7 @@ class _BriefPageState extends State<BriefPage> {
   }
 
   Widget _buildContent() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final BriefSnapshot? snapshot = _snapshot.value;
       final bool isLoading = _isLoading.value;
       final String? error = _error.value;

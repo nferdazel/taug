@@ -38,7 +38,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
   }
 
   Widget _buildHeader() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         decoration: const BoxDecoration(
@@ -94,7 +94,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
   }
 
   Widget _buildTabBar() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       return Container(
         height: 36,
         decoration: const BoxDecoration(
@@ -124,7 +124,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
   }
 
   Widget _buildContent() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       if (_provider.isLoading.value) {
         return const AppLoadingState(message: 'Loading portfolio...');
       }
@@ -143,7 +143,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
   }
 
   Widget _buildActiveView() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final positions = _provider.activePositions;
 
       if (positions.isEmpty) {
@@ -171,7 +171,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
   }
 
   Widget _buildClosedView() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final positions = _provider.closedPositions;
 
       if (positions.isEmpty) {
@@ -197,7 +197,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
   }
 
   Widget _buildLessonsView() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final closedPositions = _provider.closedPositions;
       final positionsWithLessons = closedPositions
           .where((p) => p.lessonsLearned != null && p.lessonsLearned!.isNotEmpty)
@@ -444,7 +444,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
                         isExpanded: true,
                         underline: const SizedBox(),
                         dropdownColor: AppThemeColors.surface,
-                        hint: Text('Link to a thesis...', style: AppTypography.caption),
+                        hint: const Text('Link to a thesis...', style: AppTypography.caption),
                         items: availableTheses.map((t) {
                           final stance = t['stance'] as String? ?? 'neutral';
                           final title = t['title'] as String;

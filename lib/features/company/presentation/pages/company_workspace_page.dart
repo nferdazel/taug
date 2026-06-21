@@ -34,7 +34,7 @@ class _CompanyWorkspacePageState extends State<CompanyWorkspacePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       if (_provider.isLoading.value) {
         return const AppLoadingState(message: 'Loading company...');
       }

@@ -59,7 +59,7 @@ class _SymbolSearchDialogState extends State<SymbolSearchDialog> {
   }
 
   Widget _buildResults() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final results = _provider.searchResults.value;
       final isSearching = _provider.isSearching.value;
       final isAdding = _provider.isAdding.value;

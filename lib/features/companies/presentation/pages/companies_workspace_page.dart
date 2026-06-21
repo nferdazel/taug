@@ -46,7 +46,7 @@ class _CompaniesWorkspacePageState extends State<CompaniesWorkspacePage> {
   }
 
   Widget _buildHeader() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final total = _provider.companies.length;
       final researching = _provider.companies.where((c) => c.researchStatus != 'not_researched').length;
 
@@ -129,7 +129,7 @@ class _CompaniesWorkspacePageState extends State<CompaniesWorkspacePage> {
   }
 
   Widget _buildContent() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       if (_provider.isLoading.value) {
         return const AppLoadingState(message: 'Loading companies...');
       }

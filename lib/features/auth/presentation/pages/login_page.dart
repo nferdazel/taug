@@ -30,7 +30,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Watch((_) {
+      body: SignalBuilder(builder: (_) {
         final isLoading = _authProvider.isLoading.value;
         final error = _authProvider.error.value;
 

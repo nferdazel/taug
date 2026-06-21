@@ -101,7 +101,7 @@ class _ChartPageState extends State<ChartPage> {
   }
 
   Widget _buildSidePanels() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final symbol = _selectedSymbol.value;
       return Container(
         width: 220,
@@ -175,7 +175,7 @@ class _ChartPageState extends State<ChartPage> {
   }
 
   Widget _buildSymbolSelector() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 8),
         decoration: BoxDecoration(
@@ -213,7 +213,7 @@ class _ChartPageState extends State<ChartPage> {
   }
 
   Widget _buildChartTypeSelector() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final current = _selectedChartType.value;
       return Row(
         children: [
@@ -255,7 +255,7 @@ class _ChartPageState extends State<ChartPage> {
   }
 
   Widget _buildIntervalButtons() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final intervals = ['1m', '5m', '15m', '1h', '1d', '1w', '1M'];
       return Row(
         children: intervals.map((interval) {
@@ -298,7 +298,7 @@ class _ChartPageState extends State<ChartPage> {
   }
 
   Widget _buildPriceInfo() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final price = _currentPrice.value;
       if (price == null) return const SizedBox();
 
@@ -313,7 +313,7 @@ class _ChartPageState extends State<ChartPage> {
   }
 
   Widget _buildChart() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final candles = _candles.value;
       final isLoading = _isLoading.value;
       final error = _error.value;
@@ -455,7 +455,7 @@ class _ChartPageState extends State<ChartPage> {
   }
 
   Widget _buildInfoPanel() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final price = _currentPrice.value;
       if (price == null) return const SizedBox();
 

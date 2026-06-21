@@ -57,7 +57,7 @@ class _CompanyPageState extends State<CompanyPage> {
   }
 
   Widget _buildToolbar() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final CompanyFullProfile? p = _provider.profile.value;
       final bool isLoading = _provider.isLoading.value;
 
@@ -104,7 +104,7 @@ class _CompanyPageState extends State<CompanyPage> {
   }
 
   Widget _buildContent() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final CompanyFullProfile? p = _provider.profile.value;
       final bool isLoading = _provider.isLoading.value;
       final String? error = _provider.error.value;

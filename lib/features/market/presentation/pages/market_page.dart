@@ -54,7 +54,7 @@ class _MarketPageState extends State<MarketPage> {
           const SizedBox(width: AppSpacing.lg),
           const DataStatusBadge(origin: _marketOrigin),
           const Spacer(),
-          Watch((_) {
+          SignalBuilder(builder: (_) {
             if (_provider.lastUpdated.value != null) {
               return Padding(
                 padding: const EdgeInsets.only(right: AppSpacing.lg),
@@ -72,7 +72,7 @@ class _MarketPageState extends State<MarketPage> {
   }
 
   Widget _buildContent() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final movers = _provider.movers.value;
       final isLoading = _provider.isLoading.value;
       final error = _provider.error.value;

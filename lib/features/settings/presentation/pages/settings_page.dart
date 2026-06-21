@@ -58,7 +58,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildProfileCard() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       return Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
@@ -93,7 +93,7 @@ class _SettingsPageState extends State<SettingsPage> {
         children: [
           const Text('TIMEZONE', style: AppTypography.monoSection),
           const SizedBox(height: 6),
-          Watch((_) {
+          SignalBuilder(builder: (_) {
             return Row(
               children: [
                 Expanded(
@@ -155,7 +155,7 @@ class _SettingsPageState extends State<SettingsPage> {
         children: [
           const Text('DENSITY', style: AppTypography.monoSection),
           const SizedBox(height: 6),
-          Watch((_) {
+          SignalBuilder(builder: (_) {
             return Row(
               children: [
                 _buildDensityChip(

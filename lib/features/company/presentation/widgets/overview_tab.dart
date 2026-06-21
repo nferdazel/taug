@@ -13,7 +13,7 @@ class OverviewTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final profile = provider.profile.value;
       final metrics = provider.metrics;
       final theses = provider.theses;

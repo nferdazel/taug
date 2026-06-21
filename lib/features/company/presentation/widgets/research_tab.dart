@@ -15,7 +15,7 @@ class ResearchTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final theses = provider.theses;
       final notes = provider.notes;
 

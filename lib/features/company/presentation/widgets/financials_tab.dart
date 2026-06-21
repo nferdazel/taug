@@ -13,7 +13,7 @@ class FinancialsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final statements = provider.statements;
 
       if (statements.isEmpty) {
@@ -244,9 +244,9 @@ class _PeriodHeader extends StatelessWidget {
             ),
             // Restatement indicator
             if (row.isRestated)
-              Padding(
-                padding: const EdgeInsets.only(left: 3),
-                child: const Icon(
+              const Padding(
+                padding: EdgeInsets.only(left: 3),
+                child: Icon(
                   Icons.sync,
                   size: 11,
                   color: AppThemeColors.warning,

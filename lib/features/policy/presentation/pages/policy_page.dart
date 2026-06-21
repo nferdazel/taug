@@ -104,7 +104,7 @@ class _PolicyPageState extends State<PolicyPage> {
   }
 
   Widget _buildCountryFilter() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       const countries = ['all', 'US'];
       return _buildDropdown(
         value: _selectedCountry.value,
@@ -118,7 +118,7 @@ class _PolicyPageState extends State<PolicyPage> {
   }
 
   Widget _buildAgencyFilter() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       const agencies = ['all', 'Federal Reserve', 'SEC'];
       return _buildDropdown(
         value: _selectedAgency.value,
@@ -167,7 +167,7 @@ class _PolicyPageState extends State<PolicyPage> {
   }
 
   Widget _buildImportanceFilter() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       return Row(
         children: [
           _buildImportanceChip(1, 'ALL'),
@@ -209,7 +209,7 @@ class _PolicyPageState extends State<PolicyPage> {
   }
 
   Widget _buildRefreshButton() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       return SizedBox(
         height: AppSpacing.buttonHeight,
         width: AppSpacing.buttonHeight,
@@ -229,7 +229,7 @@ class _PolicyPageState extends State<PolicyPage> {
   }
 
   Widget _buildContent() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final events = _events.value;
       if (_isLoading.value && events.isEmpty) {
         return const Center(
