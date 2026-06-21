@@ -295,7 +295,6 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
     String? selectedCompanyId;
     String? selectedCompanyName;
     String? selectedThesisId;
-    String? selectedThesisTitle;
     List<Map<String, dynamic>> availableTheses = [];
     final searchController = TextEditingController();
     List<Map<String, dynamic>> searchResults = [];
@@ -349,7 +348,6 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
                                 selectedCompanyId = null;
                                 selectedCompanyName = null;
                                 selectedThesisId = null;
-                                selectedThesisTitle = null;
                                 availableTheses = [];
                               });
                             },
@@ -412,9 +410,8 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
                                     selectedCompanyName = companyName;
                                     searchResults = [];
                                     searchController.clear();
-                                    selectedThesisId = null;
-                                    selectedThesisTitle = null;
-                                  });
+                                     selectedThesisId = null;
+                                   });
                                   await fetchTheses(companyId);
                                   setDialogState(() {});
                                 },
@@ -467,7 +464,6 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
                           final thesis = availableTheses.firstWhere((t) => t['id'] == id);
                           setDialogState(() {
                             selectedThesisId = id;
-                            selectedThesisTitle = thesis['title'] as String;
                             // Auto-populate conviction from thesis
                             final thesisConviction = thesis['conviction'] as String?;
                             if (thesisConviction != null && ['low', 'medium', 'high'].contains(thesisConviction)) {

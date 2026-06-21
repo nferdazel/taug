@@ -248,6 +248,10 @@ class WorkspaceRepository {
     String? summary,
     String? bullCase,
     String? bearCase,
+    String? assumptions,
+    String? catalysts,
+    String? risks,
+    String? exitConditions,
     String conviction = 'low',
   }) async {
     try {
@@ -260,6 +264,10 @@ class WorkspaceRepository {
             'summary': summary,
             'bull_case': bullCase,
             'bear_case': bearCase,
+            'assumptions': assumptions,
+            'catalysts': catalysts,
+            'risks': risks,
+            'exit_conditions': exitConditions,
             'conviction': conviction,
           })
           .select()
@@ -274,6 +282,10 @@ class WorkspaceRepository {
           summary: response['summary'] as String?,
           bullCase: response['bull_case'] as String?,
           bearCase: response['bear_case'] as String?,
+          assumptions: response['assumptions'] as String?,
+          catalysts: response['catalysts'] as String?,
+          risks: response['risks'] as String?,
+          exitConditions: response['exit_conditions'] as String?,
           conviction: response['conviction'] as String? ?? 'low',
           createdAt: DateTime.parse(response['created_at'] as String),
           updatedAt: DateTime.parse(response['updated_at'] as String),
@@ -292,6 +304,10 @@ class WorkspaceRepository {
     String? summary,
     String? bullCase,
     String? bearCase,
+    String? assumptions,
+    String? catalysts,
+    String? risks,
+    String? exitConditions,
     String? conviction,
   }) async {
     try {
@@ -303,6 +319,10 @@ class WorkspaceRepository {
       if (summary != null) update['summary'] = summary;
       if (bullCase != null) update['bull_case'] = bullCase;
       if (bearCase != null) update['bear_case'] = bearCase;
+      if (assumptions != null) update['assumptions'] = assumptions;
+      if (catalysts != null) update['catalysts'] = catalysts;
+      if (risks != null) update['risks'] = risks;
+      if (exitConditions != null) update['exit_conditions'] = exitConditions;
       if (conviction != null) update['conviction'] = conviction;
 
       await _client

@@ -117,13 +117,13 @@ class WorkspaceProvider {
     }
   }
 
-  Future<void> createThesis(String title, String stance, {String? summary, String? bullCase, String? bearCase, String conviction = 'low'}) async {
+  Future<void> createThesis(String title, String stance, {String? summary, String? bullCase, String? bearCase, String? assumptions, String? catalysts, String? risks, String? exitConditions, String conviction = 'low'}) async {
     if (_isMutating) return;
     _isMutating = true;
     mutationError.value = null;
     try {
       final result = await _repository.createThesis(
-        companyId: companyId, title: title, stance: stance, summary: summary, bullCase: bullCase, bearCase: bearCase, conviction: conviction,
+        companyId: companyId, title: title, stance: stance, summary: summary, bullCase: bullCase, bearCase: bearCase, assumptions: assumptions, catalysts: catalysts, risks: risks, exitConditions: exitConditions, conviction: conviction,
       );
       if (result.isSuccess) {
         theses.value = [result.data!, ...theses];
@@ -136,17 +136,17 @@ class WorkspaceProvider {
     }
   }
 
-  Future<void> updateThesis(String thesisId, String title, String stance, {String? summary, String? bullCase, String? bearCase, String? conviction}) async {
+  Future<void> updateThesis(String thesisId, String title, String stance, {String? summary, String? bullCase, String? bearCase, String? assumptions, String? catalysts, String? risks, String? exitConditions, String? conviction}) async {
     if (_isMutating) return;
     _isMutating = true;
     mutationError.value = null;
     try {
       final result = await _repository.updateThesis(
-        thesisId: thesisId, title: title, stance: stance, summary: summary, bullCase: bullCase, bearCase: bearCase, conviction: conviction,
+        thesisId: thesisId, title: title, stance: stance, summary: summary, bullCase: bullCase, bearCase: bearCase, assumptions: assumptions, catalysts: catalysts, risks: risks, exitConditions: exitConditions, conviction: conviction,
       );
       if (result.isSuccess) {
         theses.value = theses.map((t) => t.id == thesisId
-            ? CompanyThesis(id: t.id, companyId: t.companyId, title: title, stance: stance, summary: summary ?? t.summary, bullCase: bullCase ?? t.bullCase, bearCase: bearCase ?? t.bearCase, assumptions: t.assumptions, catalysts: t.catalysts, risks: t.risks, exitConditions: t.exitConditions, conviction: conviction ?? t.conviction, createdAt: t.createdAt, updatedAt: DateTime.now())
+            ? CompanyThesis(id: t.id, companyId: t.companyId, title: title, stance: stance, summary: summary ?? t.summary, bullCase: bullCase ?? t.bullCase, bearCase: bearCase ?? t.bearCase, assumptions: assumptions ?? t.assumptions, catalysts: catalysts ?? t.catalysts, risks: risks ?? t.risks, exitConditions: exitConditions ?? t.exitConditions, conviction: conviction ?? t.conviction, createdAt: t.createdAt, updatedAt: DateTime.now())
             : t).toList();
       } else {
         debugPrint('[WorkspaceProvider] updateThesis failed: ${result.error}');
