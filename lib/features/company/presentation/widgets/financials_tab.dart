@@ -92,9 +92,9 @@ class FinancialsTab extends StatelessWidget {
         dataRowMaxHeight: 28,
         columns: [
           const DataColumn(label: Text('')),
-          ...displayPeriods.map(
-            (p) => DataColumn(
-              label: Text(p.substring(0, 4), style: AppTypography.monoLabel),
+          ...displayRows.map(
+            (row) => DataColumn(
+              label: _PeriodHeader(row: row),
               numeric: true,
             ),
           ),
@@ -186,6 +186,107 @@ class FinancialsTab extends StatelessWidget {
   ];
 
   static const _cashFlowKeys = ['operating_cash_flow', 'capex'];
+}
+
+/// Builds a period header with restatement indicator, version badge, and
+/// freshness tint based on the statement's age.
+class _PeriodHeader extends StatelessWidget {
+  final StatementRow row;
+
+  const _PeriodHeader({required this.row});
+
+  @override
+  Widget build(BuildContext context) {
+    final Color? backgroundColor = _freshnessTint();
+
+    return Tooltip(
+      message: row.isRestated
+          ? 'This statement has been restated by the company'
+          : _periodDisplayText(),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(2),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Version badge when version > 1
+            if (row.statementVersion != null && row.statementVersion! > 1)
+              Padding(
+                padding: const EdgeInsets.only(right: 3),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 3,
+                    vertical: 0,
+                  ),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: AppThemeColors.textTertiary,
+                      width: 0.5,
+                    ),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                  child: Text(
+                    'v${row.statementVersion}',
+                    style: AppTypography.monoMeta.copyWith(
+                      fontSize: 8,
+                      color: AppThemeColors.textTertiary,
+                    ),
+                  ),
+                ),
+              ),
+            // Period year label
+            Text(
+              row.periodEnd.substring(0, 4),
+              style: AppTypography.monoLabel,
+            ),
+            // Restatement indicator
+            if (row.isRestated)
+              Padding(
+                padding: const EdgeInsets.only(left: 3),
+                child: const Icon(
+                  Icons.sync,
+                  size: 11,
+                  color: AppThemeColors.warning,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Returns the period end year as display text.
+  String _periodDisplayText() {
+    try {
+      return row.periodEnd.substring(0, 4);
+    } catch (e) {
+      debugPrint('[FinancialsTab] periodDisplayText parse error: $e');
+      return row.periodEnd;
+    }
+  }
+
+  /// Computes a subtle background tint based on the age of the period end date.
+  /// - < 90 days: no tint (null)
+  /// - 90–365 days: amber tint (warning at low alpha)
+  /// - > 365 days: red tint (critical at low alpha)
+  Color? _freshnessTint() {
+    try {
+      final DateTime periodDate = DateTime.parse(row.periodEnd);
+      final int ageDays = DateTime.now().difference(periodDate).inDays;
+
+      if (ageDays < 90) return null;
+      if (ageDays <= 365) {
+        return AppThemeColors.warning.withAlpha(20);
+      }
+      return AppThemeColors.critical.withAlpha(18);
+    } catch (e) {
+      debugPrint('[FinancialsTab] freshnessTint parse error: $e');
+      return null;
+    }
+  }
 }
 
 class _SectionHeader extends StatelessWidget {

@@ -3,6 +3,7 @@ import 'package:signals/signals_flutter.dart';
 
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../data/workspace_models.dart';
 import '../providers/workspace_provider.dart';
 
 class OverviewTab extends StatelessWidget {
@@ -17,6 +18,8 @@ class OverviewTab extends StatelessWidget {
       final metrics = provider.metrics;
       final theses = provider.theses;
       final notes = provider.notes;
+      final qualityDetail = provider.qualityDetail.value;
+      final freshness = provider.freshnessStatus.value;
 
       return SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -31,8 +34,12 @@ class OverviewTab extends StatelessWidget {
             _buildResearchState(theses, notes),
             const SizedBox(height: 24),
 
+            // Data trust summary
+            _buildDataTrustSection(qualityDetail, freshness),
+            const SizedBox(height: 24),
+
             // Key metrics — supporting
-            _buildMetricsSection(metrics),
+            _buildMetricsSection(metrics, qualityDetail, freshness),
             const SizedBox(height: 24),
 
             // Company summary — background
@@ -198,7 +205,118 @@ class OverviewTab extends StatelessWidget {
     );
   }
 
-  Widget _buildMetricsSection(List<dynamic> metrics) {
+  // ── Data Trust Section ──
+
+  Widget _buildDataTrustSection(QualityScoreDetail? quality, String? freshness) {
+    // Don't render if both are null — no trust data available
+    if (quality == null && freshness == null) return const SizedBox.shrink();
+
+    final freshnessInfo = _resolveFreshnessInfo(freshness);
+    final qualityInfo = _resolveQualityInfo(quality);
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: AppThemeColors.border),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: const BoxDecoration(
+              color: AppThemeColors.surfaceMuted,
+              border: Border(bottom: BorderSide(color: AppThemeColors.border)),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.verified_outlined, size: 14, color: AppThemeColors.textSecondary),
+                SizedBox(width: 8),
+                Text('DATA TRUST', style: AppTypography.monoSection),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: Row(
+              children: [
+                // Quality badge
+                if (qualityInfo != null) ...[
+                  _TrustBadge(
+                    icon: Icons.analytics_outlined,
+                    label: 'Quality',
+                    value: qualityInfo.label,
+                    color: qualityInfo.color,
+                  ),
+                  const SizedBox(width: 16),
+                ],
+                // Freshness badge
+                _TrustBadge(
+                  icon: Icons.schedule,
+                  label: 'Statements',
+                  value: freshnessInfo.label,
+                  color: freshnessInfo.color,
+                ),
+                const Spacer(),
+                // As-of date
+                if (quality?.scoreDate != null)
+                  Text(
+                    'Scored ${_formatDate(quality!.scoreDate!)}',
+                    style: AppTypography.monoMeta.copyWith(color: AppThemeColors.textTertiary),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  _FreshnessInfo _resolveFreshnessInfo(String? freshness) {
+    if (freshness == null) {
+      return const _FreshnessInfo(label: 'Unknown', color: AppThemeColors.textTertiary);
+    }
+    switch (freshness.toLowerCase()) {
+      case 'fresh':
+      case 'current':
+      case 'up_to_date':
+        return const _FreshnessInfo(label: 'Fresh', color: AppThemeColors.success);
+      case 'recent':
+        return const _FreshnessInfo(label: 'Recent', color: AppThemeColors.success);
+      case 'aging':
+      case 'moderate':
+        return const _FreshnessInfo(label: 'Aging', color: AppThemeColors.warning);
+      case 'stale':
+      case 'old':
+      case 'outdated':
+        return const _FreshnessInfo(label: 'Stale', color: AppThemeColors.critical);
+      default:
+        return _FreshnessInfo(label: _humanize(freshness), color: AppThemeColors.textTertiary);
+    }
+  }
+
+  _QualityInfo? _resolveQualityInfo(QualityScoreDetail? quality) {
+    if (quality == null) return null;
+    final score = quality.overallScore;
+    final label = '${(score * 100).toStringAsFixed(0)}%';
+    final Color color;
+    if (score >= 0.8) {
+      color = AppThemeColors.success;
+    } else if (score >= 0.5) {
+      color = AppThemeColors.warning;
+    } else {
+      color = AppThemeColors.critical;
+    }
+    return _QualityInfo(label: label, color: color);
+  }
+
+  // ── Metrics Section ──
+
+  Widget _buildMetricsSection(
+    List<dynamic> metrics,
+    QualityScoreDetail? quality,
+    String? freshness,
+  ) {
     final keyMetrics = ['market_cap', 'pe', 'roe', 'gross_margin', 'net_margin', 'debt_equity'];
     final metricMap = <String, dynamic>{};
     for (final m in metrics) {
@@ -206,6 +324,9 @@ class OverviewTab extends StatelessWidget {
         metricMap[m.metricCode] = m;
       }
     }
+
+    final freshnessColor = _resolveFreshnessInfo(freshness).color;
+    final DateTime? asOfDate = quality?.scoreDate;
 
     return Container(
       decoration: BoxDecoration(
@@ -233,14 +354,18 @@ class OverviewTab extends StatelessWidget {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             crossAxisCount: 3,
-            childAspectRatio: 2.2,
+            childAspectRatio: 2.0,
             children: keyMetrics.map((code) {
               final m = metricMap[code];
-              return _MetricCell(
-                label: _metricLabel(code),
-                value: m != null ? _formatMetric(m) : '—',
-                isOk: m != null,
-                tooltip: _metricTooltip(code),
+              return RepaintBoundary(
+                child: _MetricCell(
+                  label: _metricLabel(code),
+                  value: m != null ? _formatMetric(m) : '—',
+                  isOk: m != null,
+                  tooltip: _metricTooltip(code),
+                  freshnessBorderColor: freshnessColor,
+                  asOfDate: asOfDate,
+                ),
               );
             }).toList(),
           ),
@@ -248,6 +373,8 @@ class OverviewTab extends StatelessWidget {
       ),
     );
   }
+
+  // ── Research Helpers ──
 
   _ResearchStatus _getResearchStatus(List<dynamic> theses, List<dynamic> notes) {
     if (theses.isNotEmpty) {
@@ -287,6 +414,8 @@ class OverviewTab extends StatelessWidget {
     return _ResearchState(current: 'Not Researched', next: 'Create Notes', color: AppThemeColors.textTertiary);
   }
 
+  // ── Metric Helpers ──
+
   String _metricLabel(String code) {
     switch (code) {
       case 'market_cap': return 'Market Cap';
@@ -306,7 +435,7 @@ class OverviewTab extends StatelessWidget {
       case 'roe': return 'Return on Equity.';
       case 'gross_margin': return 'Gross profit as % of revenue.';
       case 'net_margin': return 'Net income as % of revenue.';
-      case 'debt_equity': return 'Total debt ÷ shareholders equity.';
+      case 'debt_equity': return 'Total debt / shareholders equity.';
       default: return code;
     }
   }
@@ -331,9 +460,19 @@ class OverviewTab extends StatelessWidget {
   }
 
   String _formatDate(DateTime dt) {
-    return '${dt.month.toString().padLeft(2, '0')}/${dt.day.toString().padLeft(2, '0')}';
+    return '${dt.month.toString().padLeft(2, '0')}/${dt.day.toString().padLeft(2, '0')}/${dt.year}';
+  }
+
+  String _humanize(String value) {
+    return value
+        .replaceAll('_', ' ')
+        .split(' ')
+        .map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}')
+        .join(' ');
   }
 }
+
+// ── Data Models ──
 
 class _ResearchStatus {
   final String title;
@@ -358,6 +497,73 @@ class _ResearchState {
 
   _ResearchState({required this.current, this.next, required this.color});
 }
+
+class _FreshnessInfo {
+  final String label;
+  final Color color;
+
+  const _FreshnessInfo({required this.label, required this.color});
+}
+
+class _QualityInfo {
+  final String label;
+  final Color color;
+
+  const _QualityInfo({required this.label, required this.color});
+}
+
+// ── Trust Badge Widget ──
+
+class _TrustBadge extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+
+  const _TrustBadge({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 12, color: color),
+        const SizedBox(width: 6),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(label, style: AppTypography.monoMeta.copyWith(fontSize: 10)),
+            const SizedBox(height: 1),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(3),
+              ),
+              child: Text(
+                value,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: AppTypography.mono,
+                  color: color,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+// ── Existing Shared Widgets ──
 
 class _StateChip extends StatelessWidget {
   final String label;
@@ -403,21 +609,31 @@ class _ActionChip extends StatelessWidget {
   }
 }
 
+// ── Metric Cell (with freshness indicators) ──
+
 class _MetricCell extends StatelessWidget {
   final String label;
   final String value;
   final bool isOk;
   final String? tooltip;
+  final Color freshnessBorderColor;
+  final DateTime? asOfDate;
 
   const _MetricCell({
     required this.label,
     required this.value,
     required this.isOk,
     this.tooltip,
+    required this.freshnessBorderColor,
+    this.asOfDate,
   });
 
   @override
   Widget build(BuildContext context) {
+    final String? asOfText = asOfDate != null
+        ? 'as of ${asOfDate!.month.toString().padLeft(2, '0')}/${asOfDate!.day.toString().padLeft(2, '0')}/${asOfDate!.year}'
+        : null;
+
     return Tooltip(
       message: tooltip ?? label,
       decoration: BoxDecoration(
@@ -430,6 +646,7 @@ class _MetricCell extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           border: Border(
+            left: BorderSide(color: freshnessBorderColor, width: 2),
             right: BorderSide(color: AppThemeColors.border.withValues(alpha: 0.5)),
             bottom: BorderSide(color: AppThemeColors.border.withValues(alpha: 0.5)),
           ),
@@ -447,6 +664,18 @@ class _MetricCell extends StatelessWidget {
                 fontSize: 13,
               ),
             ),
+            if (asOfText != null) ...[
+              const SizedBox(height: 2),
+              Text(
+                asOfText,
+                style: AppTypography.monoMeta.copyWith(
+                  fontSize: 9,
+                  color: AppThemeColors.textTertiary,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ],
         ),
       ),
