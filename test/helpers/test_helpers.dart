@@ -96,11 +96,17 @@ Map<String, dynamic> createPriceDataJson({
     'price': price,
     'previous_close': previousClose,
     'volume': volume,
+    // ignore: use_null_aware_elements
     if (open != null) 'open': open,
+    // ignore: use_null_aware_elements
     if (high != null) 'high': high,
+    // ignore: use_null_aware_elements
     if (low != null) 'low': low,
+    // ignore: use_null_aware_elements
     if (close != null) 'close': close,
+    // ignore: use_null_aware_elements
     if (turnover != null) 'turnover': turnover,
+    // ignore: use_null_aware_elements
     if (lastUpdate != null) 'last_update': lastUpdate,
   };
 }

@@ -178,7 +178,7 @@ void main() {
       test('propagates failure without calling transform', () {
         const result = Result<int>.failure('original err');
         final chained = result.flatMap(
-          (n) => Result<String>.success('should not reach'),
+          (n) => const Result<String>.success('should not reach'),
         );
 
         expect(chained, isA<ResultFailure<String>>());
