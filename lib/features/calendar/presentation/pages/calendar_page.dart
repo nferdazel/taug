@@ -33,6 +33,18 @@ class _CalendarPageState extends State<CalendarPage> {
     _loadEvents();
   }
 
+  @override
+  void dispose() {
+    _events.dispose();
+    _selectedDate.dispose();
+    _selectedCountry.dispose();
+    _minImportance.dispose();
+    _isLoading.dispose();
+    _error.dispose();
+    _lastUpdated.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadEvents() async {
     _isLoading.value = true;
     _error.value = null;

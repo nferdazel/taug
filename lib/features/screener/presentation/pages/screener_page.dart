@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -15,16 +17,24 @@ class ScreenerPage extends StatefulWidget {
 
 class _ScreenerPageState extends State<ScreenerPage> {
   List<Map<String, dynamic>> _rows = [];
+  List<Map<String, dynamic>> _filteredRows = [];
   bool _isLoading = true;
   String? _error;
   String _sortBy = 'display_name';
   bool _sortAsc = true;
   String _searchQuery = '';
+  Timer? _searchDebounce;
 
   @override
   void initState() {
     super.initState();
     _loadData();
+  }
+
+  @override
+  void dispose() {
+    _searchDebounce?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadData() async {
@@ -42,6 +52,7 @@ class _ScreenerPageState extends State<ScreenerPage> {
       setState(() {
         _rows = List<Map<String, dynamic>>.from(response);
         _isLoading = false;
+        _recomputeFilteredRows();
       });
     } catch (e) {
       setState(() {
@@ -51,7 +62,7 @@ class _ScreenerPageState extends State<ScreenerPage> {
     }
   }
 
-  List<Map<String, dynamic>> get _filteredRows {
+  void _recomputeFilteredRows() {
     var rows = _rows;
 
     if (_searchQuery.isNotEmpty) {
@@ -78,7 +89,7 @@ class _ScreenerPageState extends State<ScreenerPage> {
       return _sortAsc ? cmp : -cmp;
     });
 
-    return rows;
+    _filteredRows = rows;
   }
 
   void _onSort(String column) {
@@ -89,6 +100,7 @@ class _ScreenerPageState extends State<ScreenerPage> {
         _sortBy = column;
         _sortAsc = false;
       }
+      _recomputeFilteredRows();
     });
   }
 
@@ -117,7 +129,18 @@ class _ScreenerPageState extends State<ScreenerPage> {
             width: 200,
             height: 28,
             child: TextField(
-              onChanged: (v) => setState(() => _searchQuery = v),
+              onChanged: (v) {
+                _searchQuery = v;
+                _searchDebounce?.cancel();
+                _searchDebounce = Timer(
+                  const Duration(milliseconds: 300),
+                  () {
+                    setState(() {
+                      _recomputeFilteredRows();
+                    });
+                  },
+                );
+              },
               style: AppTypography.monoData.copyWith(fontSize: 11),
               decoration: const InputDecoration(
                 hintText: 'Filter...',

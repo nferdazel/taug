@@ -21,13 +21,17 @@ class PriceCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final direction = (change ?? 0) >= 0 ? 'up' : 'down';
     return RepaintBoundary(
-      child: Text(
-        value,
-        style: AppThemeColors.changeStyle(change ?? 0).copyWith(
-          fontSize: 11,
+      child: Semantics(
+        label: 'Price: $value, $direction',
+        child: Text(
+          value,
+          style: AppThemeColors.changeStyle(change ?? 0).copyWith(
+            fontSize: 11,
+          ),
+          textAlign: textAlign,
         ),
-        textAlign: textAlign,
       ),
     );
   }
@@ -52,14 +56,19 @@ class ChangeCell extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = value >= 0 ? AppThemeColors.bullish : AppThemeColors.bearish;
     final prefix = value >= 0 ? '+' : '';
+    final direction = value >= 0 ? 'up' : 'down';
+    final formatted = showPercent
+        ? '$prefix${value.toStringAsFixed(2)}%'
+        : '$prefix${value.toStringAsFixed(2)}';
 
     return RepaintBoundary(
-      child: Text(
-        showPercent
-            ? '$prefix${value.toStringAsFixed(2)}%'
-            : '$prefix${value.toStringAsFixed(2)}',
-        style: AppTypography.monoSmall.copyWith(color: color),
-        textAlign: textAlign,
+      child: Semantics(
+        label: 'Change: $direction ${value.abs().toStringAsFixed(2)} percent',
+        child: Text(
+          formatted,
+          style: AppTypography.monoSmall.copyWith(color: color),
+          textAlign: textAlign,
+        ),
       ),
     );
   }
@@ -81,10 +90,13 @@ class VolumeCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RepaintBoundary(
-      child: Text(
-        formatVolume(value),
-        style: AppTypography.monoTiny,
-        textAlign: textAlign,
+      child: Semantics(
+        label: 'Volume: ${formatVolume(value)}',
+        child: Text(
+          formatVolume(value),
+          style: AppTypography.monoTiny,
+          textAlign: textAlign,
+        ),
       ),
     );
   }
@@ -93,6 +105,7 @@ class VolumeCell extends StatelessWidget {
 /// Connection status indicator dot.
 /// Wrapped in [RepaintBoundary] to prevent unnecessary repaints
 /// when parent list rebuilds due to price ticks.
+/// Uses [Semantics.liveRegion] so screen readers announce status changes.
 class StatusDot extends StatelessWidget {
   final bool isConnected;
 
@@ -100,13 +113,21 @@ class StatusDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final statusLabel = isConnected ? 'Connected' : 'Disconnected';
     return RepaintBoundary(
-      child: Container(
-        width: 6,
-        height: 6,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: isConnected ? AppThemeColors.bullish : AppThemeColors.bearish,
+      child: Semantics(
+        label: statusLabel,
+        liveRegion: true,
+        child: Tooltip(
+          message: statusLabel,
+          child: Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isConnected ? AppThemeColors.bullish : AppThemeColors.bearish,
+            ),
+          ),
         ),
       ),
     );
@@ -127,17 +148,21 @@ class SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: Row(
-        children: [
-          Text(
-            title.toUpperCase(),
-            style: AppTypography.sectionHeader,
-          ),
-          const Spacer(),
-          ?trailing,
-        ],
+    return Semantics(
+      header: true,
+      label: title,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Row(
+          children: [
+            Text(
+              title.toUpperCase(),
+              style: AppTypography.sectionHeader,
+            ),
+            const Spacer(),
+            ?trailing,
+          ],
+        ),
       ),
     );
   }

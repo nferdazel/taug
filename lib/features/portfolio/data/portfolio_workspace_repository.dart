@@ -12,9 +12,16 @@ class PortfolioRepository {
 
   Future<Result<List<PortfolioPosition>>> getPositions({String? status}) async {
     try {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) {
+        debugPrint('[PortfolioRepo] getPositions: Not authenticated');
+        return Result.failure(Exception('Not authenticated'));
+      }
+
       var query = _client
           .from('portfolio_positions')
-          .select('*, companies!inner(display_name)');
+          .select('*, companies!inner(display_name)')
+          .eq('user_id', userId);
 
       if (status != null) {
         query = query.eq('status', status);
@@ -73,6 +80,12 @@ class PortfolioRepository {
     String? thesisId,
   }) async {
     try {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) {
+        debugPrint('[PortfolioRepo] updatePosition: Not authenticated');
+        return Result.failure(Exception('Not authenticated'));
+      }
+
       final update = <String, dynamic>{
         'updated_at': DateTime.now().toIso8601String(),
       };
@@ -84,7 +97,8 @@ class PortfolioRepository {
       await _client
           .from('portfolio_positions')
           .update(update)
-          .eq('id', positionId);
+          .eq('id', positionId)
+          .eq('user_id', userId);
 
       return const Result.success(null);
     } catch (e) {
@@ -101,6 +115,12 @@ class PortfolioRepository {
     double? exitPrice,
   }) async {
     try {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) {
+        debugPrint('[PortfolioRepo] closePosition: Not authenticated');
+        return Result.failure(Exception('Not authenticated'));
+      }
+
       await _client
           .from('portfolio_positions')
           .update({
@@ -111,7 +131,8 @@ class PortfolioRepository {
             'exit_price': exitPrice,
             'updated_at': DateTime.now().toIso8601String(),
           })
-          .eq('id', positionId);
+          .eq('id', positionId)
+          .eq('user_id', userId);
 
       return const Result.success(null);
     } catch (e) {
@@ -122,13 +143,20 @@ class PortfolioRepository {
 
   Future<Result<void>> markReviewNeeded(String positionId) async {
     try {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) {
+        debugPrint('[PortfolioRepo] markReviewNeeded: Not authenticated');
+        return Result.failure(Exception('Not authenticated'));
+      }
+
       await _client
           .from('portfolio_positions')
           .update({
             'status': 'review_needed',
             'updated_at': DateTime.now().toIso8601String(),
           })
-          .eq('id', positionId);
+          .eq('id', positionId)
+          .eq('user_id', userId);
 
       return const Result.success(null);
     } catch (e) {

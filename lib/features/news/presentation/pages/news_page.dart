@@ -39,6 +39,20 @@ class _NewsPageState extends State<NewsPage> {
     _loadPage();
   }
 
+  @override
+  void dispose() {
+    _articles.dispose();
+    _topHeadlines.dispose();
+    _selectedCategory.dispose();
+    _policyOnly.dispose();
+    _isLoading.dispose();
+    _isTopLoading.dispose();
+    _error.dispose();
+    _topError.dispose();
+    _lastUpdated.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadPage() async {
     await Future.wait([_loadNews(), _loadTopHeadlines()]);
   }

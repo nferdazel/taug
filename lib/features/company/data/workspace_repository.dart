@@ -124,10 +124,17 @@ class WorkspaceRepository {
 
   Future<Result<List<CompanyNote>>> getNotes(String companyId) async {
     try {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) {
+        debugPrint('[WorkspaceRepo] getNotes: Not authenticated');
+        return Result.failure(Exception('Not authenticated'));
+      }
+
       final response = await _client
           .from(AppSchema.researchNotes)
           .select('id, company_id, title, body, created_at, updated_at')
           .eq('company_id', companyId)
+          .eq('user_id', userId)
           .order('updated_at', ascending: false);
 
       final notes = (response as List)
@@ -156,9 +163,15 @@ class WorkspaceRepository {
     required String body,
   }) async {
     try {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) {
+        debugPrint('[WorkspaceRepo] createNote: Not authenticated');
+        return Result.failure(Exception('Not authenticated'));
+      }
+
       final response = await _client
           .from(AppSchema.researchNotes)
-          .insert({'company_id': companyId, 'title': title, 'body': body})
+          .insert({'user_id': userId, 'company_id': companyId, 'title': title, 'body': body})
           .select()
           .single();
 
@@ -184,6 +197,12 @@ class WorkspaceRepository {
     required String body,
   }) async {
     try {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) {
+        debugPrint('[WorkspaceRepo] updateNote: Not authenticated');
+        return Result.failure(Exception('Not authenticated'));
+      }
+
       await _client
           .from(AppSchema.researchNotes)
           .update({
@@ -191,7 +210,8 @@ class WorkspaceRepository {
             'body': body,
             'updated_at': DateTime.now().toIso8601String(),
           })
-          .eq('id', noteId);
+          .eq('id', noteId)
+          .eq('user_id', userId);
       return const Result.success(null);
     } catch (e) {
       debugPrint('[WorkspaceRepo] updateNote: $e');
@@ -201,7 +221,17 @@ class WorkspaceRepository {
 
   Future<Result<void>> deleteNote(String noteId) async {
     try {
-      await _client.from(AppSchema.researchNotes).delete().eq('id', noteId);
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) {
+        debugPrint('[WorkspaceRepo] deleteNote: Not authenticated');
+        return Result.failure(Exception('Not authenticated'));
+      }
+
+      await _client
+          .from(AppSchema.researchNotes)
+          .delete()
+          .eq('id', noteId)
+          .eq('user_id', userId);
       return const Result.success(null);
     } catch (e) {
       debugPrint('[WorkspaceRepo] deleteNote: $e');
@@ -211,10 +241,17 @@ class WorkspaceRepository {
 
   Future<Result<List<CompanyThesis>>> getTheses(String companyId) async {
     try {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) {
+        debugPrint('[WorkspaceRepo] getTheses: Not authenticated');
+        return Result.failure(Exception('Not authenticated'));
+      }
+
       final response = await _client
           .from(AppSchema.investmentTheses)
           .select('*')
           .eq('company_id', companyId)
+          .eq('user_id', userId)
           .order('updated_at', ascending: false);
 
       final theses = (response as List)
@@ -255,9 +292,16 @@ class WorkspaceRepository {
     String conviction = 'low',
   }) async {
     try {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) {
+        debugPrint('[WorkspaceRepo] createThesis: Not authenticated');
+        return Result.failure(Exception('Not authenticated'));
+      }
+
       final response = await _client
           .from(AppSchema.investmentTheses)
           .insert({
+            'user_id': userId,
             'company_id': companyId,
             'title': title,
             'stance': stance,
@@ -311,6 +355,12 @@ class WorkspaceRepository {
     String? conviction,
   }) async {
     try {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) {
+        debugPrint('[WorkspaceRepo] updateThesis: Not authenticated');
+        return Result.failure(Exception('Not authenticated'));
+      }
+
       final update = <String, dynamic>{
         'title': title,
         'stance': stance,
@@ -328,7 +378,8 @@ class WorkspaceRepository {
       await _client
           .from(AppSchema.investmentTheses)
           .update(update)
-          .eq('id', thesisId);
+          .eq('id', thesisId)
+          .eq('user_id', userId);
 
       return const Result.success(null);
     } catch (e) {
@@ -339,10 +390,17 @@ class WorkspaceRepository {
 
   Future<Result<void>> deleteThesis(String thesisId) async {
     try {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) {
+        debugPrint('[WorkspaceRepo] deleteThesis: Not authenticated');
+        return Result.failure(Exception('Not authenticated'));
+      }
+
       await _client
           .from(AppSchema.investmentTheses)
           .delete()
-          .eq('id', thesisId);
+          .eq('id', thesisId)
+          .eq('user_id', userId);
       return const Result.success(null);
     } catch (e) {
       debugPrint('[WorkspaceRepo] deleteThesis: $e');

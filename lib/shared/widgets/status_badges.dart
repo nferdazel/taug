@@ -28,19 +28,22 @@ class FreshnessBadge extends StatelessWidget {
     if (status == FreshnessStatus.unknown) {
       return const SizedBox.shrink();
     }
-    return Tooltip(
-      message: status.tooltip,
-      preferBelow: true,
-      decoration: BoxDecoration(
-        color: AppThemeColors.surfaceLight,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: AppThemeColors.border),
-      ),
-      textStyle: AppTypography.caption.copyWith(color: AppThemeColors.textPrimary),
-      child: AppBadge(
-        label: status.label,
-        color: status.color,
-        icon: Icons.circle,
+    return Semantics(
+      label: 'Freshness: ${status.label}',
+      child: Tooltip(
+        message: status.tooltip,
+        preferBelow: true,
+        decoration: BoxDecoration(
+          color: AppThemeColors.surfaceLight,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: AppThemeColors.border),
+        ),
+        textStyle: AppTypography.caption.copyWith(color: AppThemeColors.textPrimary),
+        child: AppBadge(
+          label: status.label,
+          color: status.color,
+          icon: Icons.circle,
+        ),
       ),
     );
   }
@@ -78,19 +81,22 @@ class QualityBadge extends StatelessWidget {
     if (level == QualityLevel.unknown) {
       return const SizedBox.shrink();
     }
-    return Tooltip(
-      message: level.tooltip,
-      preferBelow: true,
-      decoration: BoxDecoration(
-        color: AppThemeColors.surfaceLight,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: AppThemeColors.border),
-      ),
-      textStyle: AppTypography.caption.copyWith(color: AppThemeColors.textPrimary),
-      child: AppBadge(
-        label: '${(score! * 100).round()}%',
-        color: level.color,
-        icon: Icons.circle,
+    return Semantics(
+      label: 'Quality: ${level.label} ${(score! * 100).round()} percent',
+      child: Tooltip(
+        message: level.tooltip,
+        preferBelow: true,
+        decoration: BoxDecoration(
+          color: AppThemeColors.surfaceLight,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: AppThemeColors.border),
+        ),
+        textStyle: AppTypography.caption.copyWith(color: AppThemeColors.textPrimary),
+        child: AppBadge(
+          label: '${(score! * 100).round()}%',
+          color: level.color,
+          icon: Icons.circle,
+        ),
       ),
     );
   }
@@ -115,19 +121,22 @@ class ConvictionBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: level.tooltip,
-      preferBelow: true,
-      decoration: BoxDecoration(
-        color: AppThemeColors.surfaceLight,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: AppThemeColors.border),
-      ),
-      textStyle: AppTypography.caption.copyWith(color: AppThemeColors.textPrimary),
-      child: AppBadge(
-        label: level.label,
-        color: level.color,
-        icon: Icons.circle,
+    return Semantics(
+      label: 'Conviction: ${level.label}',
+      child: Tooltip(
+        message: level.tooltip,
+        preferBelow: true,
+        decoration: BoxDecoration(
+          color: AppThemeColors.surfaceLight,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: AppThemeColors.border),
+        ),
+        textStyle: AppTypography.caption.copyWith(color: AppThemeColors.textPrimary),
+        child: AppBadge(
+          label: level.label,
+          color: level.color,
+          icon: Icons.circle,
+        ),
       ),
     );
   }

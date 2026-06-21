@@ -34,6 +34,14 @@ class _BriefPageState extends State<BriefPage> {
     _loadBrief();
   }
 
+  @override
+  void dispose() {
+    _snapshot.dispose();
+    _isLoading.dispose();
+    _error.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadBrief() async {
     _isLoading.value = true;
     _error.value = null;
