@@ -57,6 +57,13 @@ class PortfolioPosition extends Equatable {
   bool get isReviewNeeded => status == PositionStatus.reviewNeeded;
   bool get isClosed => status == PositionStatus.closed;
 
+  /// Calculate return percentage from entry and exit prices
+  double? get returnPercent {
+    if (entryPrice == null || exitPrice == null) return null;
+    if (entryPrice == 0) return null;
+    return ((exitPrice! - entryPrice!) / entryPrice!) * 100;
+  }
+
   @override
   List<Object?> get props => [id];
 }

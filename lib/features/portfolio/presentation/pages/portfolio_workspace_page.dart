@@ -754,6 +754,10 @@ class _ClosedPositionCard extends StatelessWidget {
                   style: AppTypography.body.copyWith(fontWeight: FontWeight.w500),
                 ),
               ),
+              if (position.returnPercent != null) ...[
+                _ReturnBadge(returnPercent: position.returnPercent!),
+                const SizedBox(width: 8),
+              ],
               if (position.outcome != null) _OutcomeBadge(outcome: position.outcome!),
               const SizedBox(width: 8),
               IconButton(
@@ -891,6 +895,31 @@ class _StanceChipSmall extends StatelessWidget {
       child: Text(
         stance[0].toUpperCase() + stance.substring(1),
         style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color),
+      ),
+    );
+  }
+}
+
+class _ReturnBadge extends StatelessWidget {
+  final double returnPercent;
+
+  const _ReturnBadge({required this.returnPercent});
+
+  @override
+  Widget build(BuildContext context) {
+    final isPositive = returnPercent >= 0;
+    final color = isPositive ? AppThemeColors.success : AppThemeColors.critical;
+    final prefix = isPositive ? '+' : '';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        '$prefix${returnPercent.toStringAsFixed(1)}%',
+        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color),
       ),
     );
   }
