@@ -14,7 +14,7 @@ class WorkspaceProvider {
   final statements = ListSignal<StatementRow>([]);
   final notes = ListSignal<CompanyNote>([]);
   final theses = ListSignal<CompanyThesis>([]);
-  final qualityScore = Signal<double?>(null);
+  final qualityDetail = Signal<QualityScoreDetail?>(null);
   final freshnessStatus = Signal<String?>(null);
   final isLoading = Signal<bool>(false);
   final error = Signal<String?>(null);
@@ -44,7 +44,7 @@ class WorkspaceProvider {
     final statementsResult = results[2] as Result<List<StatementRow>>;
     final notesResult = results[3] as Result<List<CompanyNote>>;
     final thesesResult = results[4] as Result<List<CompanyThesis>>;
-    final qualityResult = results[5] as Result<double?>;
+    final qualityResult = results[5] as Result<QualityScoreDetail?>;
     final freshnessResult = results[6] as Result<String?>;
 
     if (profileResult.isSuccess) profile.value = profileResult.data;
@@ -52,7 +52,7 @@ class WorkspaceProvider {
     if (statementsResult.isSuccess) statements.value = statementsResult.data!;
     if (notesResult.isSuccess) notes.value = notesResult.data!;
     if (thesesResult.isSuccess) theses.value = thesesResult.data!;
-    if (qualityResult.isSuccess) qualityScore.value = qualityResult.data;
+    if (qualityResult.isSuccess) qualityDetail.value = qualityResult.data;
     if (freshnessResult.isSuccess) freshnessStatus.value = freshnessResult.data;
 
     if (profileResult.isFailure) {

@@ -330,17 +330,31 @@ class WorkspaceRepository {
     }
   }
 
-  Future<Result<double?>> getQualityScore(String companyId) async {
+  Future<Result<QualityScoreDetail?>> getQualityScore(String companyId) async {
     try {
       final response = await _client
           .from('data_quality_scores')
-          .select('overall_score')
+          .select('overall_score, historical_coverage_score, completeness_score, validation_score, verification_score, freshness_score, restatement_support_score, component_details, score_date')
           .eq('company_id', companyId)
           .order('score_date', ascending: false)
           .limit(1);
 
       if (response.isEmpty) return const Result.success(null);
-      return Result.success((response[0]['overall_score'] as num?)?.toDouble());
+      
+      final row = response[0];
+      return Result.success(
+        QualityScoreDetail(
+          overallScore: (row['overall_score'] as num?)?.toDouble() ?? 0,
+          historicalCoverageScore: (row['historical_coverage_score'] as num?)?.toDouble(),
+          completenessScore: (row['completeness_score'] as num?)?.toDouble(),
+          validationScore: (row['validation_score'] as num?)?.toDouble(),
+          verificationScore: (row['verification_score'] as num?)?.toDouble(),
+          freshnessScore: (row['freshness_score'] as num?)?.toDouble(),
+          restatementSupportScore: (row['restatement_support_score'] as num?)?.toDouble(),
+          componentDetails: row['component_details'] as Map<String, dynamic>?,
+          scoreDate: row['score_date'] != null ? DateTime.parse(row['score_date'] as String) : null,
+        ),
+      );
     } catch (e) {
       debugPrint('[WorkspaceRepo] getQualityScore: $e');
       return const Result.success(null);

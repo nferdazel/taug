@@ -130,3 +130,30 @@ class CompanyThesis extends Equatable {
   @override
   List<Object?> get props => [id];
 }
+
+class QualityScoreDetail extends Equatable {
+  final double overallScore;
+  final double? historicalCoverageScore;
+  final double? completenessScore;
+  final double? validationScore;
+  final double? verificationScore;
+  final double? freshnessScore;
+  final double? restatementSupportScore;
+  final Map<String, dynamic>? componentDetails;
+  final DateTime? scoreDate;
+
+  const QualityScoreDetail({
+    required this.overallScore,
+    this.historicalCoverageScore,
+    this.completenessScore,
+    this.validationScore,
+    this.verificationScore,
+    this.freshnessScore,
+    this.restatementSupportScore,
+    this.componentDetails,
+    this.scoreDate,
+  });
+
+  @override
+  List<Object?> get props => [overallScore, scoreDate];
+}
