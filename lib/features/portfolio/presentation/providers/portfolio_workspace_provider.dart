@@ -4,7 +4,7 @@ import 'package:signals/signals.dart';
 import '../../data/portfolio_models.dart';
 import '../../data/portfolio_workspace_repository.dart';
 
-class PortfolioProvider {
+class PortfolioWorkspaceProvider {
   final PortfolioRepository _repository;
 
   final positions = ListSignal<PortfolioPosition>([]);
@@ -13,7 +13,7 @@ class PortfolioProvider {
   final activeTab = Signal<int>(0);
   bool _isMutating = false;
 
-  PortfolioProvider({PortfolioRepository? repository})
+  PortfolioWorkspaceProvider({PortfolioRepository? repository})
       : _repository = repository ?? PortfolioRepository();
 
   List<PortfolioPosition> get activePositions =>

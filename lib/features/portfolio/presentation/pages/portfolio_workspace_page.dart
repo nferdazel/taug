@@ -17,12 +17,12 @@ class PortfolioWorkspacePage extends StatefulWidget {
 }
 
 class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
-  late final PortfolioProvider _provider;
+  late final PortfolioWorkspaceProvider _provider;
 
   @override
   void initState() {
     super.initState();
-    _provider = PortfolioProvider();
+    _provider = PortfolioWorkspaceProvider();
     _provider.loadPositions();
   }
 
