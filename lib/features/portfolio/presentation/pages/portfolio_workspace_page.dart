@@ -112,6 +112,11 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
               selected: _provider.activeTab.value == 1,
               onTap: () => _provider.activeTab.value = 1,
             ),
+            _TabButton(
+              label: 'Lessons',
+              selected: _provider.activeTab.value == 2,
+              onTap: () => _provider.activeTab.value = 2,
+            ),
           ],
         ),
       );
@@ -124,9 +129,16 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
         return const AppLoadingState(message: 'Loading portfolio...');
       }
 
-      return _provider.activeTab.value == 0
-          ? _buildActiveView()
-          : _buildClosedView();
+      switch (_provider.activeTab.value) {
+        case 0:
+          return _buildActiveView();
+        case 1:
+          return _buildClosedView();
+        case 2:
+          return _buildLessonsView();
+        default:
+          return _buildActiveView();
+      }
     });
   }
 
@@ -178,6 +190,97 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
             onViewCompany: () => context.go('/companies/${positions[index].companyId}'),
           );
         },
+      );
+    });
+  }
+
+  Widget _buildLessonsView() {
+    return Watch((_) {
+      final closedPositions = _provider.closedPositions;
+      final positionsWithLessons = closedPositions
+          .where((p) => p.lessonsLearned != null && p.lessonsLearned!.isNotEmpty)
+          .toList();
+
+      if (positionsWithLessons.isEmpty) {
+        return const AppEmptyState(
+          icon: Icons.school_outlined,
+          title: 'No lessons yet',
+          description: 'Close positions with lessons learned to build your investment knowledge base.',
+        );
+      }
+
+      // Group by outcome
+      final correctLessons = positionsWithLessons.where((p) => p.outcome == PositionOutcome.correct).toList();
+      final incorrectLessons = positionsWithLessons.where((p) => p.outcome == PositionOutcome.incorrect).toList();
+      final partialLessons = positionsWithLessons.where((p) => p.outcome == PositionOutcome.partial).toList();
+
+      return ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          // Summary
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppThemeColors.surface,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: AppThemeColors.border),
+            ),
+            child: Row(
+              children: [
+                _LessonSummaryChip(
+                  label: 'Correct',
+                  count: correctLessons.length,
+                  color: AppThemeColors.success,
+                ),
+                const SizedBox(width: 8),
+                _LessonSummaryChip(
+                  label: 'Incorrect',
+                  count: incorrectLessons.length,
+                  color: AppThemeColors.critical,
+                ),
+                const SizedBox(width: 8),
+                _LessonSummaryChip(
+                  label: 'Partial',
+                  count: partialLessons.length,
+                  color: AppThemeColors.warning,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Correct lessons
+          if (correctLessons.isNotEmpty) ...[
+            const Text('FROM CORRECT DECISIONS', style: AppTypography.monoSection),
+            const SizedBox(height: 8),
+            ...correctLessons.map((p) => _LessonCard(
+              position: p,
+              onViewCompany: () => context.go('/companies/${p.companyId}'),
+            )),
+            const SizedBox(height: 16),
+          ],
+
+          // Incorrect lessons
+          if (incorrectLessons.isNotEmpty) ...[
+            const Text('FROM INCORRECT DECISIONS', style: AppTypography.monoSection),
+            const SizedBox(height: 8),
+            ...incorrectLessons.map((p) => _LessonCard(
+              position: p,
+              onViewCompany: () => context.go('/companies/${p.companyId}'),
+            )),
+            const SizedBox(height: 16),
+          ],
+
+          // Partial lessons
+          if (partialLessons.isNotEmpty) ...[
+            const Text('FROM PARTIAL DECISIONS', style: AppTypography.monoSection),
+            const SizedBox(height: 8),
+            ...partialLessons.map((p) => _LessonCard(
+              position: p,
+              onViewCompany: () => context.go('/companies/${p.companyId}'),
+            )),
+          ],
+        ],
       );
     });
   }
@@ -920,6 +1023,100 @@ class _ReturnBadge extends StatelessWidget {
       child: Text(
         '$prefix${returnPercent.toStringAsFixed(1)}%',
         style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color),
+      ),
+    );
+  }
+}
+
+class _LessonSummaryChip extends StatelessWidget {
+  final String label;
+  final int count;
+  final Color color;
+
+  const _LessonSummaryChip({
+    required this.label,
+    required this.count,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '$count',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: color),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(fontSize: 11, color: color),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LessonCard extends StatelessWidget {
+  final PortfolioPosition position;
+  final VoidCallback onViewCompany;
+
+  const _LessonCard({
+    required this.position,
+    required this.onViewCompany,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppThemeColors.surface,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: AppThemeColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  position.companyName ?? 'Unknown Company',
+                  style: AppTypography.body.copyWith(fontWeight: FontWeight.w500),
+                ),
+              ),
+              if (position.returnPercent != null) ...[
+                _ReturnBadge(returnPercent: position.returnPercent!),
+                const SizedBox(width: 8),
+              ],
+              if (position.outcome != null) _OutcomeBadge(outcome: position.outcome!),
+              const SizedBox(width: 8),
+              IconButton(
+                icon: const Icon(Icons.open_in_new, size: 16, color: AppThemeColors.textSecondary),
+                onPressed: onViewCompany,
+                tooltip: 'View Company',
+              ),
+            ],
+          ),
+          if (position.thesisTitle != null) ...[
+            const SizedBox(height: 4),
+            Text(position.thesisTitle!, style: AppTypography.caption),
+          ],
+          const SizedBox(height: 8),
+          Text('Lessons:', style: AppTypography.caption.copyWith(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 4),
+          Text(position.lessonsLearned!, style: AppTypography.body),
+        ],
       ),
     );
   }
