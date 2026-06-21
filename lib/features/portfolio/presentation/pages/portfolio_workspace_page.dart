@@ -403,6 +403,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
   void _showClosePositionDialog(BuildContext context, PortfolioPosition position) {
     String outcome = 'correct';
     final lessonsController = TextEditingController();
+    final exitPriceController = TextEditingController();
 
     showDialog(
       context: context,
@@ -429,6 +430,23 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
                       },
                     ),
                   )).toList(),
+                ),
+                const SizedBox(height: 12),
+                const Text('Exit Price (optional)', style: AppTypography.caption),
+                const SizedBox(height: 4),
+                TextField(
+                  controller: exitPriceController,
+                  style: AppTypography.body,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    hintText: 'e.g. 175.00',
+                    hintStyle: AppTypography.caption,
+                    border: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.border)),
+                    enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.border)),
+                    focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeColors.accent)),
+                    filled: true,
+                    fillColor: AppThemeColors.surfaceMuted,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 const Text('Lessons Learned (optional)', style: AppTypography.caption),
@@ -461,6 +479,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
                   positionId: position.id,
                   outcome: outcome,
                   lessonsLearned: lessonsController.text.isNotEmpty ? lessonsController.text : null,
+                  exitPrice: double.tryParse(exitPriceController.text),
                 );
                 Navigator.pop(context);
               },
