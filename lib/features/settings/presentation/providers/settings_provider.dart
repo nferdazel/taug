@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:signals/signals.dart';
 
 import '../../data/settings_repository.dart';
@@ -38,6 +39,9 @@ class SettingsProvider {
     final result = await _repository.updateProfile({'timezone': tz});
     if (result.isSuccess) {
       timezone.value = tz;
+    } else {
+      debugPrint('[SettingsProvider] updateTimezone failed: ${result.error}');
+      error.value = result.error.toString();
     }
   }
 
@@ -45,6 +49,9 @@ class SettingsProvider {
     final result = await _repository.updateSettings({'density_mode': mode});
     if (result.isSuccess) {
       densityMode.value = mode;
+    } else {
+      debugPrint('[SettingsProvider] updateDensityMode failed: ${result.error}');
+      error.value = result.error.toString();
     }
   }
 }
