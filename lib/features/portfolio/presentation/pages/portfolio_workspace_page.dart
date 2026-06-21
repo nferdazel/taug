@@ -189,8 +189,28 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
     DateTime entryDate = DateTime.now();
     String? selectedCompanyId;
     String? selectedCompanyName;
+    String? selectedThesisId;
+    String? selectedThesisTitle;
+    List<Map<String, dynamic>> availableTheses = [];
     final searchController = TextEditingController();
     List<Map<String, dynamic>> searchResults = [];
+
+    // Fetch theses for selected company
+    Future<void> fetchTheses(String companyId) async {
+      try {
+        final client = Supabase.instance.client;
+        final response = await client
+            .from('theses')
+            .select('id, title, stance, conviction')
+            .eq('company_id', companyId)
+            .eq('status', 'active')
+            .order('created_at', ascending: false);
+        availableTheses = List<Map<String, dynamic>>.from(response as List);
+      } catch (e) {
+        debugPrint('[Portfolio] Fetch theses error: $e');
+        availableTheses = [];
+      }
+    }
 
     showDialog(
       context: context,
@@ -223,6 +243,9 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
                               setDialogState(() {
                                 selectedCompanyId = null;
                                 selectedCompanyName = null;
+                                selectedThesisId = null;
+                                selectedThesisTitle = null;
+                                availableTheses = [];
                               });
                             },
                             child: const Icon(Icons.close, size: 16, color: AppThemeColors.textTertiary),
@@ -276,13 +299,19 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
                             ),
                             child: Column(
                               children: searchResults.map((r) => InkWell(
-                                onTap: () {
+                                onTap: () async {
+                                  final companyId = r['id'] as String;
+                                  final companyName = r['display_name'] as String;
                                   setDialogState(() {
-                                    selectedCompanyId = r['id'] as String;
-                                    selectedCompanyName = r['display_name'] as String;
+                                    selectedCompanyId = companyId;
+                                    selectedCompanyName = companyName;
                                     searchResults = [];
                                     searchController.clear();
+                                    selectedThesisId = null;
+                                    selectedThesisTitle = null;
                                   });
+                                  await fetchTheses(companyId);
+                                  setDialogState(() {});
                                 },
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -297,6 +326,54 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
                       ],
                     ),
                   const SizedBox(height: 12),
+                  // Thesis selector (if company selected and has theses)
+                  if (selectedCompanyId != null && availableTheses.isNotEmpty) ...[
+                    const Text('Thesis (optional)', style: AppTypography.caption),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppThemeColors.border),
+                        borderRadius: BorderRadius.circular(4),
+                        color: AppThemeColors.surfaceMuted,
+                      ),
+                      child: DropdownButton<String>(
+                        value: selectedThesisId,
+                        isExpanded: true,
+                        underline: const SizedBox(),
+                        dropdownColor: AppThemeColors.surface,
+                        hint: Text('Link to a thesis...', style: AppTypography.caption),
+                        items: availableTheses.map((t) {
+                          final stance = t['stance'] as String? ?? 'neutral';
+                          final title = t['title'] as String;
+                          return DropdownMenuItem<String>(
+                            value: t['id'] as String,
+                            child: Row(
+                              children: [
+                                Expanded(child: Text(title, style: AppTypography.body, overflow: TextOverflow.ellipsis)),
+                                const SizedBox(width: 8),
+                                _StanceChipSmall(stance: stance),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (id) {
+                          if (id == null) return;
+                          final thesis = availableTheses.firstWhere((t) => t['id'] == id);
+                          setDialogState(() {
+                            selectedThesisId = id;
+                            selectedThesisTitle = thesis['title'] as String;
+                            // Auto-populate conviction from thesis
+                            final thesisConviction = thesis['conviction'] as String?;
+                            if (thesisConviction != null && ['low', 'medium', 'high'].contains(thesisConviction)) {
+                              conviction = thesisConviction;
+                            }
+                          });
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   const Text('Conviction', style: AppTypography.caption),
                   const SizedBox(height: 4),
                   Row(
@@ -385,6 +462,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
                 if (selectedCompanyId == null || selectedCompanyId!.isEmpty) return;
                 _provider.addPosition(
                   companyId: selectedCompanyId!,
+                  thesisId: selectedThesisId,
                   conviction: conviction,
                   entryDate: entryDate,
                   entryPrice: double.tryParse(entryPriceController.text),
@@ -781,6 +859,39 @@ class _OutcomeBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color)),
+    );
+  }
+}
+
+class _StanceChipSmall extends StatelessWidget {
+  final String stance;
+
+  const _StanceChipSmall({required this.stance});
+
+  @override
+  Widget build(BuildContext context) {
+    Color color;
+    switch (stance) {
+      case 'bullish':
+        color = AppThemeColors.success;
+        break;
+      case 'bearish':
+        color = AppThemeColors.critical;
+        break;
+      default:
+        color = AppThemeColors.textTertiary;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(3),
+      ),
+      child: Text(
+        stance[0].toUpperCase() + stance.substring(1),
+        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color),
+      ),
     );
   }
 }

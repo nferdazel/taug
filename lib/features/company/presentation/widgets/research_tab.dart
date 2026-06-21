@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:signals/signals_flutter.dart';
 
 import '../../../../core/theme/app_theme_colors.dart';
@@ -45,6 +46,7 @@ class ResearchTab extends StatelessWidget {
               thesis: theses.first,
               onEdit: () => _showThesisDialog(context, thesis: theses.first),
               onDelete: () => _confirmDelete(context, 'thesis', () => provider.deleteThesis(theses.first.id)),
+              onCreatePosition: () => context.go('/portfolio-workspace'),
             ),
           const SizedBox(height: 24),
 
@@ -520,11 +522,13 @@ class _ThesisCard extends StatelessWidget {
   final CompanyThesis thesis;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final VoidCallback onCreatePosition;
 
   const _ThesisCard({
     required this.thesis,
     required this.onEdit,
     required this.onDelete,
+    required this.onCreatePosition,
   });
 
   @override
@@ -629,6 +633,20 @@ class _ThesisCard extends StatelessWidget {
             ),
             Text(thesis.exitConditions!, style: AppTypography.body),
           ],
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 28,
+            child: ElevatedButton.icon(
+              onPressed: onCreatePosition,
+              icon: const Icon(Icons.account_balance_wallet_outlined, size: 14),
+              label: const Text('Create Position'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppThemeColors.accent,
+                foregroundColor: AppThemeColors.textPrimary,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+              ),
+            ),
+          ),
           const SizedBox(height: 8),
           Text(
             'Updated: ${_formatDate(thesis.updatedAt)}',
