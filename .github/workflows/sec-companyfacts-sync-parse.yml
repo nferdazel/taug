@@ -50,3 +50,11 @@ jobs:
           MAX_COMPANIES: ${{ github.event.inputs.max_companies != '' && github.event.inputs.max_companies || '0' }}
         run: |
           python -m workers.taug_worker.cli parse-sec-companyfacts --max-companies "$MAX_COMPANIES"
+
+      - name: Compute company metrics
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+        run: |
+          python -m workers.taug_worker.cli compute-company-metrics
