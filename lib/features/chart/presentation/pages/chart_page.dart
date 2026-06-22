@@ -243,23 +243,30 @@ class _ChartPageState extends State<ChartPage> {
 
   Widget _buildTypeButton(ChartType type, String label, ChartType current) {
     final isSelected = current == type;
-    return GestureDetector(
-      onTap: () => _selectedChartType.value = type,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-        decoration: BoxDecoration(
-          color: isSelected ? AppThemeColors.accent : Colors.transparent,
-          border: Border.all(
-            color: isSelected ? AppThemeColors.accent : AppThemeColors.border,
+    return Semantics(
+      button: true,
+      label: '$label chart type',
+      selected: isSelected,
+      child: InkWell(
+        onTap: () => _selectedChartType.value = type,
+        focusColor: AppThemeColors.accent.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(3),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+          decoration: BoxDecoration(
+            color: isSelected ? AppThemeColors.accent : Colors.transparent,
+            border: Border.all(
+              color: isSelected ? AppThemeColors.accent : AppThemeColors.border,
+            ),
+            borderRadius: BorderRadius.circular(3),
           ),
-          borderRadius: BorderRadius.circular(3),
-        ),
-        child: Text(
-          label,
-          style: AppTypography.monoLabel.copyWith(
-            color: isSelected
-                ? AppThemeColors.textPrimary
-                : AppThemeColors.textSecondary,
+          child: Text(
+            label,
+            style: AppTypography.monoLabel.copyWith(
+              color: isSelected
+                  ? AppThemeColors.textPrimary
+                  : AppThemeColors.textSecondary,
+            ),
           ),
         ),
       ),

@@ -12,8 +12,8 @@ abstract final class AppColors {
 
   // Text
   static const int textPrimary = 0xFFFAFAFA;
-  static const int textSecondary = 0xFFA1A1AA;
-  static const int textTertiary = 0xFF8E8E96;
+  static const int textSecondary = 0xFF71717A;
+  static const int textTertiary = 0xFF52525B;
 
   // Semantic
   static const int bullish = 0xFF10B981;

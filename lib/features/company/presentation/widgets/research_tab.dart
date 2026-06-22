@@ -5,6 +5,7 @@ import 'package:signals/signals_flutter.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/models/research_progression_state.dart';
 import '../../../../shared/widgets/research_empty_state.dart';
 import '../../../../shared/widgets/status_badges.dart';
@@ -289,6 +290,7 @@ class ResearchTab extends StatelessWidget {
             onPressed: () {
               Navigator.pop(context);
               onConfirm();
+              if (context.mounted) showSuccessSnackBar(context, '${type[0].toUpperCase()}${type.substring(1)} deleted');
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppThemeColors.critical,
@@ -376,8 +378,10 @@ class ResearchTab extends StatelessWidget {
 
               if (note == null) {
                 provider.createNote(title, body);
+                if (context.mounted) showSuccessSnackBar(context, 'Note created');
               } else {
                 provider.updateNote(note.id, title, body);
+                if (context.mounted) showSuccessSnackBar(context, 'Note updated');
               }
               Navigator.pop(context);
             },
@@ -692,6 +696,7 @@ class ResearchTab extends StatelessWidget {
                     exitConditions: exitConditionsController.text.trim(),
                     conviction: conviction,
                   );
+                  if (context.mounted) showSuccessSnackBar(context, 'Thesis created');
                 } else {
                   provider.updateThesis(
                     thesis.id,
@@ -706,6 +711,7 @@ class ResearchTab extends StatelessWidget {
                     exitConditions: exitConditionsController.text.trim(),
                     conviction: conviction,
                   );
+                  if (context.mounted) showSuccessSnackBar(context, 'Thesis updated');
                 }
                 Navigator.pop(context);
               },
@@ -802,6 +808,7 @@ class ResearchTab extends StatelessWidget {
                 final question = questionController.text.trim();
                 if (question.isEmpty) return;
                 provider.createQuestion(question, priority: priority);
+                if (context.mounted) showSuccessSnackBar(context, 'Question created');
                 Navigator.pop(context);
               },
               child: const Text('Create'),
@@ -874,6 +881,7 @@ class ResearchTab extends StatelessWidget {
               final answer = answerController.text.trim();
               if (answer.isEmpty) return;
               provider.answerQuestion(question.id, answer);
+              if (context.mounted) showSuccessSnackBar(context, 'Question answered');
               Navigator.pop(context);
             },
             child: const Text('Mark Answered'),
@@ -959,28 +967,33 @@ class _CollapsibleThesisSectionState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        GestureDetector(
-          onTap: () => setState(() => _expanded = !_expanded),
-          behavior: HitTestBehavior.opaque,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Row(
-              children: [
-                Icon(
-                  _expanded
-                      ? Icons.keyboard_arrow_down
-                      : Icons.keyboard_arrow_right,
-                  size: 16,
-                  color: AppThemeColors.textSecondary,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  widget.title,
-                  style: AppTypography.caption.copyWith(
-                    fontWeight: FontWeight.w600,
+        Semantics(
+          button: true,
+          label: '${_expanded ? 'Collapse' : 'Expand'} ${widget.title}',
+          child: InkWell(
+            onTap: () => setState(() => _expanded = !_expanded),
+            focusColor: AppThemeColors.accent.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(2),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: [
+                  Icon(
+                    _expanded
+                        ? Icons.keyboard_arrow_down
+                        : Icons.keyboard_arrow_right,
+                    size: 16,
+                    color: AppThemeColors.textSecondary,
                   ),
-                ),
-              ],
+                  const SizedBox(width: 4),
+                  Text(
+                    widget.title,
+                    style: AppTypography.caption.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -1266,23 +1279,32 @@ class _LessonsSectionState extends State<_LessonsSection> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header
-          GestureDetector(
-            onTap: () => setState(() => _collapsed = !_collapsed),
-            child: Row(
-              children: [
-                Icon(
-                  _collapsed
-                      ? Icons.expand_more
-                      : Icons.expand_less,
-                  size: 16,
-                  color: AppThemeColors.textSecondary,
+          Semantics(
+            button: true,
+            label: _collapsed ? 'Expand prior lessons' : 'Collapse prior lessons',
+            child: InkWell(
+              onTap: () => setState(() => _collapsed = !_collapsed),
+              focusColor: AppThemeColors.accent.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(2),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Row(
+                  children: [
+                    Icon(
+                      _collapsed
+                          ? Icons.expand_more
+                          : Icons.expand_less,
+                      size: 16,
+                      color: AppThemeColors.textSecondary,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'PRIOR LESSONS (${lessons.length})',
+                      style: AppTypography.monoSection,
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 4),
-                Text(
-                  'PRIOR LESSONS (${lessons.length})',
-                  style: AppTypography.monoSection,
-                ),
-              ],
+              ),
             ),
           ),
           // Lesson items
@@ -1293,13 +1315,22 @@ class _LessonsSectionState extends State<_LessonsSection> {
           // Expand hint if collapsed and more than 2
           if (_collapsed && lessons.length > 2) ...[
             const SizedBox(height: 6),
-            GestureDetector(
-              onTap: () => setState(() => _collapsed = false),
-              child: Text(
-                'Show ${lessons.length - 2} more...',
-                style: AppTypography.caption.copyWith(
-                  color: AppThemeColors.accent,
-                  fontWeight: FontWeight.w500,
+            Semantics(
+              button: true,
+              label: 'Show ${lessons.length - 2} more lessons',
+              child: InkWell(
+                onTap: () => setState(() => _collapsed = false),
+                focusColor: AppThemeColors.accent.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(2),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
+                  child: Text(
+                    'Show ${lessons.length - 2} more...',
+                    style: AppTypography.caption.copyWith(
+                      color: AppThemeColors.accent,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -1307,13 +1338,22 @@ class _LessonsSectionState extends State<_LessonsSection> {
           // Link to portfolio if more than 3
           if (lessons.length > 3) ...[
             const SizedBox(height: 8),
-            GestureDetector(
-              onTap: widget.onNavigateToPortfolio,
-              child: Text(
-                'View all in Portfolio →',
-                style: AppTypography.caption.copyWith(
-                  color: AppThemeColors.accent,
-                  fontWeight: FontWeight.w500,
+            Semantics(
+              button: true,
+              label: 'View all lessons in Portfolio',
+              child: InkWell(
+                onTap: widget.onNavigateToPortfolio,
+                focusColor: AppThemeColors.accent.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(2),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
+                  child: Text(
+                    'View all in Portfolio →',
+                    style: AppTypography.caption.copyWith(
+                      color: AppThemeColors.accent,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ),
               ),
             ),

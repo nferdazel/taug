@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:signals/signals_flutter.dart';
 
 import '../../../../core/theme/app_theme_colors.dart';
@@ -64,6 +65,7 @@ class _CompanyWorkspacePageState extends State<CompanyWorkspacePage> {
         children: [
           _buildHeader(profile),
           _buildTabBar(),
+          _buildBreadcrumb(profile),
           Expanded(child: _buildTabContent()),
         ],
       );
@@ -181,6 +183,57 @@ class _CompanyWorkspacePageState extends State<CompanyWorkspacePage> {
       default:
         return const SizedBox.shrink();
     }
+  }
+
+  Widget _buildBreadcrumb(CompanyProfile profile) {
+    const tabNames = ['Overview', 'Financials', 'Research'];
+    final activeTabName = tabNames[_provider.activeTab.value.clamp(0, 2)];
+
+    return Container(
+      height: 28,
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      decoration: const BoxDecoration(
+        color: AppThemeColors.surfaceMuted,
+        border: Border(bottom: BorderSide(color: AppThemeColors.border)),
+      ),
+      child: Row(
+        children: [
+          Semantics(
+            link: true,
+            label: 'Go to Companies',
+            child: GestureDetector(
+              onTap: () => context.go('/companies'),
+              child: Text(
+                'Companies',
+                style: AppTypography.caption.copyWith(
+                  color: AppThemeColors.accent,
+                ),
+              ),
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 6),
+            child: Icon(Icons.chevron_right, size: 12, color: AppThemeColors.textTertiary),
+          ),
+          Text(
+            profile.displayName,
+            style: AppTypography.caption.copyWith(
+              color: AppThemeColors.accent,
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 6),
+            child: Icon(Icons.chevron_right, size: 12, color: AppThemeColors.textTertiary),
+          ),
+          Text(
+            activeTabName,
+            style: AppTypography.caption.copyWith(
+              color: AppThemeColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   FreshnessStatus _mapFreshness(String? status) {

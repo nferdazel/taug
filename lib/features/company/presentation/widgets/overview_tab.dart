@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals/signals_flutter.dart';
 
+import '../../../../core/constants/app_constants.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/number_format.dart';
 import '../../../../shared/models/research_progression_state.dart';
 import '../../data/workspace_models.dart';
 import '../providers/workspace_provider.dart';
@@ -23,36 +26,103 @@ class OverviewTab extends StatelessWidget {
       final freshness = provider.freshnessStatus.value;
 
       return SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.xxxl),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Active position context — if user has a position
+            _buildPositionContext(context),
+            const SizedBox(height: AppSpacing.xl),
+
             // Next action — primary decision guidance
             _buildNextAction(context),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpacing.xl),
 
             // Research snapshot — progression overview
             _buildResearchSnapshot(context),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpacing.xl),
 
             // Data trust summary
             _buildDataTrustSection(qualityDetail, freshness),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpacing.xl),
 
             // Key metrics — supporting
             _buildMetricsSection(metrics, qualityDetail, freshness),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpacing.xl),
 
             // Company summary — background
             if (profile?.description != null) ...[
               const Text('ABOUT', style: AppTypography.monoSection),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.lg),
               Text(profile!.description!, style: AppTypography.body),
             ],
           ],
         ),
       );
     });
+  }
+
+  Widget _buildPositionContext(BuildContext context) {
+    final position = provider.activePosition.value;
+    if (position == null) return const SizedBox.shrink();
+
+    final daysHeld = DateTime.now().difference(position.entryDate).inDays;
+    final double? returnPct;
+    if (position.entryPrice != null && position.entryPrice! > 0) {
+      returnPct = null; // No current price available in this context
+    } else {
+      returnPct = null;
+    }
+
+    final positionLabel = position.thesisStance != null
+        ? '${position.thesisStance![0].toUpperCase()}${position.thesisStance!.substring(1)}'
+        : 'Active';
+
+    return Semantics(
+      label: 'Active position: $positionLabel, held for $daysHeld days',
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: AppThemeColors.accent.withValues(alpha: 0.08),
+          border: const Border(left: BorderSide(color: AppThemeColors.accent, width: 3)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.account_balance_wallet_outlined, size: 14, color: AppThemeColors.accent),
+            const SizedBox(width: 8),
+            const Text('POSITION:', style: AppTypography.monoSection),
+            const SizedBox(width: 6),
+            Text(positionLabel, style: AppTypography.body.copyWith(fontWeight: FontWeight.w500)),
+            if (returnPct != null) ...[
+              const SizedBox(width: 6),
+              Text(
+                '${returnPct >= 0 ? '+' : ''}${returnPct.toStringAsFixed(1)}%',
+                style: AppTypography.monoLabel.copyWith(
+                  color: returnPct >= 0 ? AppThemeColors.success : AppThemeColors.critical,
+                ),
+              ),
+            ],
+            const SizedBox(width: 6),
+            Text('$daysHeld days held', style: AppTypography.caption),
+            const Spacer(),
+            Semantics(
+              button: true,
+              label: 'View position in Portfolio',
+              child: GestureDetector(
+                onTap: () => context.go('/portfolio-workspace'),
+                child: Text(
+                  'View in Portfolio \u2192',
+                  style: AppTypography.caption.copyWith(
+                    color: AppThemeColors.accent,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildNextAction(BuildContext context) {
@@ -70,7 +140,7 @@ class OverviewTab extends StatelessWidget {
       child: Row(
         children: [
           Text(action.icon, style: AppTypography.body),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.xl),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -113,7 +183,7 @@ class OverviewTab extends StatelessWidget {
       onTap: onPressed,
       borderRadius: BorderRadius.circular(4),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.md),
         decoration: BoxDecoration(
           color: AppThemeColors.accent.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(4),
@@ -140,7 +210,7 @@ class OverviewTab extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text('RESEARCH SNAPSHOT', style: AppTypography.monoSection),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.lg),
         Row(
           children: [
             _SnapshotCell(
@@ -209,7 +279,7 @@ class OverviewTab extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl, vertical: 10),
             decoration: const BoxDecoration(
               color: AppThemeColors.surfaceMuted,
               border: Border(bottom: BorderSide(color: AppThemeColors.border)),
@@ -217,13 +287,13 @@ class OverviewTab extends StatelessWidget {
             child: const Row(
               children: [
                 Icon(Icons.verified_outlined, size: 14, color: AppThemeColors.textSecondary),
-                SizedBox(width: 8),
+                SizedBox(width: AppSpacing.lg),
                 Text('DATA TRUST', style: AppTypography.monoSection),
               ],
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl, vertical: 10),
             child: Row(
               children: [
                 // Quality badge
@@ -234,7 +304,7 @@ class OverviewTab extends StatelessWidget {
                     value: qualityInfo.label,
                     color: qualityInfo.color,
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: AppSpacing.xxl),
                 ],
                 // Freshness badge
                 _TrustBadge(
@@ -286,9 +356,9 @@ class OverviewTab extends StatelessWidget {
     final score = quality.overallScore;
     final label = '${(score * 100).toStringAsFixed(0)}%';
     final Color color;
-    if (score >= 0.8) {
+    if (score >= AppConstants.qualityGood) {
       color = AppThemeColors.success;
-    } else if (score >= 0.5) {
+    } else if (score >= AppConstants.qualityFair) {
       color = AppThemeColors.warning;
     } else {
       color = AppThemeColors.critical;
@@ -323,7 +393,7 @@ class OverviewTab extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl, vertical: 10),
             decoration: const BoxDecoration(
               color: AppThemeColors.surfaceMuted,
               border: Border(bottom: BorderSide(color: AppThemeColors.border)),
@@ -331,7 +401,7 @@ class OverviewTab extends StatelessWidget {
             child: const Row(
               children: [
                 Icon(Icons.insights, size: 14, color: AppThemeColors.textSecondary),
-                SizedBox(width: 8),
+                SizedBox(width: AppSpacing.lg),
                 Text('KEY METRICS', style: AppTypography.monoSection),
               ],
             ),
@@ -389,20 +459,7 @@ class OverviewTab extends StatelessWidget {
   String _formatMetric(dynamic m) {
     if (m.valueNumeric == null) return '—';
     final v = m.valueNumeric as double;
-    switch (m.unitType) {
-      case 'percentage': return '${(v * 100).toStringAsFixed(2)}%';
-      case 'monetary': return _formatLargeNumber(v);
-      case 'ratio': return v.toStringAsFixed(2);
-      default: return v.toStringAsFixed(2);
-    }
-  }
-
-  String _formatLargeNumber(double n) {
-    if (n.abs() >= 1e12) return '\$${(n / 1e12).toStringAsFixed(2)}T';
-    if (n.abs() >= 1e9) return '\$${(n / 1e9).toStringAsFixed(2)}B';
-    if (n.abs() >= 1e6) return '\$${(n / 1e6).toStringAsFixed(2)}M';
-    if (n.abs() >= 1e3) return '\$${(n / 1e3).toStringAsFixed(1)}K';
-    return '\$${n.toStringAsFixed(2)}';
+    return formatMetricValue(v, m.unitType);
   }
 
   String _humanize(String value) {
@@ -447,36 +504,39 @@ class _TrustBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
+    return Semantics(
+      label: '$label: $value',
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
         Icon(icon, size: 12, color: color),
-        const SizedBox(width: 6),
+        const SizedBox(width: AppSpacing.md),
         Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(label, style: AppTypography.monoMeta.copyWith(fontSize: 10)),
-            const SizedBox(height: 1),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(3),
-              ),
-              child: Text(
-                value,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: AppTypography.mono,
-                  color: color,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(label, style: AppTypography.monoMeta.copyWith(fontSize: 10)),
+              const SizedBox(height: AppSpacing.xs),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 1),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+                child: Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: AppTypography.mono,
+                    color: color,
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
-      ],
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
@@ -502,17 +562,17 @@ class _SnapshotCell extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: 10),
         decoration: BoxDecoration(
           border: Border.all(color: AppThemeColors.border),
           borderRadius: BorderRadius.circular(4),
         ),
-        margin: const EdgeInsets.only(right: 8),
+        margin: const EdgeInsets.only(right: AppSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(label, style: AppTypography.monoSection),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               value,
               style: AppTypography.monoData.copyWith(
@@ -520,14 +580,23 @@ class _SnapshotCell extends StatelessWidget {
               ),
             ),
             if (actionLabel != null && onAction != null) ...[
-              const SizedBox(height: 6),
-              GestureDetector(
-                onTap: onAction,
-                child: Text(
-                  actionLabel!,
-                  style: AppTypography.caption.copyWith(
-                    color: AppThemeColors.accent,
-                    fontWeight: FontWeight.w500,
+              const SizedBox(height: AppSpacing.md),
+              Semantics(
+                button: true,
+                label: actionLabel,
+                child: InkWell(
+                  onTap: onAction,
+                  focusColor: AppThemeColors.accent.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(2),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
+                    child: Text(
+                      actionLabel!,
+                      style: AppTypography.caption.copyWith(
+                        color: AppThemeColors.accent,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -564,49 +633,56 @@ class _MetricCell extends StatelessWidget {
         ? 'as of ${asOfDate!.month.toString().padLeft(2, '0')}/${asOfDate!.day.toString().padLeft(2, '0')}/${asOfDate!.year}'
         : null;
 
-    return Tooltip(
-      message: tooltip ?? label,
-      decoration: BoxDecoration(
-        color: AppThemeColors.surfaceLight,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: AppThemeColors.border),
-      ),
-      textStyle: AppTypography.caption.copyWith(color: AppThemeColors.textPrimary),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    final semanticsLabel = asOfText != null
+        ? '$label: $value, $asOfText'
+        : '$label: $value';
+
+    return Semantics(
+      label: semanticsLabel,
+      child: Tooltip(
+        message: tooltip ?? label,
         decoration: BoxDecoration(
-          border: Border(
-            left: BorderSide(color: freshnessBorderColor, width: 2),
-            right: BorderSide(color: AppThemeColors.border.withValues(alpha: 0.5)),
-            bottom: BorderSide(color: AppThemeColors.border.withValues(alpha: 0.5)),
-          ),
+          color: AppThemeColors.surfaceLight,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: AppThemeColors.border),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(label, style: AppTypography.caption.copyWith(fontSize: 10)),
-            const SizedBox(height: 4),
-            Text(
-              value,
-              style: AppTypography.monoPrice.copyWith(
-                color: isOk ? AppThemeColors.textPrimary : AppThemeColors.textTertiary,
-                fontSize: 13,
-              ),
+        textStyle: AppTypography.caption.copyWith(color: AppThemeColors.textPrimary),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.lg),
+          decoration: BoxDecoration(
+            border: Border(
+              left: BorderSide(color: freshnessBorderColor, width: 2),
+              right: BorderSide(color: AppThemeColors.border.withValues(alpha: 0.5)),
+              bottom: BorderSide(color: AppThemeColors.border.withValues(alpha: 0.5)),
             ),
-            if (asOfText != null) ...[
-              const SizedBox(height: 2),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(label, style: AppTypography.caption.copyWith(fontSize: 10)),
+              const SizedBox(height: AppSpacing.sm),
               Text(
-                asOfText,
-                style: AppTypography.monoMeta.copyWith(
-                  fontSize: 9,
-                  color: AppThemeColors.textTertiary,
+                value,
+                style: AppTypography.monoPrice.copyWith(
+                  color: isOk ? AppThemeColors.textPrimary : AppThemeColors.textTertiary,
+                  fontSize: 13,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
+              if (asOfText != null) ...[
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  asOfText,
+                  style: AppTypography.monoMeta.copyWith(
+                    fontSize: 9,
+                    color: AppThemeColors.textTertiary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

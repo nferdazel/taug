@@ -27,6 +27,7 @@ class WorkspaceProvider {
   final activeTab = Signal<int>(0);
   final companyLessons = ListSignal<PortfolioPosition>([]);
   final isLoadingLessons = Signal<bool>(false);
+  final activePosition = Signal<PortfolioPosition?>(null);
   bool _isMutating = false;
 
   WorkspaceProvider({required this.companyId, WorkspaceRepository? repository, PortfolioPositionRepository? portfolioRepository})
@@ -48,6 +49,7 @@ class WorkspaceProvider {
     activeTab.dispose();
     companyLessons.dispose();
     isLoadingLessons.dispose();
+    activePosition.dispose();
   }
 
   Future<void> loadAll() async {
@@ -87,6 +89,9 @@ class WorkspaceProvider {
       error.value = ErrorSanitizer.message(profileResult.error);
     }
 
+    // Load active position in parallel (non-blocking)
+    _loadActivePosition();
+
     isLoading.value = false;
   }
 
@@ -99,6 +104,16 @@ class WorkspaceProvider {
       ErrorSanitizer.debugLog('WorkspaceProvider', 'loadCompanyLessons failed: ${result.error}');
     }
     isLoadingLessons.value = false;
+  }
+
+  Future<void> _loadActivePosition() async {
+    final result = await _portfolioRepository.getPositions(status: 'active');
+    if (result.isSuccess) {
+      final positions = result.data!;
+      activePosition.value = positions.where((p) => p.companyId == companyId).firstOrNull;
+    } else {
+      ErrorSanitizer.debugLog('WorkspaceProvider', 'loadActivePosition failed: ${result.error}');
+    }
   }
 
   Future<void> createNote(String title, String body) async {

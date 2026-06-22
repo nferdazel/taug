@@ -142,7 +142,7 @@ class _SymbolSearchDialogState extends State<SymbolSearchDialog> {
                       result,
                     );
                     if (symbolId != null && context.mounted) {
-                      Navigator.pop(context);
+                      Navigator.pop(context, true);
                     }
                   },
                 ),

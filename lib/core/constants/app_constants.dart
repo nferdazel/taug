@@ -15,4 +15,8 @@ abstract final class AppConstants {
   // External API URLs
   static const String binanceWebSocketUrl = 'wss://stream.binance.com:9443/ws';
   static const String twelveDataApiUrl = 'https://api.twelvedata.com';
+
+  // Quality score thresholds — used for color-coding trust indicators
+  static const double qualityGood = 0.7;
+  static const double qualityFair = 0.4;
 }

@@ -7,6 +7,7 @@ import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../shared/models/price_data.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/app_state_widgets.dart';
 import '../../../../shared/widgets/status_badges.dart';
 import '../../data/portfolio_models.dart';
@@ -71,9 +72,9 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
         child: Row(
           children: [
             const Text('Portfolio', style: AppTypography.heading),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.xl),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.xs),
               decoration: BoxDecoration(
                 color: AppThemeColors.accent.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(4),
@@ -81,9 +82,9 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
               child: Text('${_provider.activeCount} active', style: AppTypography.monoLabel.copyWith(color: AppThemeColors.accent)),
             ),
             if (_provider.reviewCount > 0) ...[
-              const SizedBox(width: 6),
+              const SizedBox(width: AppSpacing.md),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.xs),
                 decoration: BoxDecoration(
                   color: AppThemeColors.warning.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(4),
@@ -91,9 +92,9 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
                 child: Text('${_provider.reviewCount} review', style: AppTypography.monoLabel.copyWith(color: AppThemeColors.warning)),
               ),
             ],
-            const SizedBox(width: 6),
+            const SizedBox(width: AppSpacing.md),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.xs),
               decoration: BoxDecoration(
                 color: AppThemeColors.surfaceLight,
                 borderRadius: BorderRadius.circular(4),
@@ -217,7 +218,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
       }
 
       return ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.xxl),
         itemCount: positions.length,
         itemExtent: 120,
         itemBuilder: (context, index) {
@@ -251,11 +252,11 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
       final partialLessons = positionsWithLessons.where((p) => p.outcome == PositionOutcome.partial).toList();
 
       return ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.xxl),
         children: [
           // Summary
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(AppSpacing.xl),
             decoration: BoxDecoration(
               color: AppThemeColors.surface,
               borderRadius: BorderRadius.circular(6),
@@ -268,13 +269,13 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
                   count: correctLessons.length,
                   color: AppThemeColors.success,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.lg),
                 _LessonSummaryChip(
                   label: 'Incorrect',
                   count: incorrectLessons.length,
                   color: AppThemeColors.critical,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.lg),
                 _LessonSummaryChip(
                   label: 'Partial',
                   count: partialLessons.length,
@@ -283,36 +284,36 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.xxl),
 
           // Correct lessons
           if (correctLessons.isNotEmpty) ...[
             const Text('FROM CORRECT DECISIONS', style: AppTypography.monoSection),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.lg),
             ...correctLessons.map((p) => _LessonCard(
               position: p,
               onViewCompany: () => context.go('/companies/${p.companyId}'),
               onNewResearch: () => context.go('/companies/${p.companyId}/research'),
             )),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.xxl),
           ],
 
           // Incorrect lessons
           if (incorrectLessons.isNotEmpty) ...[
             const Text('FROM INCORRECT DECISIONS', style: AppTypography.monoSection),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.lg),
             ...incorrectLessons.map((p) => _LessonCard(
               position: p,
               onViewCompany: () => context.go('/companies/${p.companyId}'),
               onNewResearch: () => context.go('/companies/${p.companyId}/research'),
             )),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.xxl),
           ],
 
           // Partial lessons
           if (partialLessons.isNotEmpty) ...[
             const Text('FROM PARTIAL DECISIONS', style: AppTypography.monoSection),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.lg),
             ...partialLessons.map((p) => _LessonCard(
               position: p,
               onViewCompany: () => context.go('/companies/${p.companyId}'),
@@ -339,7 +340,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
       }
 
       return ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.xxl),
         children: [
           _buildPatternsPanel(),
         ],
@@ -349,7 +350,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
 
   Widget _buildPatternsPanel() {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpacing.xl),
       decoration: BoxDecoration(
         color: AppThemeColors.surface,
         borderRadius: BorderRadius.circular(6),
@@ -359,15 +360,15 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text('YOUR PATTERNS', style: AppTypography.monoSection),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.xl),
           _buildStanceAccuracy(),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.xl),
           _buildConvictionAccuracy(),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.xl),
           _buildCommonThemes(),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.xl),
           _buildHoldingPeriods(),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.xl),
           _buildOverallStats(),
         ],
       ),
@@ -431,14 +432,14 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
     final pct = ((correct / total) * 100).round();
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: Row(
         children: [
           Expanded(
             child: Text(label, style: AppTypography.body),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.xs),
             decoration: BoxDecoration(
               color: _accuracyColor(pct).withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(4),
@@ -467,10 +468,10 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text('COMMON LESSONS', style: AppTypography.monoSection),
-        const SizedBox(height: 6),
+        const SizedBox(height: AppSpacing.md),
         Wrap(
-          spacing: 6,
-          runSpacing: 4,
+          spacing: AppSpacing.md,
+          runSpacing: AppSpacing.sm,
           children: themes.map((t) => Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
@@ -496,7 +497,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text('HOLDING PERIODS', style: AppTypography.monoSection),
-        const SizedBox(height: 6),
+        const SizedBox(height: AppSpacing.md),
         Row(
           children: [
             const Text('Avg Holding (Correct): ', style: AppTypography.caption),
@@ -504,7 +505,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
               '${correctDays.round()} days',
               style: AppTypography.monoData.copyWith(color: AppThemeColors.success),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: AppSpacing.xxl),
             const Text('Avg Holding (Incorrect): ', style: AppTypography.caption),
             Text(
               '${incorrectDays.round()} days',
@@ -529,7 +530,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text('OVERALL', style: AppTypography.monoSection),
-        const SizedBox(height: 6),
+        const SizedBox(height: AppSpacing.md),
         Row(
           children: [
             const Text('Win Rate: ', style: AppTypography.caption),
@@ -537,7 +538,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
               '$pct% ($correct/$total)',
               style: AppTypography.monoData.copyWith(color: _accuracyColor(pct)),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: AppSpacing.xxl),
             const Text('Partial: ', style: AppTypography.caption),
             Text(
               '$partial',
@@ -605,16 +606,25 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
                       child: Row(
                         children: [
                           Expanded(child: Text(selectedCompanyName ?? selectedCompanyId!, style: AppTypography.body)),
-                          GestureDetector(
-                            onTap: () {
-                              setDialogState(() {
-                                selectedCompanyId = null;
-                                selectedCompanyName = null;
-                                selectedThesisId = null;
-                                availableTheses = [];
-                              });
-                            },
-                            child: const Icon(Icons.close, size: 16, color: AppThemeColors.textTertiary),
+                          Semantics(
+                            button: true,
+                            label: 'Clear selected company',
+                            child: InkWell(
+                              onTap: () {
+                                setDialogState(() {
+                                  selectedCompanyId = null;
+                                  selectedCompanyName = null;
+                                  selectedThesisId = null;
+                                  availableTheses = [];
+                                });
+                              },
+                              focusColor: AppThemeColors.accent.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(2),
+                              child: const Padding(
+                                padding: EdgeInsets.all(2),
+                                child: Icon(Icons.close, size: 16, color: AppThemeColors.textTertiary),
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -669,7 +679,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
                                   setDialogState(() {});
                                 },
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.lg),
                                   decoration: BoxDecoration(
                                     border: Border(bottom: BorderSide(color: AppThemeColors.border.withValues(alpha: 0.5))),
                                   ),
@@ -823,6 +833,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
                   notes: notesController.text.isNotEmpty ? notesController.text : null,
                 );
                 Navigator.pop(context);
+                if (context.mounted) showSuccessSnackBar(context, 'Position added');
               },
               child: const Text('Add Position'),
             ),
@@ -914,6 +925,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
                   exitPrice: double.tryParse(exitPriceController.text),
                 );
                 Navigator.pop(context);
+                if (context.mounted) showSuccessSnackBar(context, 'Position closed');
               },
               style: ElevatedButton.styleFrom(backgroundColor: AppThemeColors.critical),
               child: const Text('Close Position'),
@@ -947,7 +959,7 @@ class _TabButton extends StatelessWidget {
         focusColor: AppThemeColors.accent.withValues(alpha: 0.2),
         highlightColor: AppThemeColors.accent.withValues(alpha: 0.1),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
           decoration: BoxDecoration(
             border: Border(
               bottom: BorderSide(
@@ -1001,9 +1013,20 @@ class _ActivePositionCard extends StatelessWidget {
       unrealizedPnl = null;
     }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
+    final pnlText = unrealizedPnl != null
+        ? ', P&L ${unrealizedPnl >= 0 ? '+' : ''}${unrealizedPnl.toStringAsFixed(2)} percent'
+        : '';
+    final statusText = position.isReviewNeeded ? ', review needed' : '';
+    final semanticsLabel = '${position.companyName ?? 'Unknown Company'}'
+        '${position.ticker != null ? ' ${position.ticker}' : ''}'
+        '$pnlText'
+        '$statusText';
+
+    return Semantics(
+      label: semanticsLabel,
+      child: Container(
+      margin: const EdgeInsets.only(bottom: AppSpacing.lg),
+      padding: const EdgeInsets.all(AppSpacing.xl),
       decoration: BoxDecoration(
         color: AppThemeColors.surface,
         borderRadius: BorderRadius.circular(6),
@@ -1031,7 +1054,7 @@ class _ActivePositionCard extends StatelessWidget {
               ),
               if (unrealizedPnl != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: 3),
                   decoration: BoxDecoration(
                     color: (unrealizedPnl >= 0
                             ? AppThemeColors.success
@@ -1040,7 +1063,7 @@ class _ActivePositionCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
-                    '${unrealizedPnl >= 0 ? '+' : ''}${unrealizedPnl.toStringAsFixed(1)}%',
+                    '${unrealizedPnl >= 0 ? '+' : ''}${unrealizedPnl.toStringAsFixed(2)}%',
                     style: AppTypography.monoLabel.copyWith(
                       color: unrealizedPnl >= 0
                           ? AppThemeColors.success
@@ -1050,9 +1073,9 @@ class _ActivePositionCard extends StatelessWidget {
                   ),
                 ),
               if (position.isReviewNeeded) ...[
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.lg),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: 3),
                   decoration: BoxDecoration(
                     color: AppThemeColors.warning.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(4),
@@ -1060,9 +1083,10 @@ class _ActivePositionCard extends StatelessWidget {
                   child: const Text('Review Needed', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppThemeColors.warning)),
                 ),
               ],
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.lg),
               PopupMenuButton<String>(
                 icon: const Icon(Icons.more_vert, size: 16, color: AppThemeColors.textSecondary),
+                tooltip: 'Position actions',
                 onSelected: (value) {
                   if (value == 'view') onViewCompany();
                   if (value == 'close') onClose();
@@ -1077,14 +1101,14 @@ class _ActivePositionCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.lg),
           Row(
             children: [
               _ConvictionChip(conviction: position.conviction),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.lg),
               if (position.thesisTitle != null) ...[
                 const Icon(Icons.lightbulb_outline, size: 12, color: AppThemeColors.textTertiary),
-                const SizedBox(width: 4),
+                const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
                     position.thesisTitle!,
@@ -1096,27 +1120,27 @@ class _ActivePositionCard extends StatelessWidget {
               ],
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.lg),
           Row(
             children: [
               Text(
                 'Entry: ${position.entryDate.toYyyyMmDd()}',
                 style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.xl),
               Text(
                 '${daysHeld}d held',
                 style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
               ),
               if (position.entryPrice != null) ...[
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSpacing.xl),
                 Text(
                   '@ \$${position.entryPrice!.toStringAsFixed(2)}',
                   style: AppTypography.monoLabel.copyWith(color: AppThemeColors.textTertiary),
                 ),
               ],
               if (currentPrice != null) ...[
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSpacing.xl),
                 Text(
                   'Now: \$${currentPrice!.price.toStringAsFixed(2)}',
                   style: AppTypography.monoLabel.copyWith(color: AppThemeColors.textPrimary),
@@ -1125,13 +1149,14 @@ class _ActivePositionCard extends StatelessWidget {
             ],
           ),
           if (position.isReviewNeeded) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               'Review needed — position flagged for attention',
               style: AppTypography.caption.copyWith(color: AppThemeColors.warning),
             ),
           ],
         ],
+      ),
       ),
     );
   }
@@ -1148,9 +1173,21 @@ class _ClosedPositionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
+    final outcomeText = position.outcome != null
+        ? ', outcome: ${position.outcome!.name}'
+        : '';
+    final returnText = position.returnPercent != null
+        ? ', return: ${position.returnPercent! >= 0 ? '+' : ''}${position.returnPercent!.toStringAsFixed(1)} percent'
+        : '';
+    final semanticsLabel = '${position.companyName ?? 'Unknown Company'}'
+        '$outcomeText'
+        '$returnText';
+
+    return Semantics(
+      label: semanticsLabel,
+      child: Container(
+      margin: const EdgeInsets.only(bottom: AppSpacing.lg),
+      padding: const EdgeInsets.all(AppSpacing.xl),
       decoration: BoxDecoration(
         color: AppThemeColors.surface,
         borderRadius: BorderRadius.circular(6),
@@ -1169,10 +1206,10 @@ class _ClosedPositionCard extends StatelessWidget {
               ),
               if (position.returnPercent != null) ...[
                 _ReturnBadge(returnPercent: position.returnPercent!),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.lg),
               ],
               if (position.outcome != null) _OutcomeBadge(outcome: position.outcome!),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.lg),
               IconButton(
                 icon: const Icon(Icons.open_in_new, size: 16, color: AppThemeColors.textSecondary),
                 onPressed: onViewCompany,
@@ -1181,10 +1218,10 @@ class _ClosedPositionCard extends StatelessWidget {
             ],
           ),
           if (position.thesisTitle != null) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.sm),
             Text(position.thesisTitle!, style: AppTypography.caption),
           ],
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.lg),
           Row(
             children: [
               Text(
@@ -1192,7 +1229,7 @@ class _ClosedPositionCard extends StatelessWidget {
                 style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
               ),
               if (position.exitDate != null) ...[
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSpacing.xl),
                 Text(
                   'Exit: ${position.exitDate!.toYyyyMmDd()}',
                   style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
@@ -1201,11 +1238,12 @@ class _ClosedPositionCard extends StatelessWidget {
             ],
           ),
           if (position.lessonsLearned != null && position.lessonsLearned!.isNotEmpty) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.lg),
             Text('Lessons:', style: AppTypography.caption.copyWith(fontWeight: FontWeight.w600)),
             Text(position.lessonsLearned!, style: AppTypography.caption),
           ],
         ],
+      ),
       ),
     );
   }
@@ -1230,8 +1268,10 @@ class _ConvictionChip extends StatelessWidget {
         color = AppThemeColors.textTertiary;
     }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+    return Semantics(
+      label: 'Conviction: ${conviction[0].toUpperCase()}${conviction.substring(1)}',
+      child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: 3),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(4),
@@ -1239,6 +1279,7 @@ class _ConvictionChip extends StatelessWidget {
       child: Text(
         conviction[0].toUpperCase() + conviction.substring(1),
         style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color),
+      ),
       ),
     );
   }
@@ -1265,13 +1306,16 @@ class _OutcomeBadge extends StatelessWidget {
         label = 'Partial';
     }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+    return Semantics(
+      label: 'Outcome: $label',
+      child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: 3),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color)),
+      ),
     );
   }
 }
@@ -1287,15 +1331,18 @@ class _ReturnBadge extends StatelessWidget {
     final color = isPositive ? AppThemeColors.success : AppThemeColors.critical;
     final prefix = isPositive ? '+' : '';
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+    return Semantics(
+      label: 'Return: $prefix${returnPercent.toStringAsFixed(2)} percent',
+      child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: 3),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
-        '$prefix${returnPercent.toStringAsFixed(1)}%',
+        '$prefix${returnPercent.toStringAsFixed(2)}%',
         style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color),
+      ),
       ),
     );
   }
@@ -1315,7 +1362,7 @@ class _LessonSummaryChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.md),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(4),
@@ -1327,7 +1374,7 @@ class _LessonSummaryChip extends StatelessWidget {
             '$count',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: color),
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: AppSpacing.sm),
           Text(
             label,
             style: TextStyle(fontSize: 11, color: color),
@@ -1351,9 +1398,25 @@ class _LessonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
+    final outcomeText = position.outcome != null
+        ? ', ${position.outcome!.name}'
+        : '';
+    final returnText = position.returnPercent != null
+        ? ', return: ${position.returnPercent! >= 0 ? '+' : ''}${position.returnPercent!.toStringAsFixed(1)} percent'
+        : '';
+    final lessonPreview = position.lessonsLearned != null && position.lessonsLearned!.isNotEmpty
+        ? ', lesson: ${position.lessonsLearned!.length > 80 ? position.lessonsLearned!.substring(0, 80) : position.lessonsLearned}'
+        : '';
+    final semanticsLabel = '${position.companyName ?? 'Unknown Company'}'
+        '$outcomeText'
+        '$returnText'
+        '$lessonPreview';
+
+    return Semantics(
+      label: semanticsLabel,
+      child: Container(
+      margin: const EdgeInsets.only(bottom: AppSpacing.lg),
+      padding: const EdgeInsets.all(AppSpacing.xl),
       decoration: BoxDecoration(
         color: AppThemeColors.surface,
         borderRadius: BorderRadius.circular(6),
@@ -1406,6 +1469,7 @@ class _LessonCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

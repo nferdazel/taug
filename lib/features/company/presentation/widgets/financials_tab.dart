@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:signals/signals_flutter.dart';
 
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/number_format.dart';
 import '../../../../shared/models/research_progression_state.dart';
+import '../../../../shared/widgets/app_state_widgets.dart';
 import '../../data/workspace_models.dart';
 import '../providers/workspace_provider.dart';
 
@@ -75,11 +77,10 @@ class _FinancialsTabState extends State<FinancialsTab> {
       final statements = widget.provider.statements;
 
       if (statements.isEmpty) {
-        return const Center(
-          child: Text(
-            'No financial data available',
-            style: TextStyle(color: AppThemeColors.textTertiary),
-          ),
+        return const AppEmptyState(
+          icon: Icons.assessment_outlined,
+          title: 'No financial data available',
+          description: 'Financial statements from SEC EDGAR filings will appear here once available for this company.',
         );
       }
 
@@ -114,13 +115,27 @@ class _FinancialsTabState extends State<FinancialsTab> {
             _buildStatementTable(cashFlows, _cashFlowKeys),
             const SizedBox(height: 24),
           ],
-          // Source attribution
-          Text(
-            'Source: SEC EDGAR · Last updated: ${DateTime.now().toYyyyMmDd()}',
-            style: AppTypography.caption.copyWith(
-              color: AppThemeColors.textTertiary,
-            ),
-          ),
+          // Source attribution — use actual last filing date from statements
+          if (statements.isNotEmpty) ...[
+            (() {
+              final lastFiling = statements
+                  .where((s) => s.statementVersion != null)
+                  .fold<StatementRow?>(null, (prev, curr) {
+                if (prev == null) return curr;
+                return (curr.statementVersion ?? 0) >
+                        (prev.statementVersion ?? 0)
+                    ? curr
+                    : prev;
+              });
+              final filingDate = lastFiling?.periodEnd ?? statements.first.periodEnd;
+              return Text(
+                'Source: SEC EDGAR · Last updated: $filingDate',
+                style: AppTypography.caption.copyWith(
+                  color: AppThemeColors.textTertiary,
+                ),
+              );
+            })(),
+          ],
         ],
       );
     });
@@ -463,10 +478,10 @@ class _FinancialsTabState extends State<FinancialsTab> {
     );
   }
 
-  /// Maps a 0–1 score to a color: green ≥0.7, amber ≥0.4, red below.
+  /// Maps a 0–1 score to a color using centralized quality thresholds.
   static Color _scoreColor(double score) {
-    if (score >= 0.7) return AppThemeColors.bullish;
-    if (score >= 0.4) return AppThemeColors.warning;
+    if (score >= AppConstants.qualityGood) return AppThemeColors.bullish;
+    if (score >= AppConstants.qualityFair) return AppThemeColors.warning;
     return AppThemeColors.bearish;
   }
 
@@ -511,7 +526,8 @@ class _FinancialsTabState extends State<FinancialsTab> {
                 final value = row.items[key];
                 return DataCell(
                   Text(
-                    value != null ? _formatValue(value) : '—',
+                    value != null ? formatCurrency(value) : '—',
+                    textAlign: TextAlign.right,
                     style: AppTypography.monoData.copyWith(
                       color: value != null
                           ? AppThemeColors.textPrimary
@@ -558,14 +574,6 @@ class _FinancialsTabState extends State<FinancialsTab> {
       default:
         return key;
     }
-  }
-
-  String _formatValue(double v) {
-    if (v.abs() >= 1e12) return '\$${(v / 1e12).toStringAsFixed(2)}T';
-    if (v.abs() >= 1e9) return '\$${(v / 1e9).toStringAsFixed(2)}B';
-    if (v.abs() >= 1e6) return '\$${(v / 1e6).toStringAsFixed(2)}M';
-    if (v.abs() >= 1e3) return '\$${(v / 1e3).toStringAsFixed(1)}K';
-    return '\$${v.toStringAsFixed(2)}';
   }
 
   static const List<String> _incomeStatementKeys = [
@@ -733,31 +741,36 @@ class _SidebarToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        height: 28,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        decoration: const BoxDecoration(
-          border: Border(
-            bottom: BorderSide(color: AppThemeColors.border, width: 1),
+    return Semantics(
+      button: true,
+      label: isExpanded ? 'Hide research context sidebar' : 'Show research context sidebar',
+      child: InkWell(
+        onTap: onTap,
+        focusColor: AppThemeColors.accent.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(2),
+        child: Container(
+          height: 28,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: const BoxDecoration(
+            border: Border(
+              bottom: BorderSide(color: AppThemeColors.border, width: 1),
+            ),
           ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              isExpanded ? Icons.chevron_right : Icons.chevron_left,
-              size: 16,
-              color: AppThemeColors.textSecondary,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              isExpanded ? 'HIDE CONTEXT' : 'SHOW CONTEXT',
-              style: AppTypography.monoSection,
-            ),
-          ],
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                isExpanded ? Icons.chevron_right : Icons.chevron_left,
+                size: 16,
+                color: AppThemeColors.textSecondary,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                isExpanded ? 'HIDE CONTEXT' : 'SHOW CONTEXT',
+                style: AppTypography.monoSection,
+              ),
+            ],
+          ),
         ),
       ),
     );

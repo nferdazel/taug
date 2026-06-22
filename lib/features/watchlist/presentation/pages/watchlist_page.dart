@@ -6,6 +6,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../domain/watchlist_entity.dart';
 import '../providers/watchlist_provider.dart';
 import 'symbol_search_dialog.dart';
@@ -422,13 +423,16 @@ class _WatchlistPageState extends State<WatchlistPage> {
     final currentWatchlist = _provider.currentWatchlist.value;
     if (currentWatchlist == null) return;
 
-    showDialog(
+    showDialog<bool>(
       context: context,
       builder: (context) =>
           SymbolSearchDialog(watchlistId: currentWatchlist.id),
-    ).then((_) {
+    ).then((added) {
       if (_provider.currentWatchlist.value != null) {
         _provider.loadWatchlistItems(_provider.currentWatchlist.value!.id);
+      }
+      if (added == true && mounted) {
+        showSuccessSnackBar(context, 'Symbol added to watchlist');
       }
     });
   }
@@ -456,6 +460,7 @@ class _WatchlistPageState extends State<WatchlistPage> {
               await _provider.removeFromWatchlist(item.id);
               if (context.mounted && _provider.error.value == null) {
                 Navigator.pop(context);
+                showSuccessSnackBar(context, '${item.ticker} removed');
               }
             },
             style: ElevatedButton.styleFrom(
