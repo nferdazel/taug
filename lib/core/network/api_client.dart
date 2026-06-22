@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../config/app_env.dart';
+import '../constants/app_constants.dart';
 import '../errors/failures.dart';
 import '../errors/result.dart';
 
@@ -19,7 +20,7 @@ class ApiClient {
     String? apiKey,
     http.Client? client,
     Duration? timeout,
-  }) : _baseUrl = baseUrl ?? 'https://api.twelvedata.com',
+  }) : _baseUrl = baseUrl ?? AppConstants.twelveDataApiUrl,
        _apiKey = apiKey ?? AppEnv.twelveDataApiKey,
        _client = client ?? http.Client(),
        _timeout = timeout ?? const Duration(seconds: 10);

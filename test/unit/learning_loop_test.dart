@@ -16,7 +16,7 @@ void main() {
   late MockSupabaseQueryBuilder mockQueryBuilder;
   late MockPostgrestFilterBuilder<List<Map<String, dynamic>>> mockSelectFilter;
   late MockPostgrestTransformBuilder<List<Map<String, dynamic>>> mockSelectTransform;
-  late PortfolioRepository repository;
+  late PortfolioPositionRepository repository;
 
   const testUserId = 'user-learn-001';
 
@@ -31,7 +31,7 @@ void main() {
     when(() => mockAuth.currentUser).thenReturn(mockUser);
     when(() => mockUser.id).thenReturn(testUserId);
 
-    repository = PortfolioRepository(client: mockClient);
+    repository = PortfolioPositionRepository(client: mockClient);
   });
 
   void wireLessonsQuery(dynamic data) {

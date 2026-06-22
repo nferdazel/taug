@@ -10,7 +10,7 @@ import '../../data/workspace_repository.dart';
 
 class WorkspaceProvider {
   final WorkspaceRepository _repository;
-  final PortfolioRepository _portfolioRepository;
+  final PortfolioPositionRepository _portfolioRepository;
   final String companyId;
 
   final profile = Signal<CompanyProfile?>(null);
@@ -29,9 +29,9 @@ class WorkspaceProvider {
   final isLoadingLessons = Signal<bool>(false);
   bool _isMutating = false;
 
-  WorkspaceProvider({required this.companyId, WorkspaceRepository? repository, PortfolioRepository? portfolioRepository})
+  WorkspaceProvider({required this.companyId, WorkspaceRepository? repository, PortfolioPositionRepository? portfolioRepository})
       : _repository = repository ?? WorkspaceRepository(),
-        _portfolioRepository = portfolioRepository ?? PortfolioRepository();
+        _portfolioRepository = portfolioRepository ?? PortfolioPositionRepository();
 
   void dispose() {
     profile.dispose();

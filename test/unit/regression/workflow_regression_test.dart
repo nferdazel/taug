@@ -15,7 +15,7 @@ class MockUser extends Mock implements User {}
 
 class MockWorkspaceRepository extends Mock implements WorkspaceRepository {}
 
-class MockPortfolioRepository extends Mock implements PortfolioRepository {}
+class MockPortfolioPositionRepository extends Mock implements PortfolioPositionRepository {}
 
 /// Regression suite exercising end-to-end workflows across features.
 /// Each test group validates a critical user workflow to prevent future breakage.
@@ -40,14 +40,14 @@ void main() {
   // ==========================================================================
   group('Regression: Research Questions CRUD', () {
     late MockWorkspaceRepository mockRepo;
-    late MockPortfolioRepository mockPortfolioRepo;
+    late MockPortfolioPositionRepository mockPortfolioRepo;
     late WorkspaceProvider provider;
 
     const testCompanyId = 'comp-reg-001';
 
     setUp(() {
       mockRepo = MockWorkspaceRepository();
-      mockPortfolioRepo = MockPortfolioRepository();
+      mockPortfolioRepo = MockPortfolioPositionRepository();
 
       // Stub loadAll dependencies.
       when(() => mockRepo.getCompanyProfile(testCompanyId)).thenAnswer(
@@ -275,7 +275,7 @@ void main() {
   // 2. Learning Loop (lessons fetched for company, filtered by status)
   // ==========================================================================
   group('Regression: Learning Loop', () {
-    late PortfolioRepository repository;
+    late PortfolioPositionRepository repository;
     late MockSupabaseQueryBuilder mockQueryBuilder;
     late MockPostgrestFilterBuilder<List<Map<String, dynamic>>> mockFilter;
     late MockPostgrestTransformBuilder<List<Map<String, dynamic>>>
@@ -286,7 +286,7 @@ void main() {
       mockFilter = MockPostgrestFilterBuilder<List<Map<String, dynamic>>>();
       mockTransform =
           MockPostgrestTransformBuilder<List<Map<String, dynamic>>>();
-      repository = PortfolioRepository(client: mockClient);
+      repository = PortfolioPositionRepository(client: mockClient);
     });
 
     void wireLessonsQuery(dynamic data) {
@@ -417,7 +417,7 @@ void main() {
 
     test('provider loads lessons into companyLessons signal', () async {
       final mockRepo = MockWorkspaceRepository();
-      final mockPortfolioRepo = MockPortfolioRepository();
+      final mockPortfolioRepo = MockPortfolioPositionRepository();
 
       when(() => mockRepo.getCompanyProfile(any()))
           .thenAnswer((_) async => const Result.success(
@@ -664,14 +664,14 @@ void main() {
   // 4. Pattern Intelligence (stance accuracy, conviction accuracy)
   // ==========================================================================
   group('Regression: Pattern Intelligence', () {
-    late PortfolioRepository repository;
+    late PortfolioPositionRepository repository;
     late MockSupabaseQueryBuilder mockQueryBuilder;
     late MockPostgrestFilterBuilder<List<Map<String, dynamic>>> mockFilter;
 
     setUp(() {
       mockQueryBuilder = MockSupabaseQueryBuilder();
       mockFilter = MockPostgrestFilterBuilder<List<Map<String, dynamic>>>();
-      repository = PortfolioRepository(client: mockClient);
+      repository = PortfolioPositionRepository(client: mockClient);
     });
 
     void wireClosedPositionsQuery(dynamic data) {
@@ -861,7 +861,7 @@ void main() {
   // 5. Portfolio Workflow (add position, close position, mark review)
   // ==========================================================================
   group('Regression: Portfolio Workflow', () {
-    late PortfolioRepository repository;
+    late PortfolioPositionRepository repository;
     late MockSupabaseQueryBuilder mockQueryBuilder;
     late MockPostgrestFilterBuilder<List<Map<String, dynamic>>> mockFilter;
     late MockPostgrestTransformBuilder<List<Map<String, dynamic>>>
@@ -872,7 +872,7 @@ void main() {
       mockFilter = MockPostgrestFilterBuilder<List<Map<String, dynamic>>>();
       mockTransform =
           MockPostgrestTransformBuilder<List<Map<String, dynamic>>>();
-      repository = PortfolioRepository(client: mockClient);
+      repository = PortfolioPositionRepository(client: mockClient);
     });
 
     Map<String, dynamic> buildPositionJson({

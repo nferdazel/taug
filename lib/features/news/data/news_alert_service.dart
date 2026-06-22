@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/errors/failures.dart';
@@ -26,6 +27,7 @@ class NewsAlertService {
 
       return Result.success(articles);
     } catch (e) {
+      debugPrint('[NewsAlertService] getBreakingNews: $e');
       return Result.failure(ServerFailure(message: e.toString()));
     }
   }
@@ -43,6 +45,7 @@ class NewsAlertService {
 
       return Result.success(response.length);
     } catch (e) {
+      debugPrint('[NewsAlertService] getUnreadCount: $e');
       return Result.failure(ServerFailure(message: e.toString()));
     }
   }

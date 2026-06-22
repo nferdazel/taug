@@ -1,13 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:signals/signals_flutter.dart';
 
-import '../../../../core/schema/app_schema.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../core/utils/error_sanitizer.dart';
+import '../providers/screener_provider.dart';
 
 class ScreenerPage extends StatefulWidget {
   const ScreenerPage({super.key});
@@ -17,10 +16,7 @@ class ScreenerPage extends StatefulWidget {
 }
 
 class _ScreenerPageState extends State<ScreenerPage> {
-  List<Map<String, dynamic>> _rows = [];
-  List<Map<String, dynamic>> _filteredRows = [];
-  bool _isLoading = true;
-  String? _error;
+  final _provider = ScreenerProvider();
   String _sortBy = 'display_name';
   bool _sortAsc = true;
   String _searchQuery = '';
@@ -29,68 +25,44 @@ class _ScreenerPageState extends State<ScreenerPage> {
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _provider.load();
   }
 
   @override
   void dispose() {
     _searchDebounce?.cancel();
+    _provider.dispose();
     super.dispose();
   }
 
-  Future<void> _loadData() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-
-    try {
-      final response = await Supabase.instance.client
-          .from(AppSchema.screenerResults)
-          .select()
-          .order('display_name');
-
-      setState(() {
-        _rows = List<Map<String, dynamic>>.from(response);
-        _isLoading = false;
-        _recomputeFilteredRows();
-      });
-    } catch (e) {
-      setState(() {
-        _error = ErrorSanitizer.message(e);
-        _isLoading = false;
-      });
-    }
-  }
-
-  void _recomputeFilteredRows() {
-    var rows = _rows;
+  List<Map<String, dynamic>> _computeFilteredRows(
+    List<Map<String, dynamic>> rows,
+  ) {
+    var result = rows;
 
     if (_searchQuery.isNotEmpty) {
       final q = _searchQuery.toLowerCase();
-      rows = rows.where((r) {
+      result = result.where((r) {
         final name = (r['display_name'] as String? ?? '').toLowerCase();
         final ticker = (r['primary_ticker'] as String? ?? '').toLowerCase();
         return name.contains(q) || ticker.contains(q);
       }).toList();
     }
 
-    rows.sort((a, b) {
+    result.sort((a, b) {
       final aVal = a[_sortBy];
       final bVal = b[_sortBy];
       if (aVal == null && bVal == null) return 0;
       if (aVal == null) return 1;
       if (bVal == null) return -1;
       if (aVal is num && bVal is num) {
-        return _sortAsc
-            ? aVal.compareTo(bVal)
-            : bVal.compareTo(aVal);
+        return _sortAsc ? aVal.compareTo(bVal) : bVal.compareTo(aVal);
       }
       final cmp = aVal.toString().compareTo(bVal.toString());
       return _sortAsc ? cmp : -cmp;
     });
 
-    _filteredRows = rows;
+    return result;
   }
 
   void _onSort(String column) {
@@ -101,7 +73,6 @@ class _ScreenerPageState extends State<ScreenerPage> {
         _sortBy = column;
         _sortAsc = false;
       }
-      _recomputeFilteredRows();
     });
   }
 
@@ -135,11 +106,7 @@ class _ScreenerPageState extends State<ScreenerPage> {
                 _searchDebounce?.cancel();
                 _searchDebounce = Timer(
                   const Duration(milliseconds: 300),
-                  () {
-                    setState(() {
-                      _recomputeFilteredRows();
-                    });
-                  },
+                  () => setState(() {}),
                 );
               },
               style: AppTypography.monoData.copyWith(fontSize: 11),
@@ -165,18 +132,21 @@ class _ScreenerPageState extends State<ScreenerPage> {
             ),
           ),
           const SizedBox(width: AppSpacing.lg),
-          Text(
-            '${_filteredRows.length} companies',
-            style: AppTypography.monoTiny.copyWith(
-              color: AppThemeColors.textTertiary,
-            ),
-          ),
+          SignalBuilder(builder: (_) {
+            final filtered = _computeFilteredRows(_provider.rows.value);
+            return Text(
+              '${filtered.length} companies',
+              style: AppTypography.monoTiny.copyWith(
+                color: AppThemeColors.textTertiary,
+              ),
+            );
+          }),
           const Spacer(),
           SizedBox(
             width: 24,
             height: 28,
             child: IconButton(
-              onPressed: _loadData,
+              onPressed: () => _provider.load(),
               padding: EdgeInsets.zero,
               icon: const Icon(Icons.refresh, size: 14),
             ),
@@ -187,42 +157,50 @@ class _ScreenerPageState extends State<ScreenerPage> {
   }
 
   Widget _buildContent() {
-    if (_isLoading) {
-      return const Center(
+    return SignalBuilder(builder: (_) {
+      final isLoading = _provider.isLoading.value;
+      final error = _provider.error.value;
+      final rows = _provider.rows.value;
+
+      if (isLoading) {
+        return const Center(
+          child: SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        );
+      }
+
+      if (error != null) {
+        return Center(
+          child: Text(error, style: AppTypography.bodySmall),
+        );
+      }
+
+      final filteredRows = _computeFilteredRows(rows);
+
+      return SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
         child: SizedBox(
-          width: 16,
-          height: 16,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-      );
-    }
-
-    if (_error != null) {
-      return Center(
-        child: Text(_error!, style: AppTypography.bodySmall),
-      );
-    }
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: SizedBox(
-        width: 1400,
-        child: Column(
-          children: <Widget>[
-            _buildHeader(),
-            Expanded(
-              child: ListView.builder(
-                itemCount: _filteredRows.length,
-                itemExtent: 32,
-                itemBuilder: (BuildContext context, int index) {
-                  return _buildRow(_filteredRows[index], index);
-                },
+          width: 1400,
+          child: Column(
+            children: <Widget>[
+              _buildHeader(),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: filteredRows.length,
+                  itemExtent: 32,
+                  itemBuilder: (BuildContext context, int index) {
+                    return _buildRow(filteredRows[index], index);
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 
   Widget _buildHeader() {

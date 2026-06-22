@@ -10,18 +10,18 @@ import 'package:taug/features/portfolio/data/portfolio_workspace_repository.dart
 
 class MockWorkspaceRepository extends Mock implements WorkspaceRepository {}
 
-class MockPortfolioRepository extends Mock implements PortfolioRepository {}
+class MockPortfolioPositionRepository extends Mock implements PortfolioPositionRepository {}
 
 void main() {
   late MockWorkspaceRepository mockRepo;
-  late MockPortfolioRepository mockPortfolioRepo;
+  late MockPortfolioPositionRepository mockPortfolioRepo;
   late WorkspaceProvider provider;
 
   const testCompanyId = 'comp-1';
 
   setUp(() {
     mockRepo = MockWorkspaceRepository();
-    mockPortfolioRepo = MockPortfolioRepository();
+    mockPortfolioRepo = MockPortfolioPositionRepository();
     provider = WorkspaceProvider(
       companyId: testCompanyId,
       repository: mockRepo,

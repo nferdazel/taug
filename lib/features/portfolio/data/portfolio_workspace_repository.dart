@@ -4,10 +4,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/errors/result.dart';
 import 'portfolio_models.dart';
 
-class PortfolioRepository {
+class PortfolioPositionRepository {
   final SupabaseClient _client;
 
-  PortfolioRepository({SupabaseClient? client})
+  PortfolioPositionRepository({SupabaseClient? client})
       : _client = client ?? Supabase.instance.client;
 
   String? get clientId => _client.auth.currentUser?.id;
@@ -22,7 +22,7 @@ class PortfolioRepository {
 
       var query = _client
           .from('portfolio_positions')
-          .select('*, companies!inner(display_name)')
+          .select('*, companies!inner(display_name), securities!left(ticker)')
           .eq('user_id', userId);
 
       if (status != null) {
@@ -64,7 +64,7 @@ class PortfolioRepository {
             'notes': notes,
             'status': 'active',
           })
-          .select('*, companies!inner(display_name)')
+          .select('*, companies!inner(display_name), securities!left(ticker)')
           .single();
 
       return Result.success(_mapPosition(response));
@@ -153,7 +153,7 @@ class PortfolioRepository {
 
       final response = await _client
           .from('portfolio_positions')
-          .select('*, companies!inner(display_name)')
+          .select('*, companies!inner(display_name), securities!left(ticker)')
           .eq('user_id', userId)
           .eq('company_id', companyId)
           .eq('status', 'closed')
@@ -230,7 +230,7 @@ class PortfolioRepository {
     try {
       final response = await _client
           .from('portfolio_positions')
-          .select('*, companies!inner(display_name), investment_theses!left(stance)')
+          .select('*, companies!inner(display_name), securities!left(ticker), investment_theses!left(stance, title)')
           .eq('user_id', userId)
           .eq('status', 'closed');
 
@@ -377,11 +377,16 @@ class PortfolioRepository {
 
   PortfolioPosition _mapPosition(Map<String, dynamic> p) {
     final company = p['companies'] as Map<String, dynamic>?;
+    final securities = p['securities'] as Map<String, dynamic>?;
+    final thesis = p['investment_theses'] as Map<String, dynamic>?;
     return PortfolioPosition(
       id: p['id'] as String,
       companyId: p['company_id'] as String,
       companyName: company?['display_name'] as String?,
+      ticker: securities?['ticker'] as String?,
       thesisId: p['thesis_id'] as String?,
+      thesisTitle: thesis?['title'] as String?,
+      thesisStance: thesis?['stance'] as String?,
       conviction: p['conviction'] as String? ?? 'low',
       entryDate: DateTime.parse(p['entry_date'] as String),
       entryPrice: (p['entry_price'] as num?)?.toDouble(),

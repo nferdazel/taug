@@ -12,7 +12,7 @@ import 'package:taug/features/portfolio/data/portfolio_workspace_repository.dart
 
 class MockWorkspaceRepository extends Mock implements WorkspaceRepository {}
 
-class MockPortfolioRepository extends Mock implements PortfolioRepository {}
+class MockPortfolioPositionRepository extends Mock implements PortfolioPositionRepository {}
 
 /// Sets the test surface to the given logical [width]x[height] and returns
 /// a tear-down that resets to the default.
@@ -41,14 +41,14 @@ class _TestHarness extends StatelessWidget {
 
 void main() {
   late MockWorkspaceRepository mockRepo;
-  late MockPortfolioRepository mockPortfolioRepo;
+  late MockPortfolioPositionRepository mockPortfolioRepo;
   late WorkspaceProvider provider;
 
   const testCompanyId = 'comp-fin-001';
 
   setUp(() {
     mockRepo = MockWorkspaceRepository();
-    mockPortfolioRepo = MockPortfolioRepository();
+    mockPortfolioRepo = MockPortfolioPositionRepository();
 
     // Stub all loadAll calls so the provider can be populated manually.
     when(() => mockRepo.getCompanyProfile(testCompanyId)).thenAnswer(

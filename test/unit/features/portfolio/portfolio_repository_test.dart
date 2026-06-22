@@ -16,7 +16,7 @@ void main() {
   late MockSupabaseQueryBuilder mockQueryBuilder;
   late MockPostgrestFilterBuilder<List<Map<String, dynamic>>> mockSelectFilter;
   late MockPostgrestTransformBuilder<List<Map<String, dynamic>>> mockSelectTransform;
-  late PortfolioRepository repository;
+  late PortfolioPositionRepository repository;
 
   const testUserId = 'user-abc-123';
 
@@ -31,7 +31,7 @@ void main() {
     when(() => mockAuth.currentUser).thenReturn(mockUser);
     when(() => mockUser.id).thenReturn(testUserId);
 
-    repository = PortfolioRepository(client: mockClient);
+    repository = PortfolioPositionRepository(client: mockClient);
   });
 
   Map<String, dynamic> buildPositionJson({
@@ -96,7 +96,7 @@ void main() {
     mockSelectFilter.stubFuture(null);
   }
 
-  group('PortfolioRepository', () {
+  group('PortfolioPositionRepository', () {
     group('getPositions', () {
       test('returns positions filtered by user_id on success', () async {
         setupSelectQuery([

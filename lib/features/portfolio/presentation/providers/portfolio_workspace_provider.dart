@@ -8,7 +8,7 @@ import '../../data/portfolio_repository.dart' as legacy;
 import '../../data/portfolio_workspace_repository.dart';
 
 class PortfolioWorkspaceProvider {
-  final PortfolioRepository _repository;
+  final PortfolioPositionRepository _repository;
   final legacy.PortfolioRepository _priceRepository;
 
   final positions = ListSignal<PortfolioPosition>([]);
@@ -26,9 +26,9 @@ class PortfolioWorkspaceProvider {
   final overallStats = Signal<Map<String, int>>({});
 
   PortfolioWorkspaceProvider({
-    PortfolioRepository? repository,
+    PortfolioPositionRepository? repository,
     legacy.PortfolioRepository? priceRepository,
-  })  : _repository = repository ?? PortfolioRepository(),
+  })  : _repository = repository ?? PortfolioPositionRepository(),
         _priceRepository = priceRepository ?? legacy.PortfolioRepository();
 
   void dispose() {

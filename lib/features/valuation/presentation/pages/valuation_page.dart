@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:signals/signals_flutter.dart';
 
-import '../../../../core/schema/app_schema.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../core/utils/error_sanitizer.dart';
+import '../providers/valuation_provider.dart';
 
 class ValuationPage extends StatefulWidget {
   const ValuationPage({super.key});
@@ -15,43 +14,25 @@ class ValuationPage extends StatefulWidget {
 }
 
 class _ValuationPageState extends State<ValuationPage> {
-  List<Map<String, dynamic>> _rows = [];
-  bool _isLoading = true;
-  String? _error;
+  final _provider = ValuationProvider();
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _provider.load();
   }
 
-  Future<void> _loadData() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-
-    try {
-      final response = await Supabase.instance.client
-          .from(AppSchema.companyMetricSnapshot)
-          .select()
-          .order('metric_code');
-
-      setState(() {
-        _rows = List<Map<String, dynamic>>.from(response);
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _error = ErrorSanitizer.message(e);
-        _isLoading = false;
-      });
-    }
+  @override
+  void dispose() {
+    _provider.dispose();
+    super.dispose();
   }
 
-  Map<String, List<Map<String, dynamic>>> get _metricsByCompany {
+  Map<String, List<Map<String, dynamic>>> _metricsByCompany(
+    List<Map<String, dynamic>> rows,
+  ) {
     final map = <String, List<Map<String, dynamic>>>{};
-    for (final row in _rows) {
+    for (final row in rows) {
       final companyId = row['company_id'] as String? ?? '';
       map.putIfAbsent(companyId, () => []).add(row);
     }
@@ -79,18 +60,21 @@ class _ValuationPageState extends State<ValuationPage> {
         children: <Widget>[
           const Text('VALUATION SNAPSHOT', style: AppTypography.monoSection),
           const Spacer(),
-          Text(
-            '${_metricsByCompany.length} companies',
-            style: AppTypography.monoTiny.copyWith(
-              color: AppThemeColors.textTertiary,
-            ),
-          ),
+          SignalBuilder(builder: (_) {
+            final byCompany = _metricsByCompany(_provider.rows.value);
+            return Text(
+              '${byCompany.length} companies',
+              style: AppTypography.monoTiny.copyWith(
+                color: AppThemeColors.textTertiary,
+              ),
+            );
+          }),
           const SizedBox(width: AppSpacing.lg),
           SizedBox(
             width: 24,
             height: 28,
             child: IconButton(
-              onPressed: _loadData,
+              onPressed: () => _provider.load(),
               padding: EdgeInsets.zero,
               icon: const Icon(Icons.refresh, size: 14),
             ),
@@ -101,41 +85,47 @@ class _ValuationPageState extends State<ValuationPage> {
   }
 
   Widget _buildContent() {
-    if (_isLoading) {
-      return const Center(
-        child: SizedBox(
-          width: 16,
-          height: 16,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-      );
-    }
+    return SignalBuilder(builder: (_) {
+      final isLoading = _provider.isLoading.value;
+      final error = _provider.error.value;
+      final rows = _provider.rows.value;
 
-    if (_error != null) {
-      return Center(
-        child: Text(_error!, style: AppTypography.bodySmall),
-      );
-    }
-
-    final byCompany = _metricsByCompany;
-    if (byCompany.isEmpty) {
-      return const Center(
-        child: Text('No metrics computed yet', style: AppTypography.caption),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(AppSpacing.cardPadding),
-      itemCount: byCompany.length,
-      itemBuilder: (BuildContext context, int index) {
-        final companyId = byCompany.keys.elementAt(index);
-        final metrics = byCompany[companyId]!;
-        return Padding(
-          padding: const EdgeInsets.only(bottom: AppSpacing.sectionGap),
-          child: _buildCompanyCard(metrics),
+      if (isLoading) {
+        return const Center(
+          child: SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
         );
-      },
-    );
+      }
+
+      if (error != null) {
+        return Center(
+          child: Text(error, style: AppTypography.bodySmall),
+        );
+      }
+
+      final byCompany = _metricsByCompany(rows);
+      if (byCompany.isEmpty) {
+        return const Center(
+          child: Text('No metrics computed yet', style: AppTypography.caption),
+        );
+      }
+
+      return ListView.builder(
+        padding: const EdgeInsets.all(AppSpacing.cardPadding),
+        itemCount: byCompany.length,
+        itemBuilder: (BuildContext context, int index) {
+          final companyId = byCompany.keys.elementAt(index);
+          final metrics = byCompany[companyId]!;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.sectionGap),
+            child: _buildCompanyCard(metrics),
+          );
+        },
+      );
+    });
   }
 
   Widget _buildCompanyCard(List<Map<String, dynamic>> metrics) {
@@ -200,7 +190,10 @@ class _ValuationPageState extends State<ValuationPage> {
     );
   }
 
-  Widget _buildMetricSection(String title, List<Map<String, dynamic>> metrics) {
+  Widget _buildMetricSection(
+    String title,
+    List<Map<String, dynamic>> metrics,
+  ) {
     if (metrics.isEmpty) return const SizedBox.shrink();
 
     return Container(
@@ -209,7 +202,9 @@ class _ValuationPageState extends State<ValuationPage> {
         vertical: AppSpacing.sm,
       ),
       decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppThemeColors.border, width: 0.5)),
+        border: Border(
+          bottom: BorderSide(color: AppThemeColors.border, width: 0.5),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -237,10 +232,20 @@ class _ValuationPageState extends State<ValuationPage> {
     String displayValue;
     if (!isOk || value == null) {
       displayValue = '--';
-    } else if (code == 'market_cap' || code == 'enterprise_value' || code == 'fcf') {
+    } else if (code == 'market_cap' ||
+        code == 'enterprise_value' ||
+        code == 'fcf') {
       displayValue = _formatLargeNumber(value.toDouble());
-    } else if (['gross_margin', 'operating_margin', 'net_margin', 'roe', 'roa',
-                'fcf_margin', 'revenue_yoy', 'eps_yoy'].contains(code)) {
+    } else if ([
+      'gross_margin',
+      'operating_margin',
+      'net_margin',
+      'roe',
+      'roa',
+      'fcf_margin',
+      'revenue_yoy',
+      'eps_yoy',
+    ].contains(code)) {
       displayValue = '${(value.toDouble() * 100).toStringAsFixed(1)}%';
     } else {
       displayValue = value.toDouble().toStringAsFixed(2);
@@ -254,7 +259,8 @@ class _ValuationPageState extends State<ValuationPage> {
       decoration: BoxDecoration(
         color: isOk ? null : AppThemeColors.backgroundLight.withAlpha(50),
         border: Border.all(
-          color: isOk ? AppThemeColors.border : AppThemeColors.border.withAlpha(100),
+          color:
+              isOk ? AppThemeColors.border : AppThemeColors.border.withAlpha(100),
         ),
         borderRadius: BorderRadius.circular(2),
       ),
@@ -271,9 +277,8 @@ class _ValuationPageState extends State<ValuationPage> {
           Text(
             displayValue,
             style: AppTypography.monoData.copyWith(
-              color: isOk
-                  ? AppThemeColors.textPrimary
-                  : AppThemeColors.textTertiary,
+              color:
+                  isOk ? AppThemeColors.textPrimary : AppThemeColors.textTertiary,
             ),
           ),
           if (isMissing) ...<Widget>[

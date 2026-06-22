@@ -3,6 +3,8 @@ import 'dart:convert';
 
 import 'package:web_socket_channel/web_socket_channel.dart';
 
+import '../constants/app_constants.dart';
+
 class BinanceWebSocketService {
   WebSocketChannel? _channel;
   StreamSubscription<dynamic>? _channelSubscription;
@@ -17,7 +19,7 @@ class BinanceWebSocketService {
     if (_channel != null) return;
 
     _channel = WebSocketChannel.connect(
-      Uri.parse('wss://stream.binance.com:9443/ws'),
+      Uri.parse(AppConstants.binanceWebSocketUrl),
     );
 
     _reconnectAttempts = 0;

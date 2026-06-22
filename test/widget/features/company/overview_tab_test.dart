@@ -14,7 +14,7 @@ import 'package:taug/features/portfolio/data/portfolio_workspace_repository.dart
 
 class MockWorkspaceRepository extends Mock implements WorkspaceRepository {}
 
-class MockPortfolioRepository extends Mock implements PortfolioRepository {}
+class MockPortfolioPositionRepository extends Mock implements PortfolioPositionRepository {}
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -26,7 +26,7 @@ Widget _wrapInApp(Widget child) {
 
 WorkspaceProvider _createProvider({
   required MockWorkspaceRepository mockRepo,
-  required MockPortfolioRepository mockPortfolioRepo,
+  required MockPortfolioPositionRepository mockPortfolioRepo,
 }) {
   return WorkspaceProvider(
     companyId: 'comp-1',
@@ -69,11 +69,11 @@ void _stubLoadAllDefaults(MockWorkspaceRepository mockRepo) {
 
 void main() {
   late MockWorkspaceRepository mockRepo;
-  late MockPortfolioRepository mockPortfolioRepo;
+  late MockPortfolioPositionRepository mockPortfolioRepo;
 
   setUp(() {
     mockRepo = MockWorkspaceRepository();
-    mockPortfolioRepo = MockPortfolioRepository();
+    mockPortfolioRepo = MockPortfolioPositionRepository();
     _stubLoadAllDefaults(mockRepo);
   });
 
