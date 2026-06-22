@@ -8,6 +8,7 @@ abstract final class AppThemeColors {
   static const Color backgroundLight = Color(AppColors.backgroundLight);
   static const Color surface = Color(AppColors.surface);
   static const Color surfaceLight = Color(AppColors.surfaceLight);
+  static const Color surfaceMuted = Color(AppColors.surfaceMuted);
   static const Color border = Color(AppColors.border);
   static const Color borderLight = Color(AppColors.borderLight);
   static const Color textPrimary = Color(AppColors.textPrimary);
@@ -21,6 +22,11 @@ abstract final class AppThemeColors {
   static const Color accentLight = Color(AppColors.accentLight);
   static const Color warning = Color(AppColors.warning);
   static const Color warningLight = Color(AppColors.warningLight);
+  static const Color success = Color(AppColors.success);
+  static const Color successLight = Color(AppColors.successLight);
+  static const Color critical = Color(AppColors.critical);
+  static const Color criticalLight = Color(AppColors.criticalLight);
+  static const Color neutral = Color(AppColors.neutral);
 
   static TextStyle priceStyle(double change) {
     final color = change >= 0 ? bullish : bearish;

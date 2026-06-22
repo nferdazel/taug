@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme_colors.dart';
@@ -16,38 +17,26 @@ class MainLayout extends StatefulWidget {
 
 class _MainLayoutState extends State<MainLayout> {
   static const _tabs = [
-    '/brief',
-    '/market',
-    '/watchlist',
-    '/portfolio',
-    '/chart',
-    '/news',
-    '/policy',
-    '/calendar',
+    '/companies',
+    '/research',
+    '/portfolio-workspace',
+    '/data',
     '/settings',
   ];
 
   static const _tabLabels = [
-    'Brief',
-    'Market',
-    'Watchlist',
+    'Companies',
+    'Research',
     'Portfolio',
-    'Chart',
-    'News',
-    'Policy',
-    'Calendar',
+    'Data',
     'Settings',
   ];
 
   static const _tabIcons = [
-    Icons.dashboard_outlined,
-    Icons.show_chart,
-    Icons.list_alt,
+    Icons.business_outlined,
+    Icons.edit_note_outlined,
     Icons.account_balance_wallet_outlined,
-    Icons.candlestick_chart_outlined,
-    Icons.newspaper_outlined,
-    Icons.account_balance_outlined,
-    Icons.calendar_today_outlined,
+    Icons.storage_outlined,
     Icons.settings_outlined,
   ];
 
@@ -58,10 +47,19 @@ class _MainLayoutState extends State<MainLayout> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppThemeColors.background,
       body: Column(
         children: [
           _buildTabBar(),
-          Expanded(child: widget.child),
+          Expanded(
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1400),
+                child: widget.child,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -69,77 +67,100 @@ class _MainLayoutState extends State<MainLayout> {
 
   Widget _buildTabBar() {
     final String location = GoRouterState.of(context).matchedLocation;
-    final int currentIndex = _tabs.indexOf(location);
+    int currentIndex = -1;
+    for (int i = 0; i < _tabs.length; i++) {
+      if (location.startsWith(_tabs[i])) {
+        currentIndex = i;
+        break;
+      }
+    }
 
-    return Container(
-      height: 40,
-      decoration: const BoxDecoration(
-        color: AppThemeColors.surface,
-        border: Border(bottom: BorderSide(color: AppThemeColors.border)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 108,
-            height: double.infinity,
-            alignment: Alignment.center,
-            child: Text(
-              AppStrings.appName.toUpperCase(),
-              style: AppTypography.monoData.copyWith(
-                color: AppThemeColors.accent,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.5,
+    // A11Y: Use Semantics with 'navigation' role for the tab bar.
+    return Semantics(
+      label: 'Main navigation',
+      child: Container(
+        height: 48,
+        decoration: const BoxDecoration(
+          color: AppThemeColors.surface,
+          border: Border(bottom: BorderSide(color: AppThemeColors.border)),
+        ),
+        child: Row(
+          children: [
+            Semantics(
+              label: '${AppStrings.appName} home',
+              button: true,
+              child: Container(
+                width: 120,
+                height: double.infinity,
+                alignment: Alignment.center,
+                child: Text(
+                  AppStrings.appName.toUpperCase(),
+                  style: AppTypography.monoData.copyWith(
+                    color: AppThemeColors.accent,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.5,
+                  ),
+                ),
               ),
             ),
-          ),
-          const VerticalDivider(width: 1),
-          Expanded(
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: _tabs.length,
-              itemBuilder: (context, index) {
-                final bool isSelected = index == currentIndex;
-                return InkWell(
-                  onTap: () => _onTabTapped(index),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          color: isSelected
-                              ? AppThemeColors.accent
-                              : Colors.transparent,
-                          width: 2,
+            const VerticalDivider(width: 1),
+            Expanded(
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: _tabs.length,
+                itemBuilder: (context, index) {
+                  final bool isSelected = index == currentIndex;
+                  // A11Y: Wrap tab in Semantics with button + selected state
+                  // so screen readers announce "Companies, selected, tab 1 of 5".
+                  return Semantics(
+                    button: true,
+                    selected: isSelected,
+                    label: '${_tabLabels[index]}, tab ${index + 1} of ${_tabs.length}',
+                    child: InkWell(
+                      onTap: () => _onTabTapped(index),
+                      focusColor: AppThemeColors.accent.withValues(alpha: 0.2),
+                      highlightColor: AppThemeColors.accent.withValues(alpha: 0.1),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        decoration: BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(
+                              color: isSelected
+                                  ? AppThemeColors.accent
+                                  : Colors.transparent,
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _tabIcons[index],
+                              size: AppSpacing.iconSize + 1,
+                              color: isSelected
+                                  ? AppThemeColors.textPrimary
+                                  : AppThemeColors.textSecondary,
+                            ),
+                            const SizedBox(width: AppSpacing.md),
+                            Text(
+                              _tabLabels[index],
+                              style: AppTypography.labelSmall.copyWith(
+                                color: isSelected
+                                    ? AppThemeColors.textPrimary
+                                    : AppThemeColors.textSecondary,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          _tabIcons[index],
-                          size: AppSpacing.iconSize + 1,
-                          color: isSelected
-                              ? AppThemeColors.textPrimary
-                              : AppThemeColors.textSecondary,
-                        ),
-                        const SizedBox(width: AppSpacing.md),
-                        Text(
-                          _tabLabels[index],
-                          style: AppTypography.labelSmall.copyWith(
-                            color: isSelected
-                                ? AppThemeColors.textPrimary
-                                : AppThemeColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

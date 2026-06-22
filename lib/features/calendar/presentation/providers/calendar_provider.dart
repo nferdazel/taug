@@ -1,5 +1,6 @@
 import 'package:signals/signals.dart';
 
+import '../../../../core/utils/error_sanitizer.dart';
 import '../../../../shared/models/econ_event.dart';
 import '../../data/calendar_repository.dart';
 
@@ -29,7 +30,7 @@ class CalendarProvider {
     if (result.isSuccess) {
       events.value = result.data!;
     } else {
-      error.value = result.error.toString();
+      error.value = ErrorSanitizer.message(result.error);
     }
 
     isLoading.value = false;

@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/errors/failures.dart';
 import '../../../core/errors/result.dart';
 import '../../../core/schema/app_schema.dart';
+import '../../../core/utils/extensions.dart';
 import '../../../shared/models/price_data.dart';
 
 class ChartRepository {
@@ -56,7 +57,7 @@ class ChartRepository {
           .maybeSingle();
 
       if (response != null) {
-        final snapshot = _extractSnapshot(response);
+        final snapshot = extractRelationRow(response, AppSchema.quoteSnapshots);
         if (snapshot != null) {
           return Result.success(
             PriceData.fromJson({'symbol': response['ticker'], ...snapshot}),
@@ -75,14 +76,4 @@ class ChartRepository {
     }
   }
 
-  Map<String, dynamic>? _extractSnapshot(Map<String, dynamic> row) {
-    final Object? relation = row[AppSchema.quoteSnapshots];
-    if (relation is Map<String, dynamic>) {
-      return relation;
-    }
-    if (relation is List && relation.isNotEmpty && relation.first is Map) {
-      return Map<String, dynamic>.from(relation.first as Map);
-    }
-    return null;
-  }
 }

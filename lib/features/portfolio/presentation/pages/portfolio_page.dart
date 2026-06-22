@@ -50,25 +50,32 @@ class _PortfolioPageState extends State<PortfolioPage> {
       ),
       child: Row(
         children: [
-          const Text('PORTFOLIO', style: AppTypography.monoSection),
+          Semantics(
+            header: true,
+            child: const Text('PORTFOLIO', style: AppTypography.monoSection),
+          ),
           const Spacer(),
-          Watch((_) {
+          SignalBuilder(builder: (_) {
             final isLoading = _provider.isLoading.value;
             return SizedBox(
               height: AppSpacing.buttonHeight,
-              child: TextButton.icon(
-                onPressed: () => _provider.loadPrices(),
-                icon: isLoading
-                    ? const SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 1.5),
-                      )
-                    : const Icon(Icons.refresh, size: 16),
-                label: const Text('Refresh', style: AppTypography.monoMeta),
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
-                  minimumSize: Size.zero,
+              child: Semantics(
+                label: isLoading ? 'Refreshing portfolio' : 'Refresh portfolio',
+                button: true,
+                child: TextButton.icon(
+                  onPressed: () => _provider.loadPrices(),
+                  icon: isLoading
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 1.5),
+                        )
+                      : const Icon(Icons.refresh, size: 16),
+                  label: const Text('Refresh', style: AppTypography.monoMeta),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    minimumSize: Size.zero,
+                  ),
                 ),
               ),
             );
@@ -79,7 +86,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
   }
 
   Widget _buildSummary() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final totalValue = _provider.totalValue;
       final totalPnL = _provider.totalPnL;
       final totalPnLPercent = _provider.totalPnLPercent;
@@ -92,40 +99,50 @@ class _PortfolioPageState extends State<PortfolioPage> {
         ),
         child: Row(
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Total Value', style: AppTypography.monoMeta),
-                Text(
-                  '\$${totalValue.toStringAsFixed(2)}',
-                  style: AppTypography.monoPrice,
-                ),
-              ],
+            Semantics(
+              label: 'Total portfolio value: \$${totalValue.toStringAsFixed(2)}',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Total Value', style: AppTypography.monoMeta),
+                  Text(
+                    '\$${totalValue.toStringAsFixed(2)}',
+                    style: AppTypography.monoPrice,
+                  ),
+                ],
+              ),
             ),
             const SizedBox(width: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('P&L', style: AppTypography.monoMeta),
-                Text(
-                  '${isPositive ? '+' : ''}\$${totalPnL.toStringAsFixed(2)} (${isPositive ? '+' : ''}${totalPnLPercent.toStringAsFixed(2)}%)',
-                  style: AppTypography.monoLabel.copyWith(
-                    color: isPositive
-                        ? AppThemeColors.bullish
-                        : AppThemeColors.bearish,
+            Semantics(
+              label: 'Profit and loss: ${isPositive ? "plus" : "minus"} \$${totalPnL.abs().toStringAsFixed(2)}, ${isPositive ? "plus" : "minus"} ${totalPnLPercent.abs().toStringAsFixed(2)} percent',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('P&L', style: AppTypography.monoMeta),
+                  Text(
+                    '${isPositive ? '+' : ''}\$${totalPnL.toStringAsFixed(2)} (${isPositive ? '+' : ''}${totalPnLPercent.toStringAsFixed(2)}%)',
+                    style: AppTypography.monoLabel.copyWith(
+                      color: isPositive
+                          ? AppThemeColors.bullish
+                          : AppThemeColors.bearish,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
             const Spacer(),
             SizedBox(
               height: AppSpacing.buttonHeight,
-              child: ElevatedButton.icon(
-                onPressed: _showAddHoldingDialog,
-                icon: const Icon(Icons.add, size: 14),
-                label: const Text('Add', style: AppTypography.monoMeta),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Semantics(
+                label: 'Add holding',
+                button: true,
+                child: ElevatedButton.icon(
+                  onPressed: _showAddHoldingDialog,
+                  icon: const Icon(Icons.add, size: 14),
+                  label: const Text('Add', style: AppTypography.monoMeta),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                  ),
                 ),
               ),
             ),
@@ -136,7 +153,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
   }
 
   Widget _buildContent() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final holdings = _provider.holdings.value;
       final isLoading = _provider.isLoading.value;
       final error = _provider.error.value;
@@ -272,7 +289,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
   }
 
   Widget _buildHoldingRow(PortfolioHolding holding) {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final price = _provider.prices.value[holding.ticker];
       final currentPrice = price?.price ?? 0;
       final pnl = (currentPrice - holding.avgPrice) * holding.quantity;
@@ -280,92 +297,107 @@ class _PortfolioPageState extends State<PortfolioPage> {
           ? ((currentPrice - holding.avgPrice) / holding.avgPrice) * 100
           : 0;
       final isPositive = pnl >= 0;
+      final direction = isPositive ? 'gain' : 'loss';
 
-      return Container(
-        height: 36,
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        decoration: const BoxDecoration(
-          border: Border(
-            bottom: BorderSide(color: AppThemeColors.border, width: 0.5),
+      // A11Y: Build semantic label for the holding row.
+      final String semanticLabel = '${holding.ticker ?? "Unknown"}, '
+          '${holding.name ?? ""}, '
+          'quantity ${holding.quantity}, '
+          'current price ${currentPrice.toStringAsFixed(2)}, '
+          '$direction ${pnlPercent.abs().toStringAsFixed(2)} percent';
+
+      return Semantics(
+        label: semanticLabel,
+        child: Container(
+          height: 36,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          decoration: const BoxDecoration(
+            border: Border(
+              bottom: BorderSide(color: AppThemeColors.border, width: 0.5),
+            ),
           ),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              flex: 2,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    holding.ticker ?? '-',
-                    style: AppTypography.monoLabel.copyWith(
-                      fontWeight: FontWeight.w600,
+          child: Row(
+            children: [
+              Expanded(
+                flex: 2,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      holding.ticker ?? '-',
+                      style: AppTypography.monoLabel.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                  Text(
-                    holding.name ?? '',
-                    style: AppTypography.monoMeta,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              flex: 1,
-              child: Text(
-                holding.quantity.toString(),
-                style: AppTypography.monoLabel,
-                textAlign: TextAlign.right,
-              ),
-            ),
-            Expanded(
-              flex: 2,
-              child: Text(
-                holding.avgPrice.toStringAsFixed(2),
-                style: AppTypography.monoLabel,
-                textAlign: TextAlign.right,
-              ),
-            ),
-            Expanded(
-              flex: 2,
-              child: Text(
-                currentPrice.toStringAsFixed(2),
-                style: AppTypography.monoData,
-                textAlign: TextAlign.right,
-              ),
-            ),
-            Expanded(
-              flex: 2,
-              child: Text(
-                (currentPrice * holding.quantity).toStringAsFixed(2),
-                style: AppTypography.monoData,
-                textAlign: TextAlign.right,
-              ),
-            ),
-            Expanded(
-              flex: 2,
-              child: Text(
-                '${isPositive ? '+' : ''}${pnlPercent.toStringAsFixed(2)}%',
-                style: AppTypography.monoLabel.copyWith(
-                  color: isPositive
-                      ? AppThemeColors.bullish
-                      : AppThemeColors.bearish,
+                    Text(
+                      holding.name ?? '',
+                      style: AppTypography.monoMeta,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
-                textAlign: TextAlign.right,
               ),
-            ),
-            SizedBox(
-              width: 24,
-              child: IconButton(
-                onPressed: () => _provider.removeHolding(holding.id),
-                icon: const Icon(Icons.close, size: 14),
-                padding: EdgeInsets.zero,
-                color: AppThemeColors.textTertiary,
+              Expanded(
+                flex: 1,
+                child: Text(
+                  holding.quantity.toString(),
+                  style: AppTypography.monoLabel,
+                  textAlign: TextAlign.right,
+                ),
               ),
-            ),
-          ],
+              Expanded(
+                flex: 2,
+                child: Text(
+                  holding.avgPrice.toStringAsFixed(2),
+                  style: AppTypography.monoLabel,
+                  textAlign: TextAlign.right,
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Text(
+                  currentPrice.toStringAsFixed(2),
+                  style: AppTypography.monoData,
+                  textAlign: TextAlign.right,
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Text(
+                  (currentPrice * holding.quantity).toStringAsFixed(2),
+                  style: AppTypography.monoData,
+                  textAlign: TextAlign.right,
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Text(
+                  '${isPositive ? '+' : ''}${pnlPercent.toStringAsFixed(2)}%',
+                  style: AppTypography.monoLabel.copyWith(
+                    color: isPositive
+                        ? AppThemeColors.bullish
+                        : AppThemeColors.bearish,
+                  ),
+                  textAlign: TextAlign.right,
+                ),
+              ),
+              SizedBox(
+                width: 24,
+                child: Semantics(
+                  label: 'Remove ${holding.ticker ?? "holding"}',
+                  button: true,
+                  child: IconButton(
+                    onPressed: () => _provider.removeHolding(holding.id),
+                    icon: const Icon(Icons.close, size: 14),
+                    padding: EdgeInsets.zero,
+                    color: AppThemeColors.textTertiary,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     });
@@ -405,30 +437,48 @@ class _AddHoldingDialogState extends State<_AddHoldingDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       backgroundColor: AppThemeColors.surface,
-      title: const Text('Add Holding', style: AppTypography.subheading),
+      title: Semantics(
+        header: true,
+        child: const Text('Add Holding', style: AppTypography.subheading),
+      ),
       content: SizedBox(
         width: 300,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(
-              controller: _symbolController,
-              decoration: const InputDecoration(hintText: 'Symbol (e.g. AAPL)'),
-              style: AppTypography.monoData,
+            Semantics(
+              label: 'Stock symbol',
+              textField: true,
+              child: TextField(
+                controller: _symbolController,
+                decoration: const InputDecoration(hintText: 'Symbol (e.g. AAPL)'),
+                style: AppTypography.monoData,
+                textInputAction: TextInputAction.next,
+              ),
             ),
             const SizedBox(height: 8),
-            TextField(
-              controller: _quantityController,
-              decoration: const InputDecoration(hintText: 'Quantity'),
-              keyboardType: TextInputType.number,
-              style: AppTypography.monoData,
+            Semantics(
+              label: 'Quantity',
+              textField: true,
+              child: TextField(
+                controller: _quantityController,
+                decoration: const InputDecoration(hintText: 'Quantity'),
+                keyboardType: TextInputType.number,
+                style: AppTypography.monoData,
+                textInputAction: TextInputAction.next,
+              ),
             ),
             const SizedBox(height: 8),
-            TextField(
-              controller: _priceController,
-              decoration: const InputDecoration(hintText: 'Avg Price'),
-              keyboardType: TextInputType.number,
-              style: AppTypography.monoData,
+            Semantics(
+              label: 'Average price',
+              textField: true,
+              child: TextField(
+                controller: _priceController,
+                decoration: const InputDecoration(hintText: 'Avg Price'),
+                keyboardType: TextInputType.number,
+                style: AppTypography.monoData,
+                textInputAction: TextInputAction.done,
+              ),
             ),
           ],
         ),

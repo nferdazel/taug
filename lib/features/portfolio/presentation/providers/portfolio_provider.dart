@@ -1,5 +1,8 @@
 import 'dart:async';
+
 import 'package:signals/signals.dart';
+
+import '../../../../core/utils/error_sanitizer.dart';
 import '../../../../shared/models/price_data.dart';
 import '../../data/portfolio_repository.dart';
 import '../../domain/portfolio_entity.dart';
@@ -13,6 +16,7 @@ class PortfolioProvider {
   final error = Signal<String?>(null);
   final lastUpdated = Signal<DateTime?>(null);
   bool _isLoadingPrices = false;
+  bool _isMutating = false;
 
   Timer? _refreshTimer;
 
@@ -40,7 +44,7 @@ class PortfolioProvider {
       await loadPrices();
       startAutoRefresh();
     } else {
-      error.value = result.error.toString();
+      error.value = ErrorSanitizer.message(result.error);
     }
 
     isLoading.value = false;
@@ -58,7 +62,6 @@ class PortfolioProvider {
     if (tickers.isEmpty) return;
 
     _isLoadingPrices = true;
-    await _repository.refreshQuoteSnapshots(tickers);
     final result = await _repository.getPrices(tickers);
     if (result.isSuccess) {
       prices.value = result.data!;
@@ -72,14 +75,24 @@ class PortfolioProvider {
     double quantity,
     double avgPrice,
   ) async {
-    final result = await _repository.addHolding(
-      symbolId: symbolId,
-      quantity: quantity,
-      avgPrice: avgPrice,
-    );
+    if (_isMutating) return;
+    _isMutating = true;
+    error.value = null;
+    try {
+      final result = await _repository.addHolding(
+        symbolId: symbolId,
+        quantity: quantity,
+        avgPrice: avgPrice,
+      );
 
-    if (result.isSuccess) {
-      await loadHoldings();
+      if (result.isSuccess) {
+        await loadHoldings();
+      } else {
+        ErrorSanitizer.debugLog('PortfolioProvider', 'addHolding failed: ${result.error}');
+        error.value = ErrorSanitizer.message(result.error);
+      }
+    } finally {
+      _isMutating = false;
     }
   }
 
@@ -88,21 +101,41 @@ class PortfolioProvider {
     double quantity,
     double avgPrice,
   ) async {
-    final result = await _repository.updateHolding(
-      holdingId: holdingId,
-      quantity: quantity,
-      avgPrice: avgPrice,
-    );
+    if (_isMutating) return;
+    _isMutating = true;
+    error.value = null;
+    try {
+      final result = await _repository.updateHolding(
+        holdingId: holdingId,
+        quantity: quantity,
+        avgPrice: avgPrice,
+      );
 
-    if (result.isSuccess) {
-      await loadHoldings();
+      if (result.isSuccess) {
+        await loadHoldings();
+      } else {
+        ErrorSanitizer.debugLog('PortfolioProvider', 'updateHolding failed: ${result.error}');
+        error.value = ErrorSanitizer.message(result.error);
+      }
+    } finally {
+      _isMutating = false;
     }
   }
 
   Future<void> removeHolding(String holdingId) async {
-    final result = await _repository.removeHolding(holdingId);
-    if (result.isSuccess) {
-      await loadHoldings();
+    if (_isMutating) return;
+    _isMutating = true;
+    error.value = null;
+    try {
+      final result = await _repository.removeHolding(holdingId);
+      if (result.isSuccess) {
+        await loadHoldings();
+      } else {
+        ErrorSanitizer.debugLog('PortfolioProvider', 'removeHolding failed: ${result.error}');
+        error.value = ErrorSanitizer.message(result.error);
+      }
+    } finally {
+      _isMutating = false;
     }
   }
 

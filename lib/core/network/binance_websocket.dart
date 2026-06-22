@@ -1,9 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
+
 import 'package:web_socket_channel/web_socket_channel.dart';
+
+import '../constants/app_constants.dart';
 
 class BinanceWebSocketService {
   WebSocketChannel? _channel;
+  StreamSubscription<dynamic>? _channelSubscription;
   final Map<String, StreamController<Map<String, dynamic>>> _controllers = {};
   final Map<String, StreamSubscription<dynamic>> _subscriptions = {};
   Timer? _reconnectTimer;
@@ -15,12 +19,12 @@ class BinanceWebSocketService {
     if (_channel != null) return;
 
     _channel = WebSocketChannel.connect(
-      Uri.parse('wss://stream.binance.com:9443/ws'),
+      Uri.parse(AppConstants.binanceWebSocketUrl),
     );
 
     _reconnectAttempts = 0;
 
-    _channel!.stream.listen(
+    _channelSubscription = _channel!.stream.listen(
       (data) {
         _reconnectAttempts = 0;
         final json = jsonDecode(data as String) as Map<String, dynamic>;
@@ -38,20 +42,30 @@ class BinanceWebSocketService {
     );
   }
 
-  void subscribeTicker(String symbol, void Function(Map<String, dynamic>) onData) {
+  void subscribeTicker(
+    String symbol,
+    void Function(Map<String, dynamic>) onData,
+  ) {
     final streamName = '${symbol.toLowerCase()}@ticker';
 
     if (!_controllers.containsKey(streamName)) {
-      _controllers[streamName] = StreamController<Map<String, dynamic>>.broadcast();
+      _controllers[streamName] =
+          StreamController<Map<String, dynamic>>.broadcast();
     }
 
     _subscriptions[streamName]?.cancel();
-    _subscriptions[streamName] = _controllers[streamName]!.stream.listen(onData);
+    _subscriptions[streamName] = _controllers[streamName]!.stream.listen(
+      onData,
+    );
 
     _sendSubscription('SUBSCRIBE', [streamName]);
   }
 
-  void subscribeKline(String symbol, String interval, void Function(Map<String, dynamic>) onData) {
+  void subscribeKline(
+    String symbol,
+    String interval,
+    void Function(Map<String, dynamic>) onData,
+  ) {
     final intervalMap = {
       '1m': '1m',
       '5m': '5m',
@@ -64,11 +78,14 @@ class BinanceWebSocketService {
     final streamName = '${symbol.toLowerCase()}@kline_$binanceInterval';
 
     if (!_controllers.containsKey(streamName)) {
-      _controllers[streamName] = StreamController<Map<String, dynamic>>.broadcast();
+      _controllers[streamName] =
+          StreamController<Map<String, dynamic>>.broadcast();
     }
 
     _subscriptions[streamName]?.cancel();
-    _subscriptions[streamName] = _controllers[streamName]!.stream.listen(onData);
+    _subscriptions[streamName] = _controllers[streamName]!.stream.listen(
+      onData,
+    );
 
     _sendSubscription('SUBSCRIBE', [streamName]);
   }
@@ -93,15 +110,14 @@ class BinanceWebSocketService {
 
   void _sendSubscription(String method, List<String> streams) {
     if (_channel != null) {
-      _channel!.sink.add(jsonEncode({
-        'method': method,
-        'params': streams,
-      }));
+      _channel!.sink.add(jsonEncode({'method': method, 'params': streams}));
     }
   }
 
   void _handleDisconnect() {
     _reconnectTimer?.cancel();
+    _channelSubscription?.cancel();
+    _channelSubscription = null;
     _channel = null;
 
     if (_reconnectAttempts < _maxReconnectAttempts) {
@@ -118,6 +134,8 @@ class BinanceWebSocketService {
 
   void disconnect() {
     _reconnectTimer?.cancel();
+    _channelSubscription?.cancel();
+    _channelSubscription = null;
     for (final sub in _subscriptions.values) {
       sub.cancel();
     }

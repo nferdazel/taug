@@ -7,6 +7,7 @@ import '../../../../core/errors/result.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/extensions.dart';
 import '../../../../shared/models/data_origin.dart';
 import '../../../../shared/models/econ_event.dart';
 import '../../../../shared/models/price_data.dart';
@@ -34,6 +35,14 @@ class _BriefPageState extends State<BriefPage> {
     _loadBrief();
   }
 
+  @override
+  void dispose() {
+    _snapshot.dispose();
+    _isLoading.dispose();
+    _error.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadBrief() async {
     _isLoading.value = true;
     _error.value = null;
@@ -59,7 +68,7 @@ class _BriefPageState extends State<BriefPage> {
   }
 
   Widget _buildToolbar() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final BriefSnapshot? snapshot = _snapshot.value;
       final bool isLoading = _isLoading.value;
 
@@ -107,7 +116,7 @@ class _BriefPageState extends State<BriefPage> {
   }
 
   Widget _buildContent() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final BriefSnapshot? snapshot = _snapshot.value;
       final bool isLoading = _isLoading.value;
       final String? error = _error.value;
@@ -339,7 +348,7 @@ class _BriefPageState extends State<BriefPage> {
                   SizedBox(
                     width: 72,
                     child: Text(
-                      _formatTime(headline.publishedAt),
+                      headline.publishedAt.timeAgo(short: true),
                       textAlign: TextAlign.right,
                       style: AppTypography.monoTiny.copyWith(
                         color: AppThemeColors.textTertiary,
@@ -494,20 +503,6 @@ class _BriefPageState extends State<BriefPage> {
       2 => AppThemeColors.warning,
       _ => AppThemeColors.accent,
     };
-  }
-
-  String _formatTime(DateTime time) {
-    final Duration diff = DateTime.now().difference(time);
-    if (diff.inMinutes < 1) {
-      return 'now';
-    }
-    if (diff.inMinutes < 60) {
-      return '${diff.inMinutes}m';
-    }
-    if (diff.inHours < 24) {
-      return '${diff.inHours}h';
-    }
-    return DateFormat('MMM d').format(time);
   }
 
   Future<void> _launchUrl(String url) async {

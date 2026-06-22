@@ -33,6 +33,18 @@ class _CalendarPageState extends State<CalendarPage> {
     _loadEvents();
   }
 
+  @override
+  void dispose() {
+    _events.dispose();
+    _selectedDate.dispose();
+    _selectedCountry.dispose();
+    _minImportance.dispose();
+    _isLoading.dispose();
+    _error.dispose();
+    _lastUpdated.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadEvents() async {
     _isLoading.value = true;
     _error.value = null;
@@ -92,7 +104,7 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   Widget _buildDateSelector() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final date = _selectedDate.value;
       return SizedBox(
         height: AppSpacing.buttonHeight,
@@ -110,7 +122,7 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   Widget _buildCountryFilter() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final countries = ['all', 'US', 'EU', 'GB', 'JP', 'ID', 'CN'];
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -145,7 +157,7 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   Widget _buildImportanceFilter() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final current = _minImportance.value;
       return Row(
         children: [
@@ -176,13 +188,13 @@ class _CalendarPageState extends State<CalendarPage> {
           padding: EdgeInsets.zero,
           minimumSize: Size.zero,
         ),
-        child: Text(emoji, style: const TextStyle(fontSize: 12)),
+        child: Text(emoji, style: AppTypography.body),
       ),
     );
   }
 
   Widget _buildRefreshButton() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final isLoading = _isLoading.value;
       return SizedBox(
         height: AppSpacing.buttonHeight,
@@ -203,7 +215,7 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   Widget _buildContent() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final events = _events.value;
       final isLoading = _isLoading.value;
       final error = _error.value;

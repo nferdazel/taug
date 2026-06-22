@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/errors/failures.dart';
 import '../../../core/errors/result.dart';
 import '../../../core/schema/app_schema.dart';
+import '../../../core/utils/extensions.dart';
 import '../../../shared/models/price_data.dart';
 import '../domain/watchlist_entity.dart';
 
@@ -62,7 +63,18 @@ class WatchlistRepository {
 
   Future<Result<void>> deleteWatchlist(String watchlistId) async {
     try {
-      await _client.from(AppSchema.watchlists).delete().eq('id', watchlistId);
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) {
+        return const Result.failure(
+          AuthFailure(message: 'User not authenticated'),
+        );
+      }
+
+      await _client
+          .from(AppSchema.watchlists)
+          .delete()
+          .eq('id', watchlistId)
+          .eq('user_id', userId);
       return const Result.success(null);
     } catch (e) {
       debugPrint('[WatchlistRepo] deleteWatchlist: $e');
@@ -112,6 +124,27 @@ class WatchlistRepository {
     int symbolId,
   ) async {
     try {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) {
+        return const Result.failure(
+          AuthFailure(message: 'User not authenticated'),
+        );
+      }
+
+      // Verify the watchlist belongs to the current user before inserting.
+      final watchlist = await _client
+          .from(AppSchema.watchlists)
+          .select('id')
+          .eq('id', watchlistId)
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      if (watchlist == null) {
+        return const Result.failure(
+          AuthFailure(message: 'Watchlist not found or access denied'),
+        );
+      }
+
       final response = await _client
           .from(AppSchema.watchlistItems)
           .insert({'watchlist_id': watchlistId, 'symbol_id': symbolId})
@@ -126,6 +159,27 @@ class WatchlistRepository {
 
   Future<Result<void>> removeFromWatchlist(String itemId) async {
     try {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) {
+        return const Result.failure(
+          AuthFailure(message: 'User not authenticated'),
+        );
+      }
+
+      // Verify the item belongs to a watchlist owned by the current user.
+      final item = await _client
+          .from(AppSchema.watchlistItems)
+          .select('id, watchlists!inner(user_id)')
+          .eq('id', itemId)
+          .eq('watchlists.user_id', userId)
+          .maybeSingle();
+
+      if (item == null) {
+        return const Result.failure(
+          AuthFailure(message: 'Item not found or access denied'),
+        );
+      }
+
       await _client.from(AppSchema.watchlistItems).delete().eq('id', itemId);
       return const Result.success(null);
     } catch (e) {
@@ -147,7 +201,7 @@ class WatchlistRepository {
       for (final row in response) {
         final Map<String, dynamic> symbolRow = Map<String, dynamic>.from(row);
         final String? ticker = symbolRow['ticker'] as String?;
-        final Map<String, dynamic>? snapshot = _extractSnapshot(symbolRow);
+        final Map<String, dynamic>? snapshot = extractRelationRow(symbolRow, AppSchema.quoteSnapshots);
 
         if (ticker != null && snapshot != null) {
           priceMap[ticker] = PriceData.fromJson({
@@ -177,14 +231,4 @@ class WatchlistRepository {
     }
   }
 
-  Map<String, dynamic>? _extractSnapshot(Map<String, dynamic> row) {
-    final Object? relation = row[AppSchema.quoteSnapshots];
-    if (relation is Map<String, dynamic>) {
-      return relation;
-    }
-    if (relation is List && relation.isNotEmpty && relation.first is Map) {
-      return Map<String, dynamic>.from(relation.first as Map);
-    }
-    return null;
-  }
 }

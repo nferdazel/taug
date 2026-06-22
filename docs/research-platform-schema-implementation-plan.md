@@ -368,6 +368,13 @@ Tables:
 - `security_price_snapshots`
 - `screening_universe_memberships`
 
+Current status:
+
+- all 6 tables implemented
+- `metric_definitions` seeded with 19 MVP metrics across valuation, profitability, leverage, cash flow, scale, and growth categories
+- formula engine worker job implemented (`compute-company-metrics`)
+- `security_price_snapshots` still empty (price data integration pending)
+
 Critical rule:
 
 - do not build screener directly on raw statement tables alone
@@ -448,7 +455,12 @@ Current status:
 - `company_research_summary_v` implemented
 - `company_latest_statement_facts_v` implemented
 - `filing_timeline_v` implemented
-- statement explorer / valuation / quality read models still pending
+- `company_statement_history_v` implemented
+- `company_statement_items_v` implemented
+- `company_metric_snapshot_v` implemented
+- `company_data_quality_v` implemented
+- `screener_results_v` implemented
+- `saved_screeners` table with RLS implemented
 
 Rule:
 

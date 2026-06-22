@@ -111,6 +111,17 @@ class FinancialStatementRecord:
   status: str
 
 
+@dataclass(frozen=True)
+class MetricDefinitionRecord:
+  id: str
+  code: str
+  name: str
+  category: str
+  formula_version: str
+  unit_type: str
+  aggregation_mode: str
+
+
 class SupabaseRestClient:
   def __init__(
     self,
@@ -1513,6 +1524,73 @@ class SupabaseRestClient:
       ],
     )
 
+  def list_securities_with_tickers(
+    self,
+    *,
+    limit: int,
+  ) -> list[tuple[str, str]]:
+    query: dict[str, str] = {
+      "select": "id,ticker",
+      "status": "eq.active",
+      "ticker": "not.is.null",
+      "limit": "1000" if limit <= 0 else str(limit),
+    }
+    rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "securities",
+      query=query,
+    )
+    results: list[tuple[str, str]] = []
+    for row in rows:
+      sec_id = row.get("id")
+      ticker = row.get("ticker")
+      if isinstance(sec_id, str) and isinstance(ticker, str) and ticker.strip():
+        results.append((sec_id, ticker.strip()))
+    return results
+
+  def upsert_price_snapshot(
+    self,
+    *,
+    security_id: str,
+    ticker: str,
+    close_price: float | None,
+    market_cap: float | None,
+    enterprise_value: float | None,
+    shares_outstanding: float | None,
+    price_date: str,
+  ) -> UpsertResult:
+    existing_rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "security_price_snapshots",
+      query={
+        "select": "id",
+        "security_id": f"eq.{security_id}",
+        "price_date": f"eq.{price_date}",
+        "limit": "1",
+      },
+    )
+    if existing_rows:
+      return UpsertResult(id=str(existing_rows[0]["id"]), created=False)
+
+    snap_payload: dict[str, object] = {
+      "security_id": security_id,
+      "price_date": price_date,
+      "close_price": close_price,
+      "market_cap": market_cap,
+      "enterprise_value": enterprise_value,
+      "shares_outstanding": shares_outstanding,
+      "last_fetched_at": datetime.now(timezone.utc).isoformat(),
+    }
+    rows: list[dict[str, Any]] = self._request(
+      "POST",
+      "security_price_snapshots",
+      headers={"Prefer": "return=representation"},
+      payload=[snap_payload],
+    )
+    if not rows:
+      raise ValueError("Failed to upsert price snapshot")
+    return UpsertResult(id=str(rows[0]["id"]), created=True)
+
   def _request(
     self,
     method: str,
@@ -1593,3 +1671,553 @@ class SupabaseRestClient:
       company_id=company_id,
       security_id=str(row["security_id"]),
     )
+
+  def get_primary_security_for_company(
+    self,
+    *,
+    company_id: str,
+  ) -> CanonicalSecurity | None:
+    rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "securities",
+      query={
+        "select": "id,company_id",
+        "company_id": f"eq.{company_id}",
+        "order": "is_primary_listing.desc,created_at.desc",
+        "limit": "1",
+      },
+    )
+    if not rows:
+      return None
+    return CanonicalSecurity(
+      company_id=str(rows[0]["company_id"]),
+      security_id=str(rows[0]["id"]),
+    )
+
+  def list_statement_history_for_company(
+    self,
+    *,
+    company_id: str,
+    limit: int,
+  ) -> list[dict[str, Any]]:
+    return self._request(
+      "GET",
+      "company_statement_history_v",
+      query={
+        "company_id": f"eq.{company_id}",
+        "order": "period_end.desc,published_at.desc",
+        "limit": str(limit),
+      },
+    )
+
+  def list_metric_definitions(self) -> list[dict[str, Any]]:
+    return self._request(
+      "GET",
+      "metric_definitions",
+      query={
+        "select": "id,code,name,category,formula_version,unit_type,aggregation_mode",
+        "is_active": "eq.true",
+        "order": "code",
+        "limit": "100",
+      },
+    )
+
+  def insert_metric_calculation_run(
+    self,
+    *,
+    run_type: str,
+    trigger_reason: str,
+    worker_version: str,
+    trigger_reference_type: str | None = None,
+    trigger_reference_id: str | None = None,
+    metadata: dict[str, object] | None = None,
+  ) -> str:
+    payload: dict[str, object] = {
+      "run_type": run_type,
+      "trigger_reason": trigger_reason,
+      "worker_version": worker_version,
+      "status": "running",
+    }
+    if trigger_reference_type is not None:
+      payload["trigger_reference_type"] = trigger_reference_type
+    if trigger_reference_id is not None:
+      payload["trigger_reference_id"] = trigger_reference_id
+    if metadata is not None:
+      payload["metadata"] = metadata
+    rows: list[dict[str, Any]] = self._request(
+      "POST",
+      "metric_calculation_runs",
+      headers={"Prefer": "return=representation"},
+      payload=[payload],
+    )
+    return str(rows[0]["id"])
+
+  def update_metric_calculation_run(
+    self,
+    *,
+    run_id: str,
+    status: str,
+    metadata: dict[str, object] | None = None,
+  ) -> None:
+    payload: dict[str, object] = {
+      "status": status,
+      "finished_at": datetime.now(timezone.utc).isoformat(),
+    }
+    if metadata is not None:
+      payload["metadata"] = metadata
+    self._request(
+      "PATCH",
+      "metric_calculation_runs",
+      query={"id": f"eq.{run_id}"},
+      headers={"Prefer": "return=minimal"},
+      payload=payload,
+    )
+
+  def insert_recalculation_run(
+    self,
+    *,
+    run_type: str,
+    trigger_reason: str,
+    worker_version: str,
+    trigger_reference_type: str | None = None,
+    trigger_reference_id: str | None = None,
+    scope: dict[str, object] | None = None,
+    metadata: dict[str, object] | None = None,
+  ) -> str:
+    payload: dict[str, object] = {
+      "run_type": run_type,
+      "trigger_reason": trigger_reason,
+      "worker_version": worker_version,
+      "status": "running",
+    }
+    if trigger_reference_type is not None:
+      payload["trigger_reference_type"] = trigger_reference_type
+    if trigger_reference_id is not None:
+      payload["trigger_reference_id"] = trigger_reference_id
+    if scope is not None:
+      payload["scope"] = scope
+    if metadata is not None:
+      payload["metadata"] = metadata
+    rows: list[dict[str, Any]] = self._request(
+      "POST",
+      "recalculation_runs",
+      headers={"Prefer": "return=representation"},
+      payload=[payload],
+    )
+    return str(rows[0]["id"])
+
+  def update_recalculation_run(
+    self,
+    *,
+    run_id: str,
+    status: str,
+    processed_entities: int = 0,
+    succeeded_entities: int = 0,
+    failed_entities: int = 0,
+    metadata: dict[str, object] | None = None,
+  ) -> None:
+    payload: dict[str, object] = {
+      "status": status,
+      "finished_at": datetime.now(timezone.utc).isoformat(),
+      "processed_entities": processed_entities,
+      "succeeded_entities": succeeded_entities,
+      "failed_entities": failed_entities,
+    }
+    if metadata is not None:
+      payload["metadata"] = metadata
+    self._request(
+      "PATCH",
+      "recalculation_runs",
+      query={"id": f"eq.{run_id}"},
+      headers={"Prefer": "return=minimal"},
+      payload=payload,
+    )
+
+  def upsert_security_metric_snapshot(
+    self,
+    *,
+    security_id: str,
+    company_id: str,
+    metric_definition_id: str,
+    reporting_period_id: str | None,
+    as_of_date: str,
+    value_numeric: float | None,
+    computation_status: str,
+    stale_input_flag: bool,
+    missing_input_flag: bool,
+    validation_warning_flag: bool,
+    currency_id: str | None,
+    calculation_run_id: str,
+    formula_version: str,
+    input_fingerprint: str | None,
+    metadata: dict[str, object] | None = None,
+  ) -> UpsertResult:
+    query: dict[str, str] = {
+      "select": "id,computation_status",
+      "security_id": f"eq.{security_id}",
+      "metric_definition_id": f"eq.{metric_definition_id}",
+      "as_of_date": f"eq.{as_of_date}",
+      "formula_version": f"eq.{formula_version}",
+      "limit": "1",
+    }
+    if reporting_period_id is not None:
+      query["reporting_period_id"] = f"eq.{reporting_period_id}"
+    else:
+      query["reporting_period_id"] = "is.null"
+
+    existing_rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "security_metric_snapshots",
+      query=query,
+    )
+    if existing_rows:
+      existing = existing_rows[0]
+      existing_status: str = str(existing.get("computation_status", ""))
+      if existing_status == "missing_input" and computation_status == "ok":
+        self._request(
+          "PATCH",
+          "security_metric_snapshots",
+          query={"id": f"eq.{existing['id']}"},
+          headers={"Prefer": "return=minimal"},
+          payload={
+            "value_numeric": value_numeric,
+            "computation_status": computation_status,
+            "stale_input_flag": stale_input_flag,
+            "missing_input_flag": missing_input_flag,
+            "validation_warning_flag": validation_warning_flag,
+            "calculation_run_id": calculation_run_id,
+            "input_fingerprint": input_fingerprint,
+            "last_fetched_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+          },
+        )
+        return UpsertResult(id=str(existing["id"]), created=True)
+      return UpsertResult(id=str(existing["id"]), created=False)
+
+    snap_payload: dict[str, object] = {
+      "security_id": security_id,
+      "company_id": company_id,
+      "metric_definition_id": metric_definition_id,
+      "reporting_period_id": reporting_period_id,
+      "as_of_date": as_of_date,
+      "value_numeric": value_numeric,
+      "computation_status": computation_status,
+      "stale_input_flag": stale_input_flag,
+      "missing_input_flag": missing_input_flag,
+      "validation_warning_flag": validation_warning_flag,
+      "currency_id": currency_id,
+      "calculation_run_id": calculation_run_id,
+      "formula_version": formula_version,
+      "input_fingerprint": input_fingerprint,
+      "last_fetched_at": datetime.now(timezone.utc).isoformat(),
+    }
+    if metadata is not None:
+      snap_payload["metadata"] = metadata
+
+    rows: list[dict[str, Any]] = self._request(
+      "POST",
+      "security_metric_snapshots",
+      headers={"Prefer": "return=representation"},
+      payload=[snap_payload],
+    )
+    if not rows:
+      raise ValueError("Failed to upsert security metric snapshot")
+    return UpsertResult(id=str(rows[0]["id"]), created=True)
+
+  # --- Macro / FRED methods ---
+
+  def ensure_raw_source(
+    self,
+    *,
+    code: str,
+    name: str,
+    source_type: str,
+    region: str,
+    is_official: bool,
+    access_method: str = "https_api",
+  ) -> RawSource:
+    payload: list[dict[str, object]] = [
+      {
+        "code": code,
+        "name": name,
+        "source_type": source_type,
+        "region": region,
+        "is_official": is_official,
+        "access_method": access_method,
+        "default_latency_class": "official_delayed",
+      },
+    ]
+    self._request(
+      "POST",
+      "raw_sources",
+      query={"on_conflict": "code"},
+      headers={"Prefer": "resolution=merge-duplicates,return=minimal"},
+      payload=payload,
+    )
+    rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "raw_sources",
+      query={"select": "id,code", "code": f"eq.{code}", "limit": "1"},
+    )
+    if not rows:
+      raise ValueError(f"Failed to ensure raw source: {code}")
+    return RawSource(id=int(rows[0]["id"]), code=str(rows[0]["code"]))
+
+  def find_raw_record_by_key(
+    self,
+    *,
+    source_record_key: str,
+  ) -> tuple[str, str] | None:
+    rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "raw_records",
+      query={
+        "select": "id,payload_hash",
+        "source_record_key": f"eq.{source_record_key}",
+        "limit": "1",
+      },
+    )
+    if not rows:
+      return None
+    return (str(rows[0]["id"]), str(rows[0].get("payload_hash", "")))
+
+  def insert_raw_record_simple(
+    self,
+    *,
+    raw_source_id: int,
+    record_type: str,
+    source_record_key: str,
+    source_entity_key: str,
+    payload_json: dict[str, object],
+    payload_hash: str,
+    schema_version: str = "1",
+  ) -> UpsertResult:
+    rows: list[dict[str, Any]] = self._request(
+      "POST",
+      "raw_records",
+      query={"on_conflict": "raw_source_id,record_type,source_record_key,payload_hash"},
+      headers={"Prefer": "resolution=ignore-duplicates,return=representation"},
+      payload=[{
+        "raw_source_id": raw_source_id,
+        "record_type": record_type,
+        "source_record_key": source_record_key,
+        "source_entity_key": source_entity_key,
+        "payload_json": payload_json,
+        "payload_hash": payload_hash,
+        "schema_version": schema_version,
+      }],
+    )
+    if rows:
+      return UpsertResult(id=str(rows[0]["id"]), created=True)
+    existing: list[dict[str, Any]] = self._request(
+      "GET",
+      "raw_records",
+      query={
+        "select": "id",
+        "raw_source_id": f"eq.{raw_source_id}",
+        "record_type": f"eq.{record_type}",
+        "source_record_key": f"eq.{source_record_key}",
+        "payload_hash": f"eq.{payload_hash}",
+        "limit": "1",
+      },
+    )
+    if not existing:
+      raise ValueError("Failed to resolve raw record after insert")
+    return UpsertResult(id=str(existing[0]["id"]), created=False)
+
+  def update_raw_record_payload(
+    self,
+    *,
+    record_id: str,
+    payload_json: dict[str, object],
+    payload_hash: str,
+  ) -> None:
+    self._request(
+      "PATCH",
+      "raw_records",
+      query={"id": f"eq.{record_id}"},
+      headers={"Prefer": "return=minimal"},
+      payload={
+        "payload_json": payload_json,
+        "payload_hash": payload_hash,
+      },
+    )
+
+  def upsert_macro_series(
+    self,
+    *,
+    series_id: str,
+    title: str,
+    category: str,
+    frequency: str,
+    units: str,
+  ) -> None:
+    self._request(
+      "POST",
+      "macro_series",
+      query={"on_conflict": "series_id"},
+      headers={"Prefer": "resolution=merge-duplicates,return=minimal"},
+      payload=[{
+        "series_id": series_id,
+        "title": title,
+        "category": category,
+        "frequency": frequency,
+        "units": units,
+      }],
+    )
+
+  def upsert_macro_observation(
+    self,
+    *,
+    series_id: str,
+    observation_date: str,
+    value_numeric: float | None,
+  ) -> UpsertResult:
+    existing: list[dict[str, Any]] = self._request(
+      "GET",
+      "macro_observations",
+      query={
+        "select": "id",
+        "series_id": f"eq.{series_id}",
+        "observation_date": f"eq.{observation_date}",
+        "limit": "1",
+      },
+    )
+    if existing:
+      return UpsertResult(id=str(existing[0]["id"]), created=False)
+
+    rows: list[dict[str, Any]] = self._request(
+      "POST",
+      "macro_observations",
+      headers={"Prefer": "return=representation"},
+      payload=[{
+        "series_id": series_id,
+        "observation_date": observation_date,
+        "value_numeric": value_numeric,
+      }],
+    )
+    if not rows:
+      raise ValueError("Failed to insert macro observation")
+    return UpsertResult(id=str(rows[0]["id"]), created=True)
+
+  def update_macro_series_fetched(
+    self,
+    series_id: str,
+  ) -> None:
+    now: str = datetime.now(timezone.utc).isoformat()
+    self._request(
+      "PATCH",
+      "macro_series",
+      query={"series_id": f"eq.{series_id}"},
+      headers={"Prefer": "return=minimal"},
+      payload={
+        "last_fetched_at": now,
+        "updated_at": now,
+      },
+    )
+
+  def get_latest_price_snapshot(
+    self,
+    *,
+    security_id: str,
+  ) -> dict[str, Any] | None:
+    rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "security_price_snapshots",
+      query={
+        "select": "close_price,market_cap,enterprise_value,shares_outstanding,price_date",
+        "security_id": f"eq.{security_id}",
+        "order": "price_date.desc",
+        "limit": "1",
+      },
+    )
+    if not rows:
+      return None
+    return rows[0]
+
+  def get_latest_shares_outstanding(
+    self,
+    *,
+    company_id: str,
+  ) -> float | None:
+    tax_rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "statement_taxonomy_items",
+      query={
+        "select": "id",
+        "code": "eq.EntityCommonStockSharesOutstanding",
+        "limit": "1",
+      },
+    )
+    if not tax_rows:
+      return None
+    tax_id: str = str(tax_rows[0]["id"])
+
+    stmt_rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "financial_statements",
+      query={
+        "select": "id",
+        "company_id": f"eq.{company_id}",
+        "statement_type": "eq.equity",
+        "order": "period_end.desc",
+        "limit": "1",
+      },
+    )
+    if not stmt_rows:
+      return None
+    stmt_id: str = str(stmt_rows[0]["id"])
+
+    item_rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "financial_statement_items",
+      query={
+        "select": "value_numeric",
+        "financial_statement_id": f"eq.{stmt_id}",
+        "taxonomy_item_id": f"eq.{tax_id}",
+        "limit": "1",
+      },
+    )
+    if not item_rows:
+      return None
+    val = item_rows[0].get("value_numeric")
+    return float(val) if val is not None else None
+
+  def list_ingestible_ciks(self) -> list[tuple[str, str]]:
+    """List CIKs for companies with ingestion_enabled = true.
+
+    Returns:
+      List of (company_id, cik) tuples.
+    """
+    companies: list[dict[str, Any]] = self._request(
+      "GET",
+      "companies",
+      query={
+        "select": "id",
+        "ingestion_enabled": "eq.true",
+        "limit": "1000",
+      },
+    )
+    if not companies:
+      return []
+
+    cik_rows: list[dict[str, Any]] = self._request(
+      "GET",
+      "security_identifiers",
+      query={
+        "select": "security_id,identifier_value,securities!inner(company_id)",
+        "identifier_type": "eq.CIK",
+        "limit": "1000",
+      },
+    )
+
+    company_ids: set[str] = {str(c["id"]) for c in companies}
+    result: list[tuple[str, str]] = []
+    for row in cik_rows:
+      secs = row.get("securities", {})
+      cid = str(secs.get("company_id", "")) if isinstance(secs, dict) else ""
+      cik = str(row.get("identifier_value", ""))
+      if cid in company_ids and cik:
+        result.append((cid, cik))
+
+    return result

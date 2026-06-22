@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -28,7 +29,7 @@ class OrderBookRepository {
   final SupabaseClient _client;
 
   OrderBookRepository({SupabaseClient? client})
-      : _client = client ?? Supabase.instance.client;
+    : _client = client ?? Supabase.instance.client;
 
   Future<Result<OrderBook>> getOrderBook(String symbol) async {
     try {
@@ -47,23 +48,25 @@ class OrderBookRepository {
 
         for (var i = 1; i <= 10; i++) {
           final spread = price * 0.001 * i;
-          final askSize = (volume * (0.1 + (0.05 * (10 - i)))).toInt().clamp(1, 99999);
-          final bidSize = (volume * (0.1 + (0.05 * (10 - i)))).toInt().clamp(1, 99999);
+          final askSize = (volume * (0.1 + (0.05 * (10 - i)))).toInt().clamp(
+            1,
+            99999,
+          );
+          final bidSize = (volume * (0.1 + (0.05 * (10 - i)))).toInt().clamp(
+            1,
+            99999,
+          );
 
           asks.add(OrderBookEntry(price: price + spread, size: askSize));
           bids.add(OrderBookEntry(price: price - spread, size: bidSize));
         }
 
-        return Result.success(OrderBook(
-          asks: asks,
-          bids: bids,
-          timestamp: DateTime.now(),
-        ));
+        return Result.success(
+          OrderBook(asks: asks, bids: bids, timestamp: DateTime.now()),
+        );
       }
 
-      return const Result.failure(
-        ServerFailure(message: 'No order book data'),
-      );
+      return const Result.failure(ServerFailure(message: 'No order book data'));
     } catch (e) {
       debugPrint('[OrderBookRepo] getOrderBook: $e');
       return Result.failure(ServerFailure(message: e.toString()));

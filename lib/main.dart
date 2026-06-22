@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:signals/signals.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -17,31 +18,44 @@ Future<void> main() async {
 
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
-    debugPrint(details.exceptionAsString());
-    debugPrintStack(stackTrace: details.stack);
+    // SECURITY: Only log full stack traces in debug mode.
+    // In production/WASM, console output is visible to end users.
+    if (kDebugMode) {
+      debugPrint(details.exceptionAsString());
+      debugPrintStack(stackTrace: details.stack);
+    }
   };
 
   ErrorWidget.builder = (FlutterErrorDetails details) {
     return _BootstrapErrorApp(
-      message: details.exceptionAsString(),
-      details: details.stack.toString(),
+      // SECURITY: In production, show generic message. Full details in debug only.
+      message: kDebugMode
+          ? details.exceptionAsString()
+          : 'An unexpected error occurred.',
+      details: kDebugMode ? details.stack.toString() : '',
     );
   };
 
   try {
     await Supabase.initialize(
       url: AppEnv.supabaseUrl,
-      anonKey: AppEnv.supabaseAnonKey,
+      publishableKey: AppEnv.supabaseAnonKey,
       postgrestOptions: const PostgrestClientOptions(schema: 'taug'),
     );
     runApp(const TaugApp());
   } catch (error, stackTrace) {
-    debugPrint('[Bootstrap] $error');
-    debugPrintStack(stackTrace: stackTrace);
+    if (kDebugMode) {
+      debugPrint('[Bootstrap] $error');
+      debugPrintStack(stackTrace: stackTrace);
+    }
     runApp(
       _BootstrapErrorApp(
-        message: error.toString(),
-        details: stackTrace.toString(),
+        // SECURITY: Never expose raw Supabase connection errors in production.
+        // They contain schema names, URLs, and auth token fragments.
+        message: kDebugMode
+            ? error.toString()
+            : 'Failed to initialize. Please check your connection.',
+        details: kDebugMode ? stackTrace.toString() : '',
       ),
     );
   }
@@ -100,13 +114,15 @@ class _BootstrapErrorApp extends StatelessWidget {
                       ),
                       const SizedBox(height: 12),
                       Text(message, style: AppTypography.bodyMedium),
-                      const SizedBox(height: 12),
-                      SelectableText(
-                        details,
-                        style: AppTypography.monoTiny.copyWith(
-                          color: const Color(AppColors.textSecondary),
+                      if (details.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        SelectableText(
+                          details,
+                          style: AppTypography.monoTiny.copyWith(
+                            color: const Color(AppColors.textSecondary),
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),

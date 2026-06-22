@@ -1,0 +1,10 @@
+# Taug Worker Dependencies
+#
+# All worker modules use Python 3.12+ stdlib only.
+# No external packages required.
+#
+# If external packages are added later (e.g. pytest for testing),
+# list them below with pinned versions.
+
+# Testing
+pytest>=8.0.0,<9.0.0

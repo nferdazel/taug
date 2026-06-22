@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/errors/failures.dart';
 import '../../../core/errors/result.dart';
 import '../../../core/schema/app_schema.dart';
+import '../../../core/utils/extensions.dart';
 import '../../../shared/models/price_data.dart';
 import '../domain/portfolio_entity.dart';
 
@@ -92,6 +93,13 @@ class PortfolioRepository {
     required double avgPrice,
   }) async {
     try {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) {
+        return const Result.failure(
+          AuthFailure(message: 'User not authenticated'),
+        );
+      }
+
       await _client
           .from(AppSchema.portfolioHoldings)
           .update({
@@ -99,7 +107,8 @@ class PortfolioRepository {
             'avg_price': avgPrice,
             'updated_at': DateTime.now().toIso8601String(),
           })
-          .eq('id', holdingId);
+          .eq('id', holdingId)
+          .eq('user_id', userId);
 
       return const Result.success(null);
     } catch (e) {
@@ -110,10 +119,18 @@ class PortfolioRepository {
 
   Future<Result<void>> removeHolding(String holdingId) async {
     try {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) {
+        return const Result.failure(
+          AuthFailure(message: 'User not authenticated'),
+        );
+      }
+
       await _client
           .from(AppSchema.portfolioHoldings)
           .delete()
-          .eq('id', holdingId);
+          .eq('id', holdingId)
+          .eq('user_id', userId);
 
       return const Result.success(null);
     } catch (e) {
@@ -133,7 +150,7 @@ class PortfolioRepository {
       for (final row in response) {
         final Map<String, dynamic> symbolRow = Map<String, dynamic>.from(row);
         final String? ticker = symbolRow['ticker'] as String?;
-        final Map<String, dynamic>? snapshot = _extractSnapshot(symbolRow);
+        final Map<String, dynamic>? snapshot = extractRelationRow(symbolRow, AppSchema.quoteSnapshots);
 
         if (ticker != null && snapshot != null) {
           priceMap[ticker] = PriceData.fromJson({
@@ -150,27 +167,4 @@ class PortfolioRepository {
     }
   }
 
-  Future<Result<void>> refreshQuoteSnapshots(List<String> tickers) async {
-    try {
-      await _client.functions.invoke(
-        'refresh-quote-snapshots',
-        body: {'tickers': tickers},
-      );
-      return const Result.success(null);
-    } catch (e) {
-      debugPrint('[PortfolioRepo] refreshQuoteSnapshots: $e');
-      return Result.failure(ServerFailure(message: e.toString()));
-    }
-  }
-
-  Map<String, dynamic>? _extractSnapshot(Map<String, dynamic> row) {
-    final Object? relation = row[AppSchema.quoteSnapshots];
-    if (relation is Map<String, dynamic>) {
-      return relation;
-    }
-    if (relation is List && relation.isNotEmpty && relation.first is Map) {
-      return Map<String, dynamic>.from(relation.first as Map);
-    }
-    return null;
-  }
 }

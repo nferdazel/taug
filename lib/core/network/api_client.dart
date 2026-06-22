@@ -1,8 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+
 import '../config/app_env.dart';
+import '../constants/app_constants.dart';
 import '../errors/failures.dart';
 import '../errors/result.dart';
 
@@ -17,22 +20,19 @@ class ApiClient {
     String? apiKey,
     http.Client? client,
     Duration? timeout,
-  })  : _baseUrl = baseUrl ?? 'https://api.twelvedata.com',
-        _apiKey = apiKey ?? AppEnv.twelveDataApiKey,
-        _client = client ?? http.Client(),
-        _timeout = timeout ?? const Duration(seconds: 10);
+  }) : _baseUrl = baseUrl ?? AppConstants.twelveDataApiUrl,
+       _apiKey = apiKey ?? AppEnv.twelveDataApiKey,
+       _client = client ?? http.Client(),
+       _timeout = timeout ?? const Duration(seconds: 10);
 
   Future<Result<Map<String, dynamic>>> get(
     String path, {
     Map<String, String>? queryParams,
   }) async {
     try {
-      final uri = Uri.parse('$_baseUrl$path').replace(
-        queryParameters: {
-          'apikey': _apiKey,
-          ...?queryParams,
-        },
-      );
+      final uri = Uri.parse(
+        '$_baseUrl$path',
+      ).replace(queryParameters: {'apikey': _apiKey, ...?queryParams});
 
       final response = await _client
           .get(uri, headers: {'Accept': 'application/json'})
@@ -55,13 +55,10 @@ class ApiClient {
         ),
       );
     } on TimeoutException {
-      return const Result.failure(
-        NetworkFailure(message: 'Request timed out'),
-      );
+      return const Result.failure(NetworkFailure(message: 'Request timed out'));
     } catch (e) {
-      return Result.failure(
-        NetworkFailure(message: e.toString()),
-      );
+      debugPrint('[ApiClient] get error: $e');
+      return Result.failure(NetworkFailure(message: e.toString()));
     }
   }
 
@@ -70,12 +67,9 @@ class ApiClient {
     Map<String, String>? queryParams,
   }) async {
     try {
-      final uri = Uri.parse('$_baseUrl$path').replace(
-        queryParameters: {
-          'apikey': _apiKey,
-          ...?queryParams,
-        },
-      );
+      final uri = Uri.parse(
+        '$_baseUrl$path',
+      ).replace(queryParameters: {'apikey': _apiKey, ...?queryParams});
 
       final response = await _client
           .get(uri, headers: {'Accept': 'application/json'})
@@ -85,9 +79,7 @@ class ApiClient {
         final data = _parseResponse(response.body);
         if (data != null && data.containsKey('data')) {
           final items = data['data'] as List;
-          return Result.success(
-            items.cast<Map<String, dynamic>>(),
-          );
+          return Result.success(items.cast<Map<String, dynamic>>());
         }
         return const Result.success([]);
       }
@@ -99,13 +91,10 @@ class ApiClient {
         ),
       );
     } on TimeoutException {
-      return const Result.failure(
-        NetworkFailure(message: 'Request timed out'),
-      );
+      return const Result.failure(NetworkFailure(message: 'Request timed out'));
     } catch (e) {
-      return Result.failure(
-        NetworkFailure(message: e.toString()),
-      );
+      debugPrint('[ApiClient] getList error: $e');
+      return Result.failure(NetworkFailure(message: e.toString()));
     }
   }
 

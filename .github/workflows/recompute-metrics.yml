@@ -1,0 +1,38 @@
+name: Recompute Company Metrics
+
+on:
+  workflow_dispatch:
+    inputs:
+      company_ids:
+        description: "Comma-separated company UUIDs (empty = all with parsed data)"
+        required: false
+        type: string
+
+jobs:
+  recompute-metrics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compute metrics
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+        run: |
+          if [ -n "${{ github.event.inputs.company_ids }}" ]; then
+            python -m workers.taug_worker.cli compute-company-metrics --company-ids "${{ github.event.inputs.company_ids }}"
+          else
+            echo "No company IDs provided. Please specify company IDs."
+            exit 1
+          fi

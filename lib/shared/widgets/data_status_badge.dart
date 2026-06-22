@@ -11,44 +11,54 @@ class DataStatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // A11Y: Build a human-readable label for screen readers.
+    final String semanticLabel = 'Data source: ${origin.sourceLabel}, '
+        '${origin.latencyClass.label} latency'
+        '${origin.isOfficial ? ', official' : ''}'
+        '${origin.isSynthetic ? ', synthetic' : ''}';
+
     return RepaintBoundary(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: AppThemeColors.backgroundLight,
-          border: Border.all(color: AppThemeColors.border),
-          borderRadius: BorderRadius.circular(4),
-        ),
-        child: Wrap(
-          spacing: 6,
-          runSpacing: 2,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 7,
-                  height: 7,
-                  decoration: BoxDecoration(
-                    color: _resolveColor(),
-                    shape: BoxShape.circle,
+      // A11Y: Wrap in Semantics so screen readers announce data origin.
+      child: Semantics(
+        label: semanticLabel,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: AppThemeColors.backgroundLight,
+            border: Border.all(color: AppThemeColors.border),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Wrap(
+            spacing: 6,
+            runSpacing: 2,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 7,
+                    height: 7,
+                    decoration: BoxDecoration(
+                      color: _resolveColor(),
+                      shape: BoxShape.circle,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  origin.latencyClass.label.toUpperCase(),
-                  style: AppTypography.monoTiny.copyWith(
-                    color: AppThemeColors.textPrimary,
-                    fontWeight: FontWeight.w600,
+                  const SizedBox(width: 6),
+                  Text(
+                    origin.latencyClass.label.toUpperCase(),
+                    style: AppTypography.monoTiny.copyWith(
+                      color: AppThemeColors.textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-              ],
-            ),
-            _buildTextLabel(origin.isOfficial ? 'OFFICIAL' : 'SOURCE'),
-            _buildTextLabel(origin.sourceLabel.toUpperCase()),
-            if (origin.isSynthetic) _buildTextLabel('SYNTHETIC'),
-          ],
+                ],
+              ),
+              _buildTextLabel(origin.isOfficial ? 'OFFICIAL' : 'SOURCE'),
+              _buildTextLabel(origin.sourceLabel.toUpperCase()),
+              if (origin.isSynthetic) _buildTextLabel('SYNTHETIC'),
+            ],
+          ),
         ),
       ),
     );

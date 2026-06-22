@@ -1,8 +1,8 @@
-import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/errors/failures.dart';
 import '../../../core/errors/result.dart';
+import '../../../core/utils/error_sanitizer.dart';
 
 class AuthRepository {
   final SupabaseClient _client;
@@ -21,24 +21,32 @@ class AuthRepository {
   }) async {
     try {
       final email = '$username@taug.app';
-      debugPrint('[Auth] Signing in: $email');
+      // SECURITY: Never log PII (email) in production.
+      // Flutter Web WASM exposes console output to end users.
+      ErrorSanitizer.debugInfo('Auth', 'Signing in user');
       final response = await _client.auth.signInWithPassword(
         email: email,
         password: password,
       );
 
       if (response.user != null) {
-        debugPrint('[Auth] Sign in success: ${response.user!.id}');
+        ErrorSanitizer.debugInfo('Auth', 'Sign in success');
         return Result.success(response.user!);
       }
 
       return const Result.failure(AuthFailure(message: 'Sign in failed'));
     } on AuthException catch (e) {
-      debugPrint('[Auth] AuthException: ${e.message}');
-      return Result.failure(AuthFailure(message: e.message));
+      ErrorSanitizer.debugLog('Auth', 'AuthException: ${e.message}');
+      // SECURITY: Never expose raw Supabase auth errors to users.
+      // They reveal whether an account exists (username enumeration).
+      return Result.failure(
+        AuthFailure(message: ErrorSanitizer.authMessage(e)),
+      );
     } catch (e) {
-      debugPrint('[Auth] Unexpected error: $e');
-      return Result.failure(AuthFailure(message: e.toString()));
+      ErrorSanitizer.debugLog('Auth', 'Unexpected sign-in error: $e');
+      return Result.failure(
+        AuthFailure(message: ErrorSanitizer.authMessage(e)),
+      );
     }
   }
 
@@ -48,7 +56,8 @@ class AuthRepository {
   }) async {
     try {
       final email = '$username@taug.app';
-      debugPrint('[Auth] Signing up: $email');
+      // SECURITY: Never log PII (email) in production.
+      ErrorSanitizer.debugInfo('Auth', 'Signing up user');
       final response = await _client.auth.signUp(
         email: email,
         password: password,
@@ -56,17 +65,23 @@ class AuthRepository {
       );
 
       if (response.user != null) {
-        debugPrint('[Auth] Sign up success: ${response.user!.id}');
+        ErrorSanitizer.debugInfo('Auth', 'Sign up success');
         return Result.success(response.user!);
       }
 
       return const Result.failure(AuthFailure(message: 'Sign up failed'));
     } on AuthException catch (e) {
-      debugPrint('[Auth] AuthException: ${e.message}');
-      return Result.failure(AuthFailure(message: e.message));
+      ErrorSanitizer.debugLog('Auth', 'AuthException: ${e.message}');
+      // SECURITY: Use registration-specific message to prevent
+      // username enumeration via error differentiation.
+      return Result.failure(
+        AuthFailure(message: ErrorSanitizer.registrationMessage(e)),
+      );
     } catch (e) {
-      debugPrint('[Auth] Unexpected error: $e');
-      return Result.failure(AuthFailure(message: e.toString()));
+      ErrorSanitizer.debugLog('Auth', 'Unexpected sign-up error: $e');
+      return Result.failure(
+        AuthFailure(message: ErrorSanitizer.registrationMessage(e)),
+      );
     }
   }
 
@@ -75,11 +90,15 @@ class AuthRepository {
       await _client.auth.signOut();
       return const Result.success(null);
     } on AuthException catch (e) {
-      debugPrint('[Auth] SignOut error: ${e.message}');
-      return Result.failure(AuthFailure(message: e.message));
+      ErrorSanitizer.debugLog('Auth', 'SignOut error: ${e.message}');
+      return Result.failure(
+        AuthFailure(message: ErrorSanitizer.authMessage(e)),
+      );
     } catch (e) {
-      debugPrint('[Auth] SignOut error: $e');
-      return Result.failure(AuthFailure(message: e.toString()));
+      ErrorSanitizer.debugLog('Auth', 'SignOut error: $e');
+      return Result.failure(
+        AuthFailure(message: ErrorSanitizer.authMessage(e)),
+      );
     }
   }
 }

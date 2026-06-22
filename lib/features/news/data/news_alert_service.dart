@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../../core/errors/failures.dart';
 import '../../../core/errors/result.dart';
 import '../../../core/schema/app_schema.dart';
@@ -8,7 +10,7 @@ class NewsAlertService {
   final SupabaseClient _client;
 
   NewsAlertService({SupabaseClient? client})
-      : _client = client ?? Supabase.instance.client;
+    : _client = client ?? Supabase.instance.client;
 
   Future<Result<List<NewsArticle>>> getBreakingNews() async {
     try {
@@ -25,6 +27,7 @@ class NewsAlertService {
 
       return Result.success(articles);
     } catch (e) {
+      debugPrint('[NewsAlertService] getBreakingNews: $e');
       return Result.failure(ServerFailure(message: e.toString()));
     }
   }
@@ -35,10 +38,14 @@ class NewsAlertService {
           .from(AppSchema.newsArticles)
           .select('id')
           .eq('is_breaking', true)
-          .gt('published_at', DateTime.now().subtract(const Duration(hours: 1)).toIso8601String());
+          .gt(
+            'published_at',
+            DateTime.now().subtract(const Duration(hours: 1)).toIso8601String(),
+          );
 
       return Result.success(response.length);
     } catch (e) {
+      debugPrint('[NewsAlertService] getUnreadCount: $e');
       return Result.failure(ServerFailure(message: e.toString()));
     }
   }

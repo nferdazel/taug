@@ -1,34 +1,37 @@
-# Taug — Financial Terminal
+# Taug — Financial Research Platform
 
-A high-performance financial terminal built with Flutter Web (WASM), designed for real-time market data, portfolio tracking, and financial analysis.
+An investment research workspace built with Flutter Web (WASM). Combines auditable financial data foundations with a compact terminal-style UI for company research, screening, and valuation analysis.
 
 ## Features
 
-### Market Data
+### Research
+
+- **Company Research** — Summary, financial metrics, statement history, data quality, research notes, and investment theses per company
+- **Screener** — Sortable metric table with quality indicators across 19 seeded financial metrics
+- **Valuation Snapshot** — Per-company metric cards organized by category (valuation, profitability, leverage, cash flow)
+- **Research Notes** — CRUD notes per company, RLS-protected
+- **Investment Theses** — Thesis tracking with stance (bullish/bearish/neutral), RLS-protected
+
+### Market Monitoring (Preserved from Terminal)
+
 - **Terminal Brief** — Dense landing page with top impact headlines, movers, and macro snapshot
-- **Watchlist** — Custom watchlists with real-time price updates (auto-refresh every 5s)
-- **Chart** — 4 chart types with `Line` as default: Line, Area, Candlestick, OHLC Bar
-- **Order Book** — 10-level ask/bid depth with spread indicator
-- **Running Trades** — Time & sales feed
-- **Market Overview** — Top movers with auto-refresh
+- **Watchlist** — Custom watchlists with price snapshots
+- **Chart** — Line, Area, Candlestick, OHLC Bar chart types
+- **Market Overview** — Top movers
+- **Portfolio** — Holdings tracker with P&L calculation
 
-### Portfolio
-- **Holdings Tracker** — Add/edit/remove holdings with quantity & avg price
-- **P&L Calculation** — Real-time profit/loss with percentage
-- **Total Value** — Aggregated portfolio value
+### Context Feeds
 
-### News & Calendar
-- **RSS News Feed** — Aggregated from CNBC, Reuters, MarketWatch, Antara
+- **News** — Aggregated RSS from CNBC, Reuters, MarketWatch, Antara
 - **Policy Monitor** — Official Fed and SEC policy/regulatory feed
-- **Economic Calendar** — Events with importance levels (High/Medium/Low)
-- **Category Filters** — Markets, Economy, Geopolitics, Earnings
-- **Top Impact Ranking** — Ranked headlines combining news and policy relevance
+- **Economic Calendar** — Events with importance levels
 
 ### Platform
+
 - **Auth** — Register/login with username + password
-- **Settings** — Timezone selection, density mode
-- **Terminal UI Baseline** — 12px typography floor with compact 2px-grid sizing
-- **9-Tab Layout** — Brief, Market, Watchlist, Portfolio, Chart, News, Policy, Calendar, Settings
+- **Settings** — Timezone, density mode, default exchange
+- **Compact Design System** — 12px typography floor, 2px-grid spacing, Bloomberg-terminal density
+- **12-Tab Layout** — Brief, Market, Company, Screener, Valuation, Watchlist, Portfolio, Chart, News, Policy, Calendar, Settings
 
 ## Tech Stack
 
@@ -41,8 +44,9 @@ A high-performance financial terminal built with Flutter Web (WASM), designed fo
 | Charts | `syncfusion_flutter_charts` |
 | Auth & DB | Supabase (schema: `taug`) |
 | Fonts | IBM Plex Mono + IBM Plex Sans |
+| Workers | Python (SEC data pipeline) |
+| Scheduling | GitHub Actions |
 | Hosting | Vercel |
-| CI/CD | GitHub Actions |
 
 ## Architecture
 
@@ -50,10 +54,26 @@ Feature-First Clean Architecture:
 
 ```
 lib/
-├── core/          # Config, theme, errors, network, utils
-├── features/      # Feature modules (auth, brief, watchlist, chart, news, policy, calendar, market, portfolio, settings)
-├── shared/        # Models and reusable widgets
-└── main.dart      # Entry point
+├── core/          # Config, theme, errors, network, schema, utils
+├── features/      # Feature modules (15 features)
+│   ├── auth/
+│   ├── brief/
+│   ├── calendar/
+│   ├── chart/
+│   ├── company/       # Research page: summary, metrics, statements, quality, notes, theses
+│   ├── layout/        # Tabbed navigation shell
+│   ├── market/
+│   ├── news/
+│   ├── policy/
+│   ├── portfolio/
+│   ├── screener/      # Sortable metric table with quality indicators
+│   ├── settings/
+│   ├── valuation/     # Per-company metric cards
+│   └── watchlist/
+├── shared/
+│   ├── models/        # Exchange, Symbol, PriceData, NewsArticle, EconEvent, etc.
+│   └── widgets/       # PriceCell, ChangeCell, VolumeCell, DataStatusBadge
+└── main.dart
 ```
 
 Each feature follows:
@@ -64,26 +84,39 @@ feature/
 └── presentation/  # Pages, providers, widgets
 ```
 
-## Planning Docs
+### Data Pipeline
 
-- [Research Platform Pivot Audit](docs/research-platform-pivot-audit.md)
-- [Research Platform Gap Analysis](docs/research-platform-gap-analysis.md)
-- [Research Platform Execution Checklist](docs/research-platform-execution-checklist.md)
-- [Research Platform Schema V2](docs/research-platform-schema-v2.md)
-- [Research Platform Ingestion Topology](docs/research-platform-ingestion-topology.md)
-- [Research Platform Schema Implementation Plan](docs/research-platform-schema-implementation-plan.md)
-- [Research Platform Screener and Metric Engine Design](docs/research-platform-screener-metric-engine.md)
-- [Research Platform Source Strategy](docs/research-platform-source-strategy.md)
-- [SEC Filings Foundation Checklist](docs/sec-filings-foundation-checklist.md)
+```
+External Source → Worker Fetch → Raw Immutable Store → Validation → Normalization → Derived Metrics → Serving Views → Flutter
+```
+
+- **8 serving views** for Flutter-safe reads (company summary, statement history, filing timeline, metrics, quality, screener)
+- **30 tables** across 5 layers (raw, normalized, filing/statement, derived/screener, research workspace)
+- **9 views** for serving read models
+
+### Workers (`workers/taug_worker/`)
+
+6 worker jobs for the SEC data pipeline:
+
+| Job | Purpose |
+|---|---|
+| `sync-sec-submissions` | Fetch SEC EDGAR submissions, normalize filings |
+| `fetch-sec-filing-documents` | Store immutable raw filing documents |
+| `sync-sec-companyfacts` | Ingest XBRL companyfacts payload |
+| `parse-sec-companyfacts` | Parse into financial statements (35 XBRL concepts) |
+| `compute-company-metrics` | Compute 19 financial metrics (TTM, balance sheet, price-dependent) |
+| `sync-price-snapshots` | Fetch quotes from Twelve Data API |
 
 ## Data Sources
 
-| Source | Data | Cost |
+| Source | Data | Role |
 |---|---|---|
-| Twelve Data API | US/Global stocks, commodities | Free tier |
-| Binance WebSocket | Crypto real-time | Free |
-| RSS Feeds | News aggregation | Free |
-| SEC / FRED / BLS / Official feeds | Filings and macro/public data | Free/public |
+| SEC EDGAR | Filings, XBRL facts, company data | Foundation |
+| Twelve Data API | US/Global stock quotes | Supporting |
+| Binance WebSocket | Crypto real-time | Supporting |
+| RSS Feeds | News, policy feeds | Context |
+| FRED (planned) | Macro time series | Foundation |
+| Bank Indonesia (planned) | Rates, FX, macro | Foundation |
 
 ## Getting Started
 
@@ -124,7 +157,7 @@ flutter run -d chrome
 ### Supabase Setup
 
 1. Create a new schema `taug` in your Supabase project
-2. Run the migration SQL files in `supabase/migrations/`
+2. Run the migration SQL files in `supabase/migrations/` in order
 3. Expose the `taug` schema in Supabase Dashboard → Settings → API → Exposed schemas
 4. Disable email confirmation: Authentication → Providers → Email → Disable "Confirm email"
 5. Deploy Edge Functions:
@@ -135,7 +168,6 @@ supabase functions deploy search-symbols
 supabase functions deploy refresh-quote-snapshots
 supabase functions deploy refresh-news
 supabase functions deploy refresh-policy
-supabase functions deploy refresh-calendar
 ```
 
 6. Set Edge Function secrets:
@@ -145,43 +177,27 @@ supabase secrets set TWELVE_DATA_API_KEY=<your-key>
 
 ### SEC Worker Setup
 
-The first research worker runs as a scheduled GitHub Actions job:
+The SEC data pipeline runs as scheduled GitHub Actions jobs:
 
-- Workflow: `.github/workflows/sec-submissions-sync.yml`
-- Entry point: `python -m workers.taug_worker.cli sync-sec-submissions`
-- Secondary workflow: `.github/workflows/sec-filing-documents-sync.yml`
-- Secondary entry point: `python -m workers.taug_worker.cli fetch-sec-filing-documents`
-- Current default submission normalization cap: `25` recent filings per company per run to keep GitHub Actions runs bounded during MVP
-- Local smoke test completed on `2026-06-19`:
-  `1` target CIK ingested with `3` normalized filings and `1` primary filing document stored end-to-end
+| Workflow | Schedule | Command |
+|---|---|---|
+| `sec-submissions-sync.yml` | Daily 2:15am UTC | `sync-sec-submissions` |
+| `sec-companyfacts-sync-parse.yml` | Daily 2:30am UTC | `sync-sec-companyfacts` then `parse-sec-companyfacts` |
+| `sec-filing-documents-sync.yml` | Daily 2:45am UTC | `fetch-sec-filing-documents` |
+| `recompute-metrics.yml` | Manual | `compute-company-metrics` |
+| `sync-price-snapshots.yml` | Weekdays 2pm UTC | `sync-price-snapshots` |
 
 Required GitHub secrets:
 
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
-- `SEC_USER_AGENT`
+- `SEC_USER_AGENT` (format: `YOUR_NAME YOUR_EMAIL@example.com`)
+- `TWELVE_DATA_API_KEY`
 
-Recommended `SEC_USER_AGENT` value:
+Recommended GitHub variables:
 
-- `YOUR_NAME YOUR_EMAIL@example.com`
-
-Local shell note:
-
-- if you source `.env` directly in a shell, quote `SEC_USER_AGENT`, for example:
-  `SEC_USER_AGENT="YOUR_NAME YOUR_EMAIL@example.com"`
-
-Recommended GitHub variable:
-
-- `SEC_TARGET_CIKS`
-- `RAW_DOCUMENTS_BUCKET`
-
-Recommended starter `SEC_TARGET_CIKS` value:
-
-- `0000320193,0000789019`
-
-Recommended `RAW_DOCUMENTS_BUCKET` value:
-
-- `raw-documents`
+- `SEC_TARGET_CIKS` — starter value: `0000320193,0000789019`
+- `RAW_DOCUMENTS_BUCKET` — starter value: `raw-documents`
 
 ### Environment Variables
 
@@ -193,29 +209,44 @@ Recommended `RAW_DOCUMENTS_BUCKET` value:
 | `TWELVE_DATA_API_KEY` | Twelve Data API key (free tier) |
 | `SEC_USER_AGENT` | SEC-compliant user agent string for EDGAR requests |
 | `SEC_TARGET_CIKS` | Default comma-separated SEC CIK list for worker runs |
-| `RAW_DOCUMENTS_BUCKET` | Supabase Storage bucket used for raw filing documents |
+| `RAW_DOCUMENTS_BUCKET` | Supabase Storage bucket for raw filing documents |
 
 ## Project Structure
 
 ```
 taug/
-├── lib/                    # Dart source code
+├── lib/                        # Dart source code (Flutter)
 ├── supabase/
-│   ├── functions/          # Edge Functions (Deno)
-│   └── migrations/         # SQL migration files
-├── .env.example            # Environment template
-├── AGENTS.md               # AI guardrails
-├── pubspec.yaml            # Dependencies
-└── vercel.json             # Vercel config
+│   ├── functions/              # Edge Functions (Deno)
+│   ├── migrations/             # SQL migration files (18 migrations)
+│   └── schema.sql              # Base schema definition
+├── workers/
+│   └── taug_worker/            # Python SEC data pipeline
+│       ├── cli.py              # CLI entry point
+│       ├── jobs/               # Worker jobs (6 jobs)
+│       ├── sources/            # SEC EDGAR client
+│       └── validators/         # Data validation
+├── docs/                       # Architecture and planning docs (12 docs)
+├── .github/workflows/          # CI/CD + scheduled data pipelines (6 workflows)
+├── .env.example                # Environment template
+├── AGENTS.md                   # AI guardrails
+├── pubspec.yaml                # Dependencies
+└── vercel.json                 # Vercel config (CSP, rewrites, caching)
 ```
 
 ## Deployment
+
+### Flutter Web (Vercel)
 
 Push to `main` branch triggers GitHub Actions:
 1. Lint (`flutter analyze`)
 2. Test (`flutter test`)
 3. Build (`flutter build web --release`)
 4. Deploy to Vercel
+
+### Workers (GitHub Actions)
+
+Scheduled workflows run the SEC data pipeline automatically. Manual triggers available for metrics recompute.
 
 ## Development
 
@@ -229,9 +260,9 @@ Push to `main` branch triggers GitHub Actions:
 ### Git Commits
 Format: `<type>(<scope>): <description>`
 ```
-feat(chart): add line, area, and OHLC chart types
+feat(company): add company research page with metrics and statements
 fix(watchlist): parallelize price fetching with Future.wait
-style(settings): redesign to compact desktop layout
+docs(core): sync execution checklist with current state
 ```
 
 ### Adding a New Feature
@@ -241,6 +272,20 @@ style(settings): redesign to compact desktop layout
 4. Create page in `presentation/pages/`
 5. Add route to `lib/core/config/app_router.dart`
 6. Add tab to `lib/features/layout/presentation/pages/main_layout.dart`
+7. Update `docs/research-platform-execution-checklist.md` before committing
+
+## Planning Docs
+
+- [AI Handoff Status](docs/ai-handoff-status.md)
+- [Research Platform Pivot Audit](docs/research-platform-pivot-audit.md)
+- [Research Platform Gap Analysis](docs/research-platform-gap-analysis.md)
+- [Research Platform Execution Checklist](docs/research-platform-execution-checklist.md)
+- [Research Platform Schema V2](docs/research-platform-schema-v2.md)
+- [Research Platform Schema Implementation Plan](docs/research-platform-schema-implementation-plan.md)
+- [Research Platform Ingestion Topology](docs/research-platform-ingestion-topology.md)
+- [Research Platform Screener and Metric Engine Design](docs/research-platform-screener-metric-engine.md)
+- [Research Platform Source Strategy](docs/research-platform-source-strategy.md)
+- [SEC Filings Foundation Checklist](docs/sec-filings-foundation-checklist.md)
 
 ## License
 

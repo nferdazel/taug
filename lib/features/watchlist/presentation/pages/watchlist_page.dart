@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:signals/signals_flutter.dart';
+
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme_colors.dart';
@@ -42,7 +43,7 @@ class _WatchlistPageState extends State<WatchlistPage> {
   }
 
   Widget _buildToolbar() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       return Container(
         height: AppSpacing.tabBarHeight,
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
@@ -73,67 +74,78 @@ class _WatchlistPageState extends State<WatchlistPage> {
   }
 
   Widget _buildWatchlistSelector() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final watchlists = _provider.watchlists.value;
       final current = _provider.currentWatchlist.value;
 
-      return DropdownButton<String>(
-        value: current?.id,
-        underline: const SizedBox(),
-        dropdownColor: AppThemeColors.surface,
-        style: AppTypography.labelMedium,
-        isDense: true,
-        items: watchlists
-            .map((w) => DropdownMenuItem(value: w.id, child: Text(w.name)))
-            .toList(),
-        onChanged: (id) {
-          if (id != null) {
-            final watchlist = watchlists.firstWhere((w) => w.id == id);
-            _provider.selectWatchlist(watchlist);
-          }
-        },
+      return Semantics(
+        label: 'Select watchlist',
+        child: DropdownButton<String>(
+          value: current?.id,
+          underline: const SizedBox(),
+          dropdownColor: AppThemeColors.surface,
+          style: AppTypography.labelMedium,
+          isDense: true,
+          items: watchlists
+              .map((w) => DropdownMenuItem(value: w.id, child: Text(w.name)))
+              .toList(),
+          onChanged: (id) {
+            if (id != null) {
+              final watchlist = watchlists.firstWhere((w) => w.id == id);
+              _provider.selectWatchlist(watchlist);
+            }
+          },
+        ),
       );
     });
   }
 
   Widget _buildAddButton() {
-    return SizedBox(
-      height: 24,
-      child: TextButton.icon(
-        onPressed: _showAddSymbolDialog,
-        icon: const Icon(Icons.add, size: 14),
-        label: const Text('Add'),
-        style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          minimumSize: const Size(0, AppSpacing.buttonHeight),
+    return Semantics(
+      label: 'Add symbol to watchlist',
+      button: true,
+      child: SizedBox(
+        height: 24,
+        child: TextButton.icon(
+          onPressed: _showAddSymbolDialog,
+          icon: const Icon(Icons.add, size: 14),
+          label: const Text('Add'),
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            minimumSize: const Size(0, AppSpacing.buttonHeight),
+          ),
         ),
       ),
     );
   }
 
   Widget _buildRefreshButton() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final isLoading = _provider.isLoading.value;
       return SizedBox(
         height: AppSpacing.buttonHeight,
         width: AppSpacing.buttonHeight,
-        child: IconButton(
-          onPressed: isLoading ? null : () => _provider.loadPrices(),
-          icon: isLoading
-              ? const SizedBox(
-                  width: 14,
-                  height: 14,
-                  child: CircularProgressIndicator(strokeWidth: 1.5),
-                )
-              : const Icon(Icons.refresh, size: 16),
-          padding: EdgeInsets.zero,
+        child: Semantics(
+          label: isLoading ? 'Refreshing prices' : 'Refresh prices',
+          button: true,
+          child: IconButton(
+            onPressed: isLoading ? null : () => _provider.loadPrices(),
+            icon: isLoading
+                ? const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(strokeWidth: 1.5),
+                  )
+                : const Icon(Icons.refresh, size: 16),
+            padding: EdgeInsets.zero,
+          ),
         ),
       );
     });
   }
 
   Widget _buildContent() {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final items = _provider.watchlistItems.value;
       final isLoading = _provider.isLoading.value;
       final error = _provider.error.value;
@@ -284,88 +296,103 @@ class _WatchlistPageState extends State<WatchlistPage> {
   }
 
   Widget _buildTableRow(WatchlistItem item, int index) {
-    return Watch((_) {
+    return SignalBuilder(builder: (_) {
       final price = _provider.getPriceForSymbol(item.ticker ?? '');
+      final changePercent = price?.changePercent ?? 0;
+      final direction = changePercent >= 0 ? 'up' : 'down';
 
-      return Container(
-        height: 34,
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        decoration: const BoxDecoration(
-          border: Border(
-            bottom: BorderSide(color: AppThemeColors.border, width: 0.5),
-          ),
-        ),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 24,
-              child: Text('${index + 1}', style: AppTypography.monoTiny),
+      // A11Y: Build semantic label for the entire row.
+      final String semanticLabel = '${item.ticker ?? "Unknown"}, '
+          '${item.name ?? ""}, '
+          '${price != null ? "price ${_formatPrice(price.price, item.assetClass)}" : "no price"}, '
+          '${price != null ? "$direction ${changePercent.abs().toStringAsFixed(2)} percent" : ""}';
+
+      return Semantics(
+        label: semanticLabel,
+        child: Container(
+          height: 34,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          decoration: const BoxDecoration(
+            border: Border(
+              bottom: BorderSide(color: AppThemeColors.border, width: 0.5),
             ),
-            Expanded(
-              flex: 2,
-              child: Text(
-                item.ticker ?? '',
-                style: AppTypography.monoSmall.copyWith(
-                  fontWeight: FontWeight.w600,
+          ),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 24,
+                child: Text('${index + 1}', style: AppTypography.monoTiny),
+              ),
+              Expanded(
+                flex: 2,
+                child: Text(
+                  item.ticker ?? '',
+                  style: AppTypography.monoSmall.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-            ),
-            Expanded(
-              flex: 3,
-              child: Text(
-                item.name ?? '',
-                style: AppTypography.bodySmall,
-                overflow: TextOverflow.ellipsis,
+              Expanded(
+                flex: 3,
+                child: Text(
+                  item.name ?? '',
+                  style: AppTypography.bodySmall,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-            ),
-            Expanded(
-              flex: 2,
-              child: Text(
-                price != null
-                    ? _formatPrice(price.price, item.assetClass)
-                    : '-',
-                style: AppTypography.monoSmall,
-                textAlign: TextAlign.right,
+              Expanded(
+                flex: 2,
+                child: Text(
+                  price != null
+                      ? _formatPrice(price.price, item.assetClass)
+                      : '-',
+                  style: AppTypography.monoSmall,
+                  textAlign: TextAlign.right,
+                ),
               ),
-            ),
-            Expanded(
-              flex: 2,
-              child: price != null
-                  ? Text(
-                      price.changePercent >= 0
-                          ? '+${price.changePercent.toStringAsFixed(2)}%'
-                          : '${price.changePercent.toStringAsFixed(2)}%',
-                      style: AppTypography.monoSmall.copyWith(
-                        color: price.changePercent >= 0
-                            ? AppThemeColors.bullish
-                            : AppThemeColors.bearish,
+              Expanded(
+                flex: 2,
+                child: price != null
+                    ? Text(
+                        price.changePercent >= 0
+                            ? '+${price.changePercent.toStringAsFixed(2)}%'
+                            : '${price.changePercent.toStringAsFixed(2)}%',
+                        style: AppTypography.monoSmall.copyWith(
+                          color: price.changePercent >= 0
+                              ? AppThemeColors.bullish
+                              : AppThemeColors.bearish,
+                        ),
+                        textAlign: TextAlign.right,
+                      )
+                    : const Text(
+                        '-',
+                        style: AppTypography.monoSmall,
+                        textAlign: TextAlign.right,
                       ),
-                      textAlign: TextAlign.right,
-                    )
-                  : const Text(
-                      '-',
-                      style: AppTypography.monoSmall,
-                      textAlign: TextAlign.right,
-                    ),
-            ),
-            Expanded(
-              flex: 1,
-              child: Text(
-                price != null ? _formatVolume(price.volume) : '-',
-                style: AppTypography.monoTiny,
-                textAlign: TextAlign.right,
               ),
-            ),
-            SizedBox(
-              width: 28,
-              child: IconButton(
-                onPressed: () => _showDeleteConfirmation(item),
-                icon: const Icon(Icons.close, size: 12),
-                padding: EdgeInsets.zero,
-                color: AppThemeColors.textTertiary,
+              Expanded(
+                flex: 1,
+                child: Text(
+                  price != null ? _formatVolume(price.volume) : '-',
+                  style: AppTypography.monoTiny,
+                  textAlign: TextAlign.right,
+                ),
               ),
-            ),
-          ],
+              SizedBox(
+                width: 28,
+                child: Semantics(
+                  label: 'Remove ${item.ticker ?? "symbol"} from watchlist',
+                  button: true,
+                  child: IconButton(
+                    onPressed: () => _showDeleteConfirmation(item),
+                    icon: const Icon(Icons.close, size: 12),
+                    padding: EdgeInsets.zero,
+                    color: AppThemeColors.textTertiary,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     });
@@ -406,12 +433,15 @@ class _WatchlistPageState extends State<WatchlistPage> {
     });
   }
 
-  void _showDeleteConfirmation(dynamic item) {
+  void _showDeleteConfirmation(WatchlistItem item) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppThemeColors.surface,
-        title: const Text('Remove Symbol', style: AppTypography.titleMedium),
+        title: Semantics(
+          header: true,
+          child: const Text('Remove Symbol', style: AppTypography.titleMedium),
+        ),
         content: Text(
           'Remove ${item.ticker} from watchlist?',
           style: AppTypography.bodySmall,
@@ -422,9 +452,11 @@ class _WatchlistPageState extends State<WatchlistPage> {
             child: const Text(AppStrings.cancel),
           ),
           ElevatedButton(
-            onPressed: () {
-              _provider.removeFromWatchlist(item.id);
-              Navigator.pop(context);
+            onPressed: () async {
+              await _provider.removeFromWatchlist(item.id);
+              if (context.mounted && _provider.error.value == null) {
+                Navigator.pop(context);
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppThemeColors.bearish,

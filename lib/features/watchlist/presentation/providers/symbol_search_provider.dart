@@ -1,5 +1,6 @@
 import 'package:signals/signals.dart';
 
+import '../../../../core/utils/error_sanitizer.dart';
 import '../../data/symbol_repository.dart';
 import '../../data/watchlist_repository.dart';
 
@@ -17,6 +18,13 @@ class SymbolSearchProvider {
     WatchlistRepository? watchlistRepository,
   }) : _symbolRepository = symbolRepository ?? SymbolRepository(),
        _watchlistRepository = watchlistRepository ?? WatchlistRepository();
+
+  void dispose() {
+    searchResults.dispose();
+    isSearching.dispose();
+    searchError.dispose();
+    isAdding.dispose();
+  }
 
   Future<void> search(String query) async {
     if (query.isEmpty) {
@@ -39,7 +47,7 @@ class SymbolSearchProvider {
     if (result.isSuccess) {
       searchResults.value = result.data!;
     } else {
-      searchError.value = result.error.toString();
+      searchError.value = ErrorSanitizer.message(result.error);
     }
 
     isSearching.value = false;
@@ -92,7 +100,8 @@ class SymbolSearchProvider {
       isAdding.value = false;
       return null;
     } catch (e) {
-      searchError.value = e.toString();
+      ErrorSanitizer.debugLog('SymbolSearchProvider', 'addToWatchlist error: $e');
+      searchError.value = 'Failed to add symbol. Please try again.';
       isAdding.value = false;
       return null;
     }

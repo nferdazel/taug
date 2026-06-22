@@ -1,6 +1,6 @@
 # Taug Research Platform Execution Checklist
 
-Last updated: 2026-06-19
+Last updated: 2026-06-20
 
 ## Purpose
 
@@ -110,7 +110,7 @@ Docs discipline for this repo:
 - `[done]` `securities`
 - `[done]` `currencies`
 - `[done]` `reporting_periods`
-- `[todo]` sector and industry normalization tables
+- `[done]` sector and industry normalization tables
 
 ### Raw immutable layer
 
@@ -140,19 +140,19 @@ Docs discipline for this repo:
 
 ### Research workflow layer
 
-- `[todo]` `research_notes`
-- `[todo]` `investment_theses`
-- `[todo]` `saved_screeners`
-- `[todo]` `coverage_lists`
+- `[done]` `research_notes`
+- `[done]` `investment_theses`
+- `[done]` `saved_screeners`
+- `[done]` `coverage_lists`
 
 ### Audit and quality layer
 
 - `[done]` `audit_events`
 - `[done]` `validation_events`
 - `[done]` `ingestion_checkpoints`
-- `[todo]` `recalculation_runs`
+- `[done]` `recalculation_runs` (integrated into compute-company-metrics)
 - `[done]` `restatement_events`
-- `[todo]` data quality scoring model
+- `[done]` data quality scoring model
 
 ## G. User Preference Gaps
 
@@ -169,10 +169,10 @@ Docs discipline for this repo:
 ### Priority foundation sources
 
 - `[done]` source strategy and ingestion priority documented
-- `[todo]` SEC EDGAR ingestion worker
-- `[todo]` FRED integration
+- `[done]` SEC EDGAR ingestion worker
+- `[done]` FRED integration
 - `[todo]` Bank Indonesia integration
-- `[todo]` BPS integration
+- `[done]` BPS integration
 - `[todo]` IDX issuer/reference data review
 
 ### Secondary sources
@@ -214,15 +214,28 @@ Docs discipline for this repo:
   - `company_research_summary_v`
   - `company_latest_statement_facts_v`
   - `filing_timeline_v`
-- `[todo]` company page
-- `[todo]` security master page
-- `[todo]` filings timeline page
-- `[todo]` statement explorer
-- `[todo]` ratio trend page
-- `[todo]` valuation snapshot page
-- `[todo]` screener page
-- `[todo]` research notes page
-- `[todo]` data quality and freshness surfaces
+  - `company_statement_history_v`
+  - `company_statement_items_v`
+  - `company_metric_snapshot_v`
+  - `company_data_quality_v`
+  - `screener_results_v`
+- `[done]` company research page (summary, metrics, statement history, quality)
+- `[done]` company page: company selector with search dialog
+- `[done]` company page: statement line items drill-down
+- `[done]` screener page (sortable metric table with quality indicators)
+- `[done]` research notes (CRUD in company page, RLS protected)
+- `[done]` investment theses (CRUD with stance tracking, RLS protected)
+- `[done]` price data integration: `sync-price-snapshots` worker job (Twelve Data API, rate-limit aware)
+- `[done]` valuation snapshot page (per-company metric cards with category sections)
+- `[done]` GitHub Actions workflows:
+  - `deploy.yml` (Flutter Web → Vercel)
+  - `sec-submissions-sync.yml` (daily SEC filings)
+  - `sec-filing-documents-sync.yml` (daily SEC documents)
+  - `sec-companyfacts-sync-parse.yml` (daily companyfacts sync + parse)
+  - `recompute-metrics.yml` (manual metrics recompute)
+  - `sync-price-snapshots.yml` (weekday price sync)
+- `[done]` price data backfill (Twelve Data synced, 10/10 securities)
+- `[done]` recompute metrics after price data available (PE, PB, PS, EV/EBIT, EV/EBITDA, market_cap, enterprise_value)
 
 ## L. Recommended Phase Order
 
@@ -307,8 +320,11 @@ Exit criteria:
   - company summary
   - latest statement fact snapshot
   - filing timeline
-- `[todo]` support historical periods and statement versions
-- `[todo]` support restatements
+- `[done]` support historical periods and statement versions:
+  - `company_statement_history_v` — pivoted historical statements per company
+  - `company_statement_items_v` — raw line-item browse per company
+- `[done]` expand parser fact catalog from 20 to 35 core XBRL concepts
+- `[done]` support restatements (filing-level supersession + statement-level supersession linked during parse)
 
 Exit criteria:
 
@@ -319,9 +335,25 @@ Exit criteria:
 - `[done]` design formula engine
 - `[done]` design metric snapshot/read model
 - `[done]` design saved screener support
-- `[todo]` implement formula engine
-- `[todo]` implement metric snapshot/read model
-- `[todo]` implement saved screener support
+- `[done]` implement metric engine schema:
+  - `metric_definitions` (19 MVP metrics seeded)
+  - `metric_inputs`
+  - `metric_calculation_runs`
+  - `security_metric_snapshots`
+  - `security_price_snapshots`
+  - `screening_universe_memberships`
+- `[done]` implement formula engine worker job (`compute-company-metrics`)
+  - TTM aggregation for income/cash flow metrics (annual or sum-of-4-quarters)
+  - Balance sheet metrics from latest period
+  - Price-dependent metrics marked as missing_input (price data pending)
+  - Tested end-to-end on Apple (AAPL) and Microsoft (MSFT)
+  - Handles non-standard fiscal calendars (250-day threshold)
+  - Handles superseded filing versions during replay
+- `[done]` implement metric snapshot serving view (`company_metric_snapshot_v`)
+- `[done]` implement data quality serving view (`company_data_quality_v`)
+- `[done]` implement saved screener schema (`saved_screeners` with RLS)
+- `[done]` implement screener results serving view (`screener_results_v`)
+- `[done]` implement screener filter execution in worker
 
 Exit criteria:
 
@@ -330,10 +362,12 @@ Exit criteria:
 
 ### Phase 6: Research workspace
 
-- `[todo]` research notes
-- `[todo]` thesis tracking
-- `[todo]` company workspace UI
-- `[todo]` quality/freshness indicator
+- `[done]` research notes (CRUD in company page, RLS protected)
+- `[done]` thesis tracking (CRUD with stance tracking, RLS protected)
+- `[done]` company workspace UI (summary, metrics, statement history, quality, notes, theses)
+- `[done]` quality/freshness indicator (company_data_quality_v serving view + UI panel)
+- `[done]` valuation snapshot page (per-company metric cards with category sections)
+- `[done]` screener page (sortable metric table with quality indicators)
 
 Exit criteria:
 
