@@ -22,16 +22,22 @@ final router = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: '/login',
   redirect: (context, state) {
-    final session = Supabase.instance.client.auth.currentSession;
-    final isAuthRoute =
-        state.matchedLocation == '/login' ||
-        state.matchedLocation == '/register';
+    // Lazy access — Supabase may not be initialized yet during router creation
+    try {
+      final session = Supabase.instance.client.auth.currentSession;
+      final isAuthRoute =
+          state.matchedLocation == '/login' ||
+          state.matchedLocation == '/register';
 
-    if (session == null && !isAuthRoute) {
-      return '/login';
-    }
-    if (session != null && isAuthRoute) {
-      return '/companies';
+      if (session == null && !isAuthRoute) {
+        return '/login';
+      }
+      if (session != null && isAuthRoute) {
+        return '/companies';
+      }
+    } catch (_) {
+      // Supabase not initialized yet — allow navigation
+      return null;
     }
 
     // Redirect legacy terminal routes to new workspace routes
