@@ -65,7 +65,9 @@ class _ActivityItem {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class ResearchWorkspacePage extends StatefulWidget {
-  const ResearchWorkspacePage({super.key});
+  final ResearchProvider? provider;
+
+  const ResearchWorkspacePage({super.key, this.provider});
 
   @override
   State<ResearchWorkspacePage> createState() => _ResearchWorkspacePageState();
@@ -78,7 +80,7 @@ class _ResearchWorkspacePageState extends State<ResearchWorkspacePage> {
   @override
   void initState() {
     super.initState();
-    _provider = ResearchProvider();
+    _provider = widget.provider ?? ResearchProvider();
     _provider.loadAll();
   }
 
