@@ -48,7 +48,7 @@ jobs:
         run: flutter test --coverage
 
       - name: Build Flutter Web
-        run: flutter build web --wasm --release
+        run: flutter build web --release
 
       - name: Copy Vercel Config Files
         run: cp vercel.json build/web/vercel.json
