@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:signals/signals_flutter.dart';
+
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme_colors.dart';
@@ -104,71 +105,77 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   Widget _buildDateSelector() {
-    return SignalBuilder(builder: (_) {
-      final date = _selectedDate.value;
-      return SizedBox(
-        height: AppSpacing.buttonHeight,
-        child: TextButton.icon(
-          onPressed: _showDatePicker,
-          icon: const Icon(Icons.calendar_today, size: 14),
-          label: Text(DateFormat('MMM d, yyyy').format(date)),
-          style: TextButton.styleFrom(
-            backgroundColor: AppThemeColors.backgroundLight,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
+    return SignalBuilder(
+      builder: (_) {
+        final date = _selectedDate.value;
+        return SizedBox(
+          height: AppSpacing.buttonHeight,
+          child: TextButton.icon(
+            onPressed: _showDatePicker,
+            icon: const Icon(Icons.calendar_today, size: 14),
+            label: Text(DateFormat('MMM d, yyyy').format(date)),
+            style: TextButton.styleFrom(
+              backgroundColor: AppThemeColors.backgroundLight,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+            ),
           ),
-        ),
-      );
-    });
+        );
+      },
+    );
   }
 
   Widget _buildCountryFilter() {
-    return SignalBuilder(builder: (_) {
-      final countries = ['all', 'US', 'EU', 'GB', 'JP', 'ID', 'CN'];
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        decoration: BoxDecoration(
-          color: AppThemeColors.backgroundLight,
-          borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: AppThemeColors.border),
-        ),
-        child: DropdownButton<String>(
-          value: _selectedCountry.value,
-          underline: const SizedBox(),
-          dropdownColor: AppThemeColors.surface,
-          style: AppTypography.monoLabel,
-          isDense: true,
-          items: countries
-              .map(
-                (c) => DropdownMenuItem(
-                  value: c,
-                  child: Text(c == 'all' ? 'All' : c),
-                ),
-              )
-              .toList(),
-          onChanged: (value) {
-            if (value != null) {
-              _selectedCountry.value = value;
-              _loadEvents();
-            }
-          },
-        ),
-      );
-    });
+    return SignalBuilder(
+      builder: (_) {
+        final countries = ['all', 'US', 'EU', 'GB', 'JP', 'ID', 'CN'];
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          decoration: BoxDecoration(
+            color: AppThemeColors.backgroundLight,
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: AppThemeColors.border),
+          ),
+          child: DropdownButton<String>(
+            value: _selectedCountry.value,
+            underline: const SizedBox(),
+            dropdownColor: AppThemeColors.surface,
+            style: AppTypography.monoLabel,
+            isDense: true,
+            items: countries
+                .map(
+                  (c) => DropdownMenuItem(
+                    value: c,
+                    child: Text(c == 'all' ? 'All' : c),
+                  ),
+                )
+                .toList(),
+            onChanged: (value) {
+              if (value != null) {
+                _selectedCountry.value = value;
+                _loadEvents();
+              }
+            },
+          ),
+        );
+      },
+    );
   }
 
   Widget _buildImportanceFilter() {
-    return SignalBuilder(builder: (_) {
-      final current = _minImportance.value;
-      return Row(
-        children: [
-          _buildImportanceButton(1, '⚪', current),
-          const SizedBox(width: 2),
-          _buildImportanceButton(2, '🟡', current),
-          const SizedBox(width: 2),
-          _buildImportanceButton(3, '🔴', current),
-        ],
-      );
-    });
+    return SignalBuilder(
+      builder: (_) {
+        final current = _minImportance.value;
+        return Row(
+          children: [
+            _buildImportanceButton(1, '⚪', current),
+            const SizedBox(width: 2),
+            _buildImportanceButton(2, '🟡', current),
+            const SizedBox(width: 2),
+            _buildImportanceButton(3, '🔴', current),
+          ],
+        );
+      },
+    );
   }
 
   Widget _buildImportanceButton(int level, String emoji, int current) {
@@ -194,106 +201,110 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   Widget _buildRefreshButton() {
-    return SignalBuilder(builder: (_) {
-      final isLoading = _isLoading.value;
-      return SizedBox(
-        height: AppSpacing.buttonHeight,
-        width: AppSpacing.buttonHeight,
-        child: IconButton(
-          onPressed: isLoading ? null : _refreshCalendar,
-          icon: isLoading
-              ? const SizedBox(
-                  width: 14,
-                  height: 14,
-                  child: CircularProgressIndicator(strokeWidth: 1.5),
-                )
-              : const Icon(Icons.refresh, size: 16),
-          padding: EdgeInsets.zero,
-        ),
-      );
-    });
+    return SignalBuilder(
+      builder: (_) {
+        final isLoading = _isLoading.value;
+        return SizedBox(
+          height: AppSpacing.buttonHeight,
+          width: AppSpacing.buttonHeight,
+          child: IconButton(
+            onPressed: isLoading ? null : _refreshCalendar,
+            icon: isLoading
+                ? const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(strokeWidth: 1.5),
+                  )
+                : const Icon(Icons.refresh, size: 16),
+            padding: EdgeInsets.zero,
+          ),
+        );
+      },
+    );
   }
 
   Widget _buildContent() {
-    return SignalBuilder(builder: (_) {
-      final events = _events.value;
-      final isLoading = _isLoading.value;
-      final error = _error.value;
+    return SignalBuilder(
+      builder: (_) {
+        final events = _events.value;
+        final isLoading = _isLoading.value;
+        final error = _error.value;
 
-      if (isLoading && events.isEmpty) {
-        return const Center(
-          child: SizedBox(
-            width: 16,
-            height: 16,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        );
-      }
-
-      if (error != null && events.isEmpty) {
-        return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.error_outline,
-                size: 32,
-                color: AppThemeColors.bearish,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                error,
-                style: AppTypography.bodySmall,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-              ElevatedButton(
-                onPressed: _loadEvents,
-                child: const Text(AppStrings.retry),
-              ),
-            ],
-          ),
-        );
-      }
-
-      if (events.isEmpty) {
-        return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.calendar_today_outlined,
-                size: 32,
-                color: AppThemeColors.textTertiary,
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'No events for this date',
-                style: AppTypography.bodySmall,
-              ),
-              const SizedBox(height: 12),
-              ElevatedButton(
-                onPressed: _refreshCalendar,
-                child: const Text('Fetch Events'),
-              ),
-            ],
-          ),
-        );
-      }
-
-      return Column(
-        children: [
-          _buildTableHeader(),
-          Expanded(
-            child: ListView.builder(
-              itemCount: events.length,
-              itemExtent: 36,
-              itemBuilder: (context, index) => _buildEventRow(events[index]),
+        if (isLoading && events.isEmpty) {
+          return const Center(
+            child: SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
             ),
-          ),
-        ],
-      );
-    });
+          );
+        }
+
+        if (error != null && events.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.error_outline,
+                  size: 32,
+                  color: AppThemeColors.bearish,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  error,
+                  style: AppTypography.bodySmall,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                ElevatedButton(
+                  onPressed: _loadEvents,
+                  child: const Text(AppStrings.retry),
+                ),
+              ],
+            ),
+          );
+        }
+
+        if (events.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.calendar_today_outlined,
+                  size: 32,
+                  color: AppThemeColors.textTertiary,
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'No events for this date',
+                  style: AppTypography.bodySmall,
+                ),
+                const SizedBox(height: 12),
+                ElevatedButton(
+                  onPressed: _refreshCalendar,
+                  child: const Text('Fetch Events'),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return Column(
+          children: [
+            _buildTableHeader(),
+            Expanded(
+              child: ListView.builder(
+                itemCount: events.length,
+                itemExtent: 36,
+                itemBuilder: (context, index) => _buildEventRow(events[index]),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Widget _buildTableHeader() {
