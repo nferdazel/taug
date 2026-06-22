@@ -75,75 +75,92 @@ class _MainLayoutState extends State<MainLayout> {
       }
     }
 
-    return Container(
-      height: 48,
-      decoration: const BoxDecoration(
-        color: AppThemeColors.surface,
-        border: Border(bottom: BorderSide(color: AppThemeColors.border)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 120,
-            height: double.infinity,
-            alignment: Alignment.center,
-            child: Text(
-              AppStrings.appName.toUpperCase(),
-              style: AppTypography.monoData.copyWith(
-                color: AppThemeColors.accent,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.5,
+    // A11Y: Use Semantics with 'navigation' role for the tab bar.
+    return Semantics(
+      label: 'Main navigation',
+      child: Container(
+        height: 48,
+        decoration: const BoxDecoration(
+          color: AppThemeColors.surface,
+          border: Border(bottom: BorderSide(color: AppThemeColors.border)),
+        ),
+        child: Row(
+          children: [
+            Semantics(
+              label: '${AppStrings.appName} home',
+              button: true,
+              child: Container(
+                width: 120,
+                height: double.infinity,
+                alignment: Alignment.center,
+                child: Text(
+                  AppStrings.appName.toUpperCase(),
+                  style: AppTypography.monoData.copyWith(
+                    color: AppThemeColors.accent,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.5,
+                  ),
+                ),
               ),
             ),
-          ),
-          const VerticalDivider(width: 1),
-          Expanded(
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: _tabs.length,
-              itemBuilder: (context, index) {
-                final bool isSelected = index == currentIndex;
-                return InkWell(
-                  onTap: () => _onTabTapped(index),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          color: isSelected
-                              ? AppThemeColors.accent
-                              : Colors.transparent,
-                          width: 2,
+            const VerticalDivider(width: 1),
+            Expanded(
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: _tabs.length,
+                itemBuilder: (context, index) {
+                  final bool isSelected = index == currentIndex;
+                  // A11Y: Wrap tab in Semantics with button + selected state
+                  // so screen readers announce "Companies, selected, tab 1 of 5".
+                  return Semantics(
+                    button: true,
+                    selected: isSelected,
+                    label: '${_tabLabels[index]}, tab ${index + 1} of ${_tabs.length}',
+                    child: InkWell(
+                      onTap: () => _onTabTapped(index),
+                      focusColor: AppThemeColors.accent.withValues(alpha: 0.2),
+                      highlightColor: AppThemeColors.accent.withValues(alpha: 0.1),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        decoration: BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(
+                              color: isSelected
+                                  ? AppThemeColors.accent
+                                  : Colors.transparent,
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _tabIcons[index],
+                              size: AppSpacing.iconSize + 1,
+                              color: isSelected
+                                  ? AppThemeColors.textPrimary
+                                  : AppThemeColors.textSecondary,
+                            ),
+                            const SizedBox(width: AppSpacing.md),
+                            Text(
+                              _tabLabels[index],
+                              style: AppTypography.labelSmall.copyWith(
+                                color: isSelected
+                                    ? AppThemeColors.textPrimary
+                                    : AppThemeColors.textSecondary,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          _tabIcons[index],
-                          size: AppSpacing.iconSize + 1,
-                          color: isSelected
-                              ? AppThemeColors.textPrimary
-                              : AppThemeColors.textSecondary,
-                        ),
-                        const SizedBox(width: AppSpacing.md),
-                        Text(
-                          _tabLabels[index],
-                          style: AppTypography.labelSmall.copyWith(
-                            color: isSelected
-                                ? AppThemeColors.textPrimary
-                                : AppThemeColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

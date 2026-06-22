@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:mocktail/mocktail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -12,23 +14,139 @@ class MockSupabaseClient extends Mock implements SupabaseClient {}
 
 class MockGoTrueClient extends Mock implements GoTrueClient {}
 
-class MockSupabaseQueryBuilder extends Mock implements SupabaseQueryBuilder {}
-
-class MockPostgrestFilterBuilder<T> extends Mock
-    implements PostgrestFilterBuilder<T> {}
-
-class MockPostgrestTransformBuilder<T> extends Mock
-    implements PostgrestTransformBuilder<T> {}
-
 class MockRealtimeClient extends Mock implements RealtimeClient {}
 
 class MockChannel extends Mock implements RealtimeChannel {}
+
+class MockSupabaseQueryBuilder extends Mock implements SupabaseQueryBuilder {}
+
+/// Postgrest builders implement [Future<T>]. Dart's `await` protocol calls
+/// [then] and expects the *callback* to be invoked with the result data.
+/// mocktail's [thenAnswer] only provides a return value — it doesn't invoke
+/// the callback — so `await mockBuilder` deadlocks.
+///
+/// The fix: override [then] to stash the response data and properly invoke
+/// the onValue callback, just like a real Future would.
+// ignore: must_be_immutable
+class MockPostgrestFilterBuilder<T> extends Mock
+    implements PostgrestFilterBuilder<T> {
+  Object? _stubData;
+  bool _hasStub = false;
+  bool _isError = false;
+
+  /// Configure what this mock returns when awaited.
+  void stubFuture(dynamic data) {
+    _stubData = data;
+    _hasStub = true;
+    _isError = false;
+  }
+
+  /// Configure this mock to throw when awaited.
+  void stubFutureError(Object error) {
+    _stubData = error;
+    _hasStub = true;
+    _isError = true;
+  }
+
+  @override
+  Future<T1> then<T1>(
+    FutureOr<T1> Function(T value) onValue, {
+    Function? onError,
+  }) {
+    if (!_hasStub) {
+      return Completer<T1>().future; // never completes
+    }
+    if (_isError) {
+      if (onError != null) {
+        try {
+          final result = onError(_stubData, StackTrace.current);
+          if (result is Future<T1>) return result;
+          return Future<T1>.value(result as T1);
+        } catch (e) {
+          return Future<T1>.error(e);
+        }
+      }
+      return Future<T1>.error(_stubData!);
+    }
+    try {
+      // Ensure list data has correct generic type to avoid
+      // List<dynamic> vs List<Map<String, dynamic>> runtime errors.
+      dynamic data = _stubData;
+      data ??= <Map<String, dynamic>>[];
+      if (data is List && data.isEmpty) {
+        data = <Map<String, dynamic>>[];
+      }
+      // ignore: avoid_as
+      final result = onValue(data as T);
+      if (result is Future<T1>) return result;
+      // ignore: avoid_as
+      return Future<T1>.value(result as dynamic);
+    } catch (e) {
+      return Future<T1>.error(e);
+    }
+  }
+}
+
+// ignore: must_be_immutable
+class MockPostgrestTransformBuilder<T> extends Mock
+    implements PostgrestTransformBuilder<T> {
+  Object? _stubData;
+  bool _hasStub = false;
+  bool _isError = false;
+
+  void stubFuture(dynamic data) {
+    _stubData = data;
+    _hasStub = true;
+    _isError = false;
+  }
+
+  void stubFutureError(Object error) {
+    _stubData = error;
+    _hasStub = true;
+    _isError = true;
+  }
+
+  @override
+  Future<T1> then<T1>(
+    FutureOr<T1> Function(T value) onValue, {
+    Function? onError,
+  }) {
+    if (!_hasStub) {
+      return Completer<T1>().future;
+    }
+    if (_isError) {
+      if (onError != null) {
+        try {
+          final result = onError(_stubData, StackTrace.current);
+          if (result is Future<T1>) return result;
+          return Future<T1>.value(result as T1);
+        } catch (e) {
+          return Future<T1>.error(e);
+        }
+      }
+      return Future<T1>.error(_stubData!);
+    }
+    try {
+      dynamic data = _stubData;
+      data ??= <Map<String, dynamic>>[];
+      if (data is List && data.isEmpty) {
+        data = <Map<String, dynamic>>[];
+      }
+      // ignore: avoid_as
+      final result = onValue(data as T);
+      if (result is Future<T1>) return result;
+      // ignore: avoid_as
+      return Future<T1>.value(result as dynamic);
+    } catch (e) {
+      return Future<T1>.error(e);
+    }
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Test Data Factories
 // ---------------------------------------------------------------------------
 
-/// Creates a [PriceData] with sensible defaults. Override any field as needed.
 PriceData createPriceData({
   String symbol = 'AAPL',
   double price = 150.00,
@@ -59,7 +177,6 @@ PriceData createPriceData({
   );
 }
 
-/// Creates a [DataOrigin] with sensible defaults.
 DataOrigin createDataOrigin({
   String sourceLabel = 'Twelve Data',
   DataLatencyClass latencyClass = DataLatencyClass.delayed,
@@ -78,7 +195,6 @@ DataOrigin createDataOrigin({
   );
 }
 
-/// Creates a raw JSON map matching the shape expected by [PriceData.fromJson].
 Map<String, dynamic> createPriceDataJson({
   String symbol = 'AAPL',
   double price = 150.00,
@@ -115,14 +231,6 @@ Map<String, dynamic> createPriceDataJson({
 // Mock Supabase Setup Helper
 // ---------------------------------------------------------------------------
 
-/// Returns a fully wired [MockSupabaseClient] with common stubs.
-///
-/// Usage in tests:
-/// ```dart
-/// final client = createMockSupabaseClient();
-/// // Then override specific stubs as needed:
-/// when(() => client.from('watchlists')).thenReturn(mockBuilder);
-/// ```
 MockSupabaseClient createMockSupabaseClient() {
   final client = MockSupabaseClient();
   final auth = MockGoTrueClient();

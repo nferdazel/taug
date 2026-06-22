@@ -7,6 +7,7 @@ import '../../../../core/schema/app_schema.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/error_sanitizer.dart';
 
 class ScreenerPage extends StatefulWidget {
   const ScreenerPage({super.key});
@@ -56,7 +57,7 @@ class _ScreenerPageState extends State<ScreenerPage> {
       });
     } catch (e) {
       setState(() {
-        _error = e.toString();
+        _error = ErrorSanitizer.message(e);
         _isLoading = false;
       });
     }

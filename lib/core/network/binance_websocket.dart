@@ -5,6 +5,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 class BinanceWebSocketService {
   WebSocketChannel? _channel;
+  StreamSubscription<dynamic>? _channelSubscription;
   final Map<String, StreamController<Map<String, dynamic>>> _controllers = {};
   final Map<String, StreamSubscription<dynamic>> _subscriptions = {};
   Timer? _reconnectTimer;
@@ -21,7 +22,7 @@ class BinanceWebSocketService {
 
     _reconnectAttempts = 0;
 
-    _channel!.stream.listen(
+    _channelSubscription = _channel!.stream.listen(
       (data) {
         _reconnectAttempts = 0;
         final json = jsonDecode(data as String) as Map<String, dynamic>;
@@ -113,6 +114,8 @@ class BinanceWebSocketService {
 
   void _handleDisconnect() {
     _reconnectTimer?.cancel();
+    _channelSubscription?.cancel();
+    _channelSubscription = null;
     _channel = null;
 
     if (_reconnectAttempts < _maxReconnectAttempts) {
@@ -129,6 +132,8 @@ class BinanceWebSocketService {
 
   void disconnect() {
     _reconnectTimer?.cancel();
+    _channelSubscription?.cancel();
+    _channelSubscription = null;
     for (final sub in _subscriptions.values) {
       sub.cancel();
     }

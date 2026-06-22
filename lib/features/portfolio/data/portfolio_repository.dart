@@ -92,6 +92,13 @@ class PortfolioRepository {
     required double avgPrice,
   }) async {
     try {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) {
+        return const Result.failure(
+          AuthFailure(message: 'User not authenticated'),
+        );
+      }
+
       await _client
           .from(AppSchema.portfolioHoldings)
           .update({
@@ -99,7 +106,8 @@ class PortfolioRepository {
             'avg_price': avgPrice,
             'updated_at': DateTime.now().toIso8601String(),
           })
-          .eq('id', holdingId);
+          .eq('id', holdingId)
+          .eq('user_id', userId);
 
       return const Result.success(null);
     } catch (e) {
@@ -110,10 +118,18 @@ class PortfolioRepository {
 
   Future<Result<void>> removeHolding(String holdingId) async {
     try {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) {
+        return const Result.failure(
+          AuthFailure(message: 'User not authenticated'),
+        );
+      }
+
       await _client
           .from(AppSchema.portfolioHoldings)
           .delete()
-          .eq('id', holdingId);
+          .eq('id', holdingId)
+          .eq('user_id', userId);
 
       return const Result.success(null);
     } catch (e) {

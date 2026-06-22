@@ -41,6 +41,18 @@ class _ChartPageState extends State<ChartPage> {
     _loadData();
   }
 
+  @override
+  void dispose() {
+    _candles.dispose();
+    _currentPrice.dispose();
+    _isLoading.dispose();
+    _error.dispose();
+    _selectedSymbol.dispose();
+    _selectedInterval.dispose();
+    _selectedChartType.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadData() async {
     final requestId = ++_requestId;
     _isLoading.value = true;

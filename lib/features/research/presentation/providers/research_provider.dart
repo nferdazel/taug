@@ -21,6 +21,17 @@ class ResearchProvider {
   ResearchProvider({ResearchRepository? repository})
       : _repository = repository ?? ResearchRepository();
 
+  void dispose() {
+    companies.dispose();
+    theses.dispose();
+    notes.dispose();
+    questions.dispose();
+    isLoading.dispose();
+    error.dispose();
+    searchQuery.dispose();
+    activeTab.dispose();
+  }
+
   Future<void> loadAll() async {
     isLoading.value = true;
     error.value = null;

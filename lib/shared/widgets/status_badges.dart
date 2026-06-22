@@ -236,18 +236,22 @@ class StanceBadge extends StatelessWidget {
     final double fontSize = isSmall ? 10 : 11;
     final double radius = isSmall ? 3 : 4;
 
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(radius),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: fontSize,
-          fontWeight: FontWeight.w600,
-          color: color,
+    // A11Y: Wrap in Semantics so screen readers announce stance.
+    return Semantics(
+      label: 'Stance: $label',
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(radius),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: fontSize,
+            fontWeight: FontWeight.w600,
+            color: color,
+          ),
         ),
       ),
     );
@@ -274,15 +278,19 @@ class PriorityBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(3),
-      ),
-      child: Text(
-        priority.toUpperCase(),
-        style: AppTypography.microBadge.copyWith(color: color),
+    // A11Y: Wrap in Semantics so screen readers announce priority level.
+    return Semantics(
+      label: 'Priority: ${priority.toUpperCase()}',
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(3),
+        ),
+        child: Text(
+          priority.toUpperCase(),
+          style: AppTypography.microBadge.copyWith(color: color),
+        ),
       ),
     );
   }

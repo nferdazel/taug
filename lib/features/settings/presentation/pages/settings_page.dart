@@ -41,7 +41,10 @@ class _SettingsPageState extends State<SettingsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('SETTINGS', style: AppTypography.monoSection),
+              Semantics(
+                header: true,
+                child: const Text('SETTINGS', style: AppTypography.monoSection),
+              ),
               const SizedBox(height: 12),
               _buildProfileCard(),
               const SizedBox(height: 8),
@@ -69,7 +72,10 @@ class _SettingsPageState extends State<SettingsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('PROFILE', style: AppTypography.monoSection),
+            Semantics(
+              header: true,
+              child: const Text('PROFILE', style: AppTypography.monoSection),
+            ),
             const SizedBox(height: 6),
             _buildRow('Username', _settingsProvider.username.value),
             const SizedBox(height: 4),
@@ -91,7 +97,10 @@ class _SettingsPageState extends State<SettingsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('TIMEZONE', style: AppTypography.monoSection),
+          Semantics(
+            header: true,
+            child: const Text('TIMEZONE', style: AppTypography.monoSection),
+          ),
           const SizedBox(height: 6),
           SignalBuilder(builder: (_) {
             return Row(
@@ -153,7 +162,10 @@ class _SettingsPageState extends State<SettingsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('DENSITY', style: AppTypography.monoSection),
+          Semantics(
+            header: true,
+            child: const Text('DENSITY', style: AppTypography.monoSection),
+          ),
           const SizedBox(height: 6),
           SignalBuilder(builder: (_) {
             return Row(
@@ -177,24 +189,34 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  // A11Y: Replace GestureDetector with InkWell for keyboard accessibility.
+  // Add Semantics with button + selected state.
   Widget _buildDensityChip(String label, String value, bool selected) {
-    return GestureDetector(
-      onTap: () => _settingsProvider.updateDensityMode(value),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: selected ? AppThemeColors.accent : Colors.transparent,
-          border: Border.all(
-            color: selected ? AppThemeColors.accent : AppThemeColors.border,
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      child: InkWell(
+        onTap: () => _settingsProvider.updateDensityMode(value),
+        borderRadius: BorderRadius.circular(3),
+        focusColor: AppThemeColors.accent.withValues(alpha: 0.2),
+        highlightColor: AppThemeColors.accent.withValues(alpha: 0.1),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: selected ? AppThemeColors.accent : Colors.transparent,
+            border: Border.all(
+              color: selected ? AppThemeColors.accent : AppThemeColors.border,
+            ),
+            borderRadius: BorderRadius.circular(3),
           ),
-          borderRadius: BorderRadius.circular(3),
-        ),
-        child: Text(
-          label,
-          style: AppTypography.monoLabel.copyWith(
-            color: selected
-                ? AppThemeColors.textPrimary
-                : AppThemeColors.textSecondary,
+          child: Text(
+            label,
+            style: AppTypography.monoLabel.copyWith(
+              color: selected
+                  ? AppThemeColors.textPrimary
+                  : AppThemeColors.textSecondary,
+            ),
           ),
         ),
       ),

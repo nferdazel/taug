@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../utils/error_sanitizer.dart';
+
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/companies/presentation/pages/companies_workspace_page.dart';
@@ -65,7 +67,7 @@ final router = GoRouter(
             const SizedBox(height: 16),
             const Text('Page not found', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
-            Text(state.error.toString(), textAlign: TextAlign.center),
+            Text(ErrorSanitizer.message(state.error!), textAlign: TextAlign.center),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () => context.go('/companies'),

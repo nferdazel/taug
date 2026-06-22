@@ -32,6 +32,23 @@ class WorkspaceProvider {
       : _repository = repository ?? WorkspaceRepository(),
         _portfolioRepository = portfolioRepository ?? PortfolioRepository();
 
+  void dispose() {
+    profile.dispose();
+    metrics.dispose();
+    statements.dispose();
+    notes.dispose();
+    theses.dispose();
+    questions.dispose();
+    qualityDetail.dispose();
+    freshnessStatus.dispose();
+    isLoading.dispose();
+    error.dispose();
+    mutationError.dispose();
+    activeTab.dispose();
+    companyLessons.dispose();
+    isLoadingLessons.dispose();
+  }
+
   Future<void> loadAll() async {
     isLoading.value = true;
     error.value = null;

@@ -17,24 +17,34 @@ class AppChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: selected
-              ? AppThemeColors.accent.withValues(alpha: 0.15)
-              : AppThemeColors.surface,
-          borderRadius: BorderRadius.circular(4),
-          border: Border.all(
-            color: selected ? AppThemeColors.accent : AppThemeColors.border,
+    // A11Y: Use Semantics with button + selected state for screen readers.
+    // InkWell provides keyboard focus and activation via Enter/Space.
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(4),
+        focusColor: AppThemeColors.accent.withValues(alpha: 0.2),
+        highlightColor: AppThemeColors.accent.withValues(alpha: 0.1),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: selected
+                ? AppThemeColors.accent.withValues(alpha: 0.15)
+                : AppThemeColors.surface,
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(
+              color: selected ? AppThemeColors.accent : AppThemeColors.border,
+            ),
           ),
-        ),
-        child: Text(
-          label,
-          style: AppTypography.caption.copyWith(
-            color: selected ? AppThemeColors.accent : AppThemeColors.textSecondary,
-            fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+          child: Text(
+            label,
+            style: AppTypography.caption.copyWith(
+              color: selected ? AppThemeColors.accent : AppThemeColors.textSecondary,
+              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+            ),
           ),
         ),
       ),

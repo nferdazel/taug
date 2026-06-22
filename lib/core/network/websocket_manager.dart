@@ -4,6 +4,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 class WebSocketManager {
   WebSocketChannel? _channel;
+  StreamSubscription<dynamic>? _channelSubscription;
   final Map<String, StreamController<dynamic>> _controllers = {};
   final Map<String, StreamSubscription<dynamic>> _subscriptions = {};
   Timer? _heartbeatTimer;
@@ -18,7 +19,7 @@ class WebSocketManager {
     _reconnectAttempts = 0;
     _startHeartbeat();
 
-    _channel!.stream.listen(
+    _channelSubscription = _channel!.stream.listen(
       (data) {
         _reconnectAttempts = 0;
         for (final controller in _controllers.values) {
@@ -55,6 +56,8 @@ class WebSocketManager {
   void disconnect() {
     _heartbeatTimer?.cancel();
     _reconnectTimer?.cancel();
+    _channelSubscription?.cancel();
+    _channelSubscription = null;
     for (final sub in _subscriptions.values) {
       sub.cancel();
     }
@@ -76,6 +79,8 @@ class WebSocketManager {
 
   void _handleDisconnect(String url) {
     _heartbeatTimer?.cancel();
+    _channelSubscription?.cancel();
+    _channelSubscription = null;
     _channel = null;
 
     if (_reconnectAttempts < _maxReconnectAttempts) {

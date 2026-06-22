@@ -8,6 +8,7 @@ class AppCard extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final double? width;
   final double? height;
+  final String? semanticLabel;
 
   const AppCard({
     super.key,
@@ -16,6 +17,7 @@ class AppCard extends StatelessWidget {
     this.padding,
     this.width,
     this.height,
+    this.semanticLabel,
   });
 
   @override
@@ -26,16 +28,22 @@ class AppCard extends StatelessWidget {
       child: Material(
         color: AppThemeColors.surface,
         borderRadius: BorderRadius.circular(6),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(6),
-          child: Container(
-            padding: padding ?? const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: AppThemeColors.border),
+        child: Semantics(
+          button: onTap != null,
+          label: semanticLabel,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(6),
+            focusColor: AppThemeColors.accent.withValues(alpha: 0.2),
+            highlightColor: AppThemeColors.accent.withValues(alpha: 0.1),
+            child: Container(
+              padding: padding ?? const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: AppThemeColors.border),
+              ),
+              child: child,
             ),
-            child: child,
           ),
         ),
       ),

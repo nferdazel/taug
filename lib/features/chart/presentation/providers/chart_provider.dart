@@ -17,6 +17,15 @@ class ChartProvider {
   ChartProvider({ChartRepository? repository})
     : _repository = repository ?? ChartRepository();
 
+  void dispose() {
+    selectedSymbol.dispose();
+    selectedInterval.dispose();
+    candles.dispose();
+    currentPrice.dispose();
+    isLoading.dispose();
+    error.dispose();
+  }
+
   Future<void> loadChartData() async {
     isLoading.value = true;
     error.value = null;

@@ -34,7 +34,11 @@ class QualityBreakdownPopover extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Text('DATA QUALITY', style: AppTypography.monoSection),
+              // A11Y: Mark section header
+              Semantics(
+                header: true,
+                child: const Text('DATA QUALITY', style: AppTypography.monoSection),
+              ),
               const Spacer(),
               if (quality.scoreDate != null)
                 Text(
@@ -47,22 +51,25 @@ class QualityBreakdownPopover extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           // Overall score
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppThemeColors.surfaceMuted,
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: AppThemeColors.border),
-            ),
-            child: Row(
-              children: [
-                Text(
-                  'Overall',
-                  style: AppTypography.body.copyWith(fontWeight: FontWeight.w600),
-                ),
-                const Spacer(),
-                _QualityScoreBadge(score: quality.overallScore),
-              ],
+          Semantics(
+            label: 'Overall quality score: ${(quality.overallScore * 100).round()} percent',
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppThemeColors.surfaceMuted,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: AppThemeColors.border),
+              ),
+              child: Row(
+                children: [
+                  Text(
+                    'Overall',
+                    style: AppTypography.body.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  const Spacer(),
+                  _QualityScoreBadge(score: quality.overallScore),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 12),
@@ -117,46 +124,52 @@ class QualityBreakdownPopover extends StatelessWidget {
 
   Widget _buildComponentRow(String label, double? score) {
     if (score == null) {
-      return Row(
-        children: [
-          Expanded(
-            child: Text(label, style: AppTypography.caption),
-          ),
-          Text('N/A', style: AppTypography.monoMeta.copyWith(color: AppThemeColors.textTertiary)),
-        ],
+      return Semantics(
+        label: '$label: not available',
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(label, style: AppTypography.caption),
+            ),
+            Text('N/A', style: AppTypography.monoMeta.copyWith(color: AppThemeColors.textTertiary)),
+          ],
+        ),
       );
     }
 
     final color = _getScoreColor(score);
     final percentage = (score * 100).toInt();
 
-    return Row(
-      children: [
-        SizedBox(
-          width: 140,
-          child: Text(label, style: AppTypography.caption),
-        ),
-        Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(2),
-            child: LinearProgressIndicator(
-              value: score,
-              backgroundColor: AppThemeColors.border,
-              valueColor: AlwaysStoppedAnimation<Color>(color),
-              minHeight: 6,
+    return Semantics(
+      label: '$label: $percentage percent',
+      child: Row(
+        children: [
+          SizedBox(
+            width: 140,
+            child: Text(label, style: AppTypography.caption),
+          ),
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(2),
+              child: LinearProgressIndicator(
+                value: score,
+                backgroundColor: AppThemeColors.border,
+                valueColor: AlwaysStoppedAnimation<Color>(color),
+                minHeight: 6,
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: 8),
-        SizedBox(
-          width: 36,
-          child: Text(
-            '$percentage%',
-            style: AppTypography.monoMeta.copyWith(color: color),
-            textAlign: TextAlign.right,
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 36,
+            child: Text(
+              '$percentage%',
+              style: AppTypography.monoMeta.copyWith(color: color),
+              textAlign: TextAlign.right,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -216,6 +229,7 @@ class _QualityScoreBadge extends StatelessWidget {
 
 /// Shows quality breakdown in a tooltip/popover.
 /// Wrap any widget with this to show breakdown on tap.
+// A11Y: Replace GestureDetector with InkWell for keyboard accessibility.
 class QualityBreakdownTooltip extends StatelessWidget {
   final QualityScoreDetail quality;
   final Widget child;
@@ -228,9 +242,15 @@ class QualityBreakdownTooltip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => _showPopover(context),
-      child: child,
+    return Semantics(
+      button: true,
+      label: 'Show quality breakdown',
+      child: InkWell(
+        onTap: () => _showPopover(context),
+        borderRadius: BorderRadius.circular(4),
+        focusColor: AppThemeColors.accent.withValues(alpha: 0.2),
+        child: child,
+      ),
     );
   }
 

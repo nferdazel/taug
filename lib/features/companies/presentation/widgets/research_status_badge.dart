@@ -40,10 +40,14 @@ class ResearchStatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppBadge(
-      label: status.label,
-      color: status.color,
-      icon: status.icon,
+    // A11Y: Wrap in Semantics so screen readers announce the research status.
+    return Semantics(
+      label: 'Research status: ${status.label}',
+      child: AppBadge(
+        label: status.label,
+        color: status.color,
+        icon: status.icon,
+      ),
     );
   }
 }

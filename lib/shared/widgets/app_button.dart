@@ -23,37 +23,45 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // A11Y: Build semantic label including loading state.
+    final String semanticLabel = isLoading ? '$label, loading' : label;
+
     return SizedBox(
       height: 32,
-      child: switch (variant) {
-        AppButtonVariant.primary => ElevatedButton.icon(
-            onPressed: isLoading ? null : onPressed,
-            icon: _buildIcon(),
-            label: _buildLabel(),
-          ),
-        AppButtonVariant.secondary => OutlinedButton.icon(
-            onPressed: isLoading ? null : onPressed,
-            icon: _buildIcon(),
-            label: _buildLabel(),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(AppColors.textPrimary),
-              side: const BorderSide(color: Color(AppColors.border)),
+      child: Semantics(
+        button: true,
+        enabled: !isLoading && onPressed != null,
+        label: semanticLabel,
+        child: switch (variant) {
+          AppButtonVariant.primary => ElevatedButton.icon(
+              onPressed: isLoading ? null : onPressed,
+              icon: _buildIcon(),
+              label: _buildLabel(),
             ),
-          ),
-        AppButtonVariant.ghost => TextButton.icon(
-            onPressed: isLoading ? null : onPressed,
-            icon: _buildIcon(),
-            label: _buildLabel(),
-          ),
-        AppButtonVariant.danger => ElevatedButton.icon(
-            onPressed: isLoading ? null : onPressed,
-            icon: _buildIcon(),
-            label: _buildLabel(),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(AppColors.critical),
+          AppButtonVariant.secondary => OutlinedButton.icon(
+              onPressed: isLoading ? null : onPressed,
+              icon: _buildIcon(),
+              label: _buildLabel(),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(AppColors.textPrimary),
+                side: const BorderSide(color: Color(AppColors.border)),
+              ),
             ),
-          ),
-      },
+          AppButtonVariant.ghost => TextButton.icon(
+              onPressed: isLoading ? null : onPressed,
+              icon: _buildIcon(),
+              label: _buildLabel(),
+            ),
+          AppButtonVariant.danger => ElevatedButton.icon(
+              onPressed: isLoading ? null : onPressed,
+              icon: _buildIcon(),
+              label: _buildLabel(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(AppColors.critical),
+              ),
+            ),
+        },
+      ),
     );
   }
 

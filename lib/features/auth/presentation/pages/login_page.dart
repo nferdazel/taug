@@ -42,12 +42,15 @@ class _LoginPageState extends State<LoginPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  AppStrings.appName,
-                  style: AppTypography.displayLarge.copyWith(
-                    color: AppThemeColors.accent,
+                Semantics(
+                  header: true,
+                  child: Text(
+                    AppStrings.appName,
+                    style: AppTypography.displayLarge.copyWith(
+                      color: AppThemeColors.accent,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -58,52 +61,69 @@ class _LoginPageState extends State<LoginPage> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 32),
-                TextField(
-                  controller: _usernameController,
-                  decoration: const InputDecoration(
-                    labelText: AppStrings.username,
-                    hintText: 'Enter your username',
+                Semantics(
+                  label: 'Username',
+                  textField: true,
+                  child: TextField(
+                    controller: _usernameController,
+                    decoration: const InputDecoration(
+                      labelText: AppStrings.username,
+                      hintText: 'Enter your username',
+                    ),
+                    textInputAction: TextInputAction.next,
+                    enabled: !isLoading,
                   ),
-                  textInputAction: TextInputAction.next,
-                  enabled: !isLoading,
                 ),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: _passwordController,
-                  decoration: const InputDecoration(
-                    labelText: AppStrings.password,
-                    hintText: 'Enter your password',
+                Semantics(
+                  label: 'Password',
+                  textField: true,
+                  child: TextField(
+                    controller: _passwordController,
+                    decoration: const InputDecoration(
+                      labelText: AppStrings.password,
+                      hintText: 'Enter your password',
+                    ),
+                    obscureText: true,
+                    textInputAction: TextInputAction.done,
+                    enabled: !isLoading,
+                    onSubmitted: (_) => _handleSignIn(),
                   ),
-                  obscureText: true,
-                  textInputAction: TextInputAction.done,
-                  enabled: !isLoading,
-                  onSubmitted: (_) => _handleSignIn(),
                 ),
                 if (error != null) ...[
                   const SizedBox(height: 12),
-                  Text(
-                    error,
-                    style: AppTypography.bodySmall.copyWith(
-                      color: AppThemeColors.bearish,
+                  Semantics(
+                    liveRegion: true,
+                    label: 'Login error: $error',
+                    child: Text(
+                      error,
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppThemeColors.bearish,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    textAlign: TextAlign.center,
                   ),
                 ],
                 const SizedBox(height: 16),
                 SizedBox(
                   height: 36,
-                  child: ElevatedButton(
-                    onPressed: isLoading ? null : _handleSignIn,
-                    child: isLoading
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: AppThemeColors.textPrimary,
-                            ),
-                          )
-                        : const Text(AppStrings.loginButton),
+                  child: Semantics(
+                    label: isLoading ? 'Signing in' : 'Sign in',
+                    button: true,
+                    enabled: !isLoading,
+                    child: ElevatedButton(
+                      onPressed: isLoading ? null : _handleSignIn,
+                      child: isLoading
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppThemeColors.textPrimary,
+                              ),
+                            )
+                          : const Text(AppStrings.loginButton),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),

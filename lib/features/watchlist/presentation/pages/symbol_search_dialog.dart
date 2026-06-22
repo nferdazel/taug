@@ -29,20 +29,27 @@ class _SymbolSearchDialogState extends State<SymbolSearchDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       backgroundColor: AppThemeColors.surface,
-      title: const Text(AppStrings.addSymbol, style: AppTypography.titleMedium),
+      title: Semantics(
+        header: true,
+        child: const Text(AppStrings.addSymbol, style: AppTypography.titleMedium),
+      ),
       content: SizedBox(
         width: 400,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(
-              controller: _controller,
-              decoration: const InputDecoration(
-                hintText: 'Search symbol or name...',
-                prefixIcon: Icon(Icons.search, size: 16),
+            Semantics(
+              label: 'Search for a stock symbol or company name',
+              textField: true,
+              child: TextField(
+                controller: _controller,
+                decoration: const InputDecoration(
+                  hintText: 'Search symbol or name...',
+                  prefixIcon: Icon(Icons.search, size: 16),
+                ),
+                autofocus: true,
+                onChanged: (value) => _provider.search(value),
               ),
-              autofocus: true,
-              onChanged: (value) => _provider.search(value),
             ),
             const SizedBox(height: 8),
             _buildResults(),
@@ -81,10 +88,14 @@ class _SymbolSearchDialogState extends State<SymbolSearchDialog> {
       if (error != null) {
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Text(
-            error,
-            style: AppTypography.bodySmall.copyWith(
-              color: AppThemeColors.bearish,
+          child: Semantics(
+            liveRegion: true,
+            label: 'Error: $error',
+            child: Text(
+              error,
+              style: AppTypography.bodySmall.copyWith(
+                color: AppThemeColors.bearish,
+              ),
             ),
           ),
         );
@@ -99,37 +110,45 @@ class _SymbolSearchDialogState extends State<SymbolSearchDialog> {
         );
       }
 
-      return SizedBox(
-        height: 250,
-        child: ListView.builder(
-          itemCount: results.length,
-          itemBuilder: (context, index) {
-            final result = results[index];
-            return ListTile(
-              dense: true,
-              title: Text(
-                result.symbol,
-                style: AppTypography.monoSmall.copyWith(
-                  fontWeight: FontWeight.w600,
+      return Semantics(
+        label: '${results.length} search results found',
+        child: SizedBox(
+          height: 250,
+          child: ListView.builder(
+            itemCount: results.length,
+            itemBuilder: (context, index) {
+              final result = results[index];
+              // A11Y: Add semantic label for each search result.
+              return Semantics(
+                button: true,
+                label: 'Add ${result.symbol} - ${result.name} from ${result.exchange}',
+                child: ListTile(
+                  dense: true,
+                  title: Text(
+                    result.symbol,
+                    style: AppTypography.monoSmall.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  subtitle: Text(
+                    '${result.name} • ${result.exchange}',
+                    style: AppTypography.monoTiny,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  trailing: const Icon(Icons.add, size: 14),
+                  onTap: () async {
+                    final symbolId = await _provider.addToWatchlist(
+                      widget.watchlistId,
+                      result,
+                    );
+                    if (symbolId != null && context.mounted) {
+                      Navigator.pop(context);
+                    }
+                  },
                 ),
-              ),
-              subtitle: Text(
-                '${result.name} • ${result.exchange}',
-                style: AppTypography.monoTiny,
-                overflow: TextOverflow.ellipsis,
-              ),
-              trailing: const Icon(Icons.add, size: 14),
-              onTap: () async {
-                final symbolId = await _provider.addToWatchlist(
-                  widget.watchlistId,
-                  result,
-                );
-                if (symbolId != null && context.mounted) {
-                  Navigator.pop(context);
-                }
-              },
-            );
-          },
+              );
+            },
+          ),
         ),
       );
     });

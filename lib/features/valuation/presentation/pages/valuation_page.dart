@@ -5,6 +5,7 @@ import '../../../../core/schema/app_schema.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/error_sanitizer.dart';
 
 class ValuationPage extends StatefulWidget {
   const ValuationPage({super.key});
@@ -42,7 +43,7 @@ class _ValuationPageState extends State<ValuationPage> {
       });
     } catch (e) {
       setState(() {
-        _error = e.toString();
+        _error = ErrorSanitizer.message(e);
         _isLoading = false;
       });
     }

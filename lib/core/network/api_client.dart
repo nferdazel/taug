@@ -56,6 +56,7 @@ class ApiClient {
     } on TimeoutException {
       return const Result.failure(NetworkFailure(message: 'Request timed out'));
     } catch (e) {
+      debugPrint('[ApiClient] get error: $e');
       return Result.failure(NetworkFailure(message: e.toString()));
     }
   }
@@ -91,6 +92,7 @@ class ApiClient {
     } on TimeoutException {
       return const Result.failure(NetworkFailure(message: 'Request timed out'));
     } catch (e) {
+      debugPrint('[ApiClient] getList error: $e');
       return Result.failure(NetworkFailure(message: e.toString()));
     }
   }

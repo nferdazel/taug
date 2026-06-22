@@ -18,6 +18,10 @@ abstract final class AppTheme {
         onSurface: Color(AppColors.textPrimary),
         onError: Color(AppColors.textPrimary),
       ),
+      // A11Y: Global focus and highlight colors for keyboard navigation
+      focusColor: const Color(AppColors.accent).withValues(alpha: 0.3),
+      highlightColor: const Color(AppColors.accent).withValues(alpha: 0.1),
+      hoverColor: const Color(AppColors.accent).withValues(alpha: 0.08),
       dividerColor: const Color(AppColors.border),
       visualDensity: VisualDensity.compact,
       iconTheme: const IconThemeData(
@@ -79,7 +83,16 @@ abstract final class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(4),
-          borderSide: const BorderSide(color: Color(AppColors.accent)),
+          borderSide: const BorderSide(color: Color(AppColors.accent), width: 2),
+        ),
+        // A11Y: Error border for validation feedback
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(4),
+          borderSide: const BorderSide(color: Color(AppColors.bearish)),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(4),
+          borderSide: const BorderSide(color: Color(AppColors.bearish), width: 2),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 12,
@@ -104,6 +117,13 @@ abstract final class AppTheme {
             fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
+          // A11Y: Focus indicator border for ElevatedButton
+          side: WidgetStateBorderSide.resolveWith((states) {
+            if (states.contains(WidgetState.focused)) {
+              return const BorderSide(color: Color(AppColors.accent), width: 2);
+            }
+            return const BorderSide(color: Colors.transparent);
+          }),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
@@ -116,6 +136,35 @@ abstract final class AppTheme {
             fontSize: 12,
             fontWeight: FontWeight.w500,
           ),
+          // A11Y: Focus indicator border for TextButton
+          side: WidgetStateBorderSide.resolveWith((states) {
+            if (states.contains(WidgetState.focused)) {
+              return const BorderSide(color: Color(AppColors.accent), width: 2);
+            }
+            return const BorderSide(color: Colors.transparent);
+          }),
+        ),
+      ),
+      // A11Y: OutlinedButton with focus indicator
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: const Color(AppColors.textPrimary),
+          minimumSize: const Size(0, AppSpacing.buttonHeight),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          textStyle: const TextStyle(
+            fontFamily: 'IBM Plex Sans',
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+          side: const BorderSide(color: Color(AppColors.border)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+        ).copyWith(
+          side: WidgetStateBorderSide.resolveWith((states) {
+            if (states.contains(WidgetState.focused)) {
+              return const BorderSide(color: Color(AppColors.accent), width: 2);
+            }
+            return const BorderSide(color: Color(AppColors.border));
+          }),
         ),
       ),
       dataTableTheme: const DataTableThemeData(
