@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:signals/signals.dart';
 
+import '../../../../core/utils/error_sanitizer.dart';
 import '../../../../shared/models/price_data.dart';
 import '../../data/watchlist_repository.dart';
 import '../../domain/watchlist_entity.dart';
@@ -53,7 +53,7 @@ class WatchlistProvider {
         await loadWatchlistItems(result.data!.first.id);
       }
     } else {
-      error.value = result.error.toString();
+      error.value = ErrorSanitizer.message(result.error);
     }
 
     isLoading.value = false;
@@ -70,7 +70,7 @@ class WatchlistProvider {
       await loadPrices();
       startAutoRefresh();
     } else {
-      error.value = result.error.toString();
+      error.value = ErrorSanitizer.message(result.error);
     }
 
     isLoading.value = false;
@@ -113,8 +113,8 @@ class WatchlistProvider {
       if (result.isSuccess) {
         await loadWatchlists();
       } else {
-        debugPrint('[WatchlistProvider] createWatchlist failed: ${result.error}');
-        error.value = result.error.toString();
+        ErrorSanitizer.debugLog('WatchlistProvider', 'createWatchlist failed: ${result.error}');
+        error.value = ErrorSanitizer.message(result.error);
       }
     } finally {
       _isMutating = false;
@@ -135,8 +135,8 @@ class WatchlistProvider {
         }
         await loadWatchlists();
       } else {
-        debugPrint('[WatchlistProvider] deleteWatchlist failed: ${result.error}');
-        error.value = result.error.toString();
+        ErrorSanitizer.debugLog('WatchlistProvider', 'deleteWatchlist failed: ${result.error}');
+        error.value = ErrorSanitizer.message(result.error);
       }
     } finally {
       _isMutating = false;
@@ -157,8 +157,8 @@ class WatchlistProvider {
       if (result.isSuccess) {
         await loadWatchlistItems(currentWatchlist.value!.id);
       } else {
-        debugPrint('[WatchlistProvider] addToWatchlist failed: ${result.error}');
-        error.value = result.error.toString();
+        ErrorSanitizer.debugLog('WatchlistProvider', 'addToWatchlist failed: ${result.error}');
+        error.value = ErrorSanitizer.message(result.error);
       }
     } finally {
       _isMutating = false;
@@ -174,8 +174,8 @@ class WatchlistProvider {
       if (result.isSuccess && currentWatchlist.value != null) {
         await loadWatchlistItems(currentWatchlist.value!.id);
       } else if (!result.isSuccess) {
-        debugPrint('[WatchlistProvider] removeFromWatchlist failed: ${result.error}');
-        error.value = result.error.toString();
+        ErrorSanitizer.debugLog('WatchlistProvider', 'removeFromWatchlist failed: ${result.error}');
+        error.value = ErrorSanitizer.message(result.error);
       }
     } finally {
       _isMutating = false;

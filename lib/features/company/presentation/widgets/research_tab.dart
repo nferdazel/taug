@@ -630,16 +630,23 @@ class ResearchTab extends StatelessWidget {
                   children: [
                     const Text('Priority: ', style: AppTypography.body),
                     ...['low', 'medium', 'high', 'critical'].map(
-                      (p) => Padding(
-                        padding: const EdgeInsets.only(left: 4),
-                        child: ChoiceChip(
-                          label: Text(p[0].toUpperCase() + p.substring(1)),
-                          selected: priority == p,
-                          onSelected: (selected) {
-                            if (selected) setDialogState(() => priority = p);
-                          },
-                        ),
-                      ),
+                      (p) {
+                        final chipColor = PriorityBadge.colorForPriority(p);
+                        return Padding(
+                          padding: const EdgeInsets.only(left: 4),
+                          child: ChoiceChip(
+                            label: Text(p[0].toUpperCase() + p.substring(1)),
+                            selected: priority == p,
+                            selectedColor: chipColor.withValues(alpha: 0.25),
+                            side: priority != p
+                                ? BorderSide(color: chipColor.withValues(alpha: 0.35))
+                                : null,
+                            onSelected: (selected) {
+                              if (selected) setDialogState(() => priority = p);
+                            },
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -684,9 +691,9 @@ class ResearchTab extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppThemeColors.surfaceMuted,
+                  color: AppThemeColors.surfaceLight,
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(color: AppThemeColors.border),
                 ),
@@ -1006,7 +1013,7 @@ class _LessonsSectionState extends State<_LessonsSection> {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: AppThemeColors.surfaceMuted,
         borderRadius: BorderRadius.circular(6),
@@ -1109,11 +1116,7 @@ class _LessonItem extends StatelessWidget {
                 ),
                 child: Text(
                   outcomeLabel,
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: outcomeColor,
-                  ),
+                  style: AppTypography.microBadge.copyWith(color: outcomeColor),
                 ),
               ),
               const SizedBox(width: 6),
@@ -1158,11 +1161,7 @@ class _ConvictionBadgeSmall extends StatelessWidget {
       ),
       child: Text(
         level.label,
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-          color: level.color,
-        ),
+        style: AppTypography.microBadge.copyWith(color: level.color),
       ),
     );
   }
@@ -1232,7 +1231,7 @@ class _QuestionCard extends StatelessWidget {
                   style: AppTypography.body.copyWith(fontWeight: FontWeight.w500),
                 ),
               ),
-              _PriorityBadge(priority: question.priority, color: priorityColor),
+              PriorityBadge(priority: question.priority, color: priorityColor),
               PopupMenuButton<String>(
                 icon: const Icon(
                   Icons.more_vert,
@@ -1311,29 +1310,4 @@ class _AnsweredQuestionCard extends StatelessWidget {
   }
 }
 
-class _PriorityBadge extends StatelessWidget {
-  final String priority;
-  final Color color;
 
-  const _PriorityBadge({required this.priority, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(right: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(3),
-      ),
-      child: Text(
-        priority.toUpperCase(),
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
-    );
-  }
-}

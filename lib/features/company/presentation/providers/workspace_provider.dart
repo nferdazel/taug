@@ -1,7 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:signals/signals.dart';
 
 import '../../../../core/errors/result.dart';
+import '../../../../core/utils/error_sanitizer.dart';
 import '../../../portfolio/data/portfolio_models.dart';
 import '../../../portfolio/data/portfolio_workspace_repository.dart';
 import '../../data/workspace_models.dart';
@@ -66,7 +66,7 @@ class WorkspaceProvider {
     if (questionsResult.isSuccess) questions.value = questionsResult.data!;
 
     if (profileResult.isFailure) {
-      error.value = profileResult.error.toString();
+      error.value = ErrorSanitizer.message(profileResult.error);
     }
 
     isLoading.value = false;
@@ -78,7 +78,7 @@ class WorkspaceProvider {
     if (result.isSuccess) {
       companyLessons.value = result.data!;
     } else {
-      debugPrint('[WorkspaceProvider] loadCompanyLessons failed: ${result.error}');
+      ErrorSanitizer.debugLog('WorkspaceProvider', 'loadCompanyLessons failed: ${result.error}');
     }
     isLoadingLessons.value = false;
   }
@@ -94,8 +94,8 @@ class WorkspaceProvider {
       if (result.isSuccess) {
         notes.value = [result.data!, ...notes];
       } else {
-        debugPrint('[WorkspaceProvider] createNote failed: ${result.error}');
-        mutationError.value = result.error.toString();
+        ErrorSanitizer.debugLog('WorkspaceProvider', 'createNote failed: ${result.error}');
+        mutationError.value = ErrorSanitizer.message(result.error);
       }
     } finally {
       _isMutating = false;
@@ -113,8 +113,8 @@ class WorkspaceProvider {
             ? CompanyNote(id: n.id, companyId: n.companyId, title: title, body: body, createdAt: n.createdAt, updatedAt: DateTime.now())
             : n).toList();
       } else {
-        debugPrint('[WorkspaceProvider] updateNote failed: ${result.error}');
-        mutationError.value = result.error.toString();
+        ErrorSanitizer.debugLog('WorkspaceProvider', 'updateNote failed: ${result.error}');
+        mutationError.value = ErrorSanitizer.message(result.error);
       }
     } finally {
       _isMutating = false;
@@ -130,8 +130,8 @@ class WorkspaceProvider {
       if (result.isSuccess) {
         notes.value = notes.where((n) => n.id != noteId).toList();
       } else {
-        debugPrint('[WorkspaceProvider] deleteNote failed: ${result.error}');
-        mutationError.value = result.error.toString();
+        ErrorSanitizer.debugLog('WorkspaceProvider', 'deleteNote failed: ${result.error}');
+        mutationError.value = ErrorSanitizer.message(result.error);
       }
     } finally {
       _isMutating = false;
@@ -149,8 +149,8 @@ class WorkspaceProvider {
       if (result.isSuccess) {
         theses.value = [result.data!, ...theses];
       } else {
-        debugPrint('[WorkspaceProvider] createThesis failed: ${result.error}');
-        mutationError.value = result.error.toString();
+        ErrorSanitizer.debugLog('WorkspaceProvider', 'createThesis failed: ${result.error}');
+        mutationError.value = ErrorSanitizer.message(result.error);
       }
     } finally {
       _isMutating = false;
@@ -170,8 +170,8 @@ class WorkspaceProvider {
             ? CompanyThesis(id: t.id, companyId: t.companyId, title: title, stance: stance, summary: summary ?? t.summary, bullCase: bullCase ?? t.bullCase, bearCase: bearCase ?? t.bearCase, assumptions: assumptions ?? t.assumptions, catalysts: catalysts ?? t.catalysts, risks: risks ?? t.risks, exitConditions: exitConditions ?? t.exitConditions, conviction: conviction ?? t.conviction, createdAt: t.createdAt, updatedAt: DateTime.now())
             : t).toList();
       } else {
-        debugPrint('[WorkspaceProvider] updateThesis failed: ${result.error}');
-        mutationError.value = result.error.toString();
+        ErrorSanitizer.debugLog('WorkspaceProvider', 'updateThesis failed: ${result.error}');
+        mutationError.value = ErrorSanitizer.message(result.error);
       }
     } finally {
       _isMutating = false;
@@ -187,8 +187,8 @@ class WorkspaceProvider {
       if (result.isSuccess) {
         theses.value = theses.where((t) => t.id != thesisId).toList();
       } else {
-        debugPrint('[WorkspaceProvider] deleteThesis failed: ${result.error}');
-        mutationError.value = result.error.toString();
+        ErrorSanitizer.debugLog('WorkspaceProvider', 'deleteThesis failed: ${result.error}');
+        mutationError.value = ErrorSanitizer.message(result.error);
       }
     } finally {
       _isMutating = false;
@@ -224,8 +224,8 @@ class WorkspaceProvider {
               )
             : t).toList();
       } else {
-        debugPrint('[WorkspaceProvider] markThesisReviewed failed: ${result.error}');
-        mutationError.value = result.error.toString();
+        ErrorSanitizer.debugLog('WorkspaceProvider', 'markThesisReviewed failed: ${result.error}');
+        mutationError.value = ErrorSanitizer.message(result.error);
       }
     } finally {
       _isMutating = false;
@@ -253,7 +253,6 @@ class WorkspaceProvider {
         stanceAfter: stanceAfter,
       );
       if (result.isSuccess) {
-        // Provider already bumps lastReviewedAt via repository
         final now = DateTime.now();
         theses.value = theses.map((t) => t.id == thesisId
             ? CompanyThesis(
@@ -276,8 +275,8 @@ class WorkspaceProvider {
               )
             : t).toList();
       } else {
-        debugPrint('[WorkspaceProvider] createReview failed: ${result.error}');
-        mutationError.value = result.error.toString();
+        ErrorSanitizer.debugLog('WorkspaceProvider', 'createReview failed: ${result.error}');
+        mutationError.value = ErrorSanitizer.message(result.error);
       }
     } finally {
       _isMutating = false;
@@ -297,8 +296,8 @@ class WorkspaceProvider {
       if (result.isSuccess) {
         questions.value = [result.data!, ...questions];
       } else {
-        debugPrint('[WorkspaceProvider] createQuestion failed: ${result.error}');
-        mutationError.value = result.error.toString();
+        ErrorSanitizer.debugLog('WorkspaceProvider', 'createQuestion failed: ${result.error}');
+        mutationError.value = ErrorSanitizer.message(result.error);
       }
     } finally {
       _isMutating = false;
@@ -331,8 +330,8 @@ class WorkspaceProvider {
               )
             : q).toList();
       } else {
-        debugPrint('[WorkspaceProvider] answerQuestion failed: ${result.error}');
-        mutationError.value = result.error.toString();
+        ErrorSanitizer.debugLog('WorkspaceProvider', 'answerQuestion failed: ${result.error}');
+        mutationError.value = ErrorSanitizer.message(result.error);
       }
     } finally {
       _isMutating = false;
@@ -348,8 +347,8 @@ class WorkspaceProvider {
       if (result.isSuccess) {
         questions.value = questions.where((q) => q.id != questionId).toList();
       } else {
-        debugPrint('[WorkspaceProvider] deleteQuestion failed: ${result.error}');
-        mutationError.value = result.error.toString();
+        ErrorSanitizer.debugLog('WorkspaceProvider', 'deleteQuestion failed: ${result.error}');
+        mutationError.value = ErrorSanitizer.message(result.error);
       }
     } finally {
       _isMutating = false;

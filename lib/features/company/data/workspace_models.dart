@@ -311,7 +311,7 @@ class QualityScoreDetail extends Equatable {
   final double? verificationScore;
   final double? freshnessScore;
   final double? restatementSupportScore;
-  final Map<String, dynamic>? componentDetails;
+  final Map<String, double>? componentDetails;
   final DateTime? scoreDate;
 
   const QualityScoreDetail({

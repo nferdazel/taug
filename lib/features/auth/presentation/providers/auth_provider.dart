@@ -32,19 +32,29 @@ class AuthProvider {
     _authSubscription = null;
   }
 
-  String _extractError(Object errorObj) {
-    final str = errorObj.toString();
-    debugPrint('[Auth] Error: $str');
-
-    if (str.contains('AuthException')) {
-      final match = RegExp(r'AuthException\((.*?)\)').firstMatch(str);
-      if (match != null) return match.group(1) ?? str;
+  /// Validates password strength.
+  ///
+  /// Requirements:
+  /// - Minimum 8 characters
+  /// - At least one uppercase letter (A-Z)
+  /// - At least one lowercase letter (a-z)
+  /// - At least one digit (0-9)
+  ///
+  /// Returns null if valid, error message otherwise.
+  String? _validatePassword(String password) {
+    if (password.length < 8) {
+      return 'Password must be at least 8 characters';
     }
-    if (str.contains('PostgrestException')) {
-      final match = RegExp(r'message: (.*?)[,\)]').firstMatch(str);
-      if (match != null) return match.group(1) ?? str;
+    if (!RegExp(r'[A-Z]').hasMatch(password)) {
+      return 'Password must contain at least one uppercase letter';
     }
-    return str;
+    if (!RegExp(r'[a-z]').hasMatch(password)) {
+      return 'Password must contain at least one lowercase letter';
+    }
+    if (!RegExp(r'[0-9]').hasMatch(password)) {
+      return 'Password must contain at least one number';
+    }
+    return null;
   }
 
   Future<void> signIn({
@@ -70,7 +80,9 @@ class AuthProvider {
     if (result.isSuccess && context.mounted) {
       context.go('/companies');
     } else if (result.isFailure) {
-      error.value = _extractError(result.error);
+      // SECURITY: Generic error for sign-in to prevent username enumeration.
+      // Never reveal whether the account exists or password is wrong.
+      error.value = 'Invalid username or password';
     }
   }
 
@@ -90,8 +102,10 @@ class AuthProvider {
       return;
     }
 
-    if (password.length < 8) {
-      error.value = 'Password must be at least 8 characters';
+    // SECURITY: Enforce strong password policy.
+    final passwordError = _validatePassword(password);
+    if (passwordError != null) {
+      error.value = passwordError;
       return;
     }
 
@@ -108,7 +122,9 @@ class AuthProvider {
     if (result.isSuccess && context.mounted) {
       context.go('/companies');
     } else if (result.isFailure) {
-      error.value = _extractError(result.error);
+      // SECURITY: Generic error for registration to prevent username enumeration.
+      // Never reveal "user already exists" vs other registration failures.
+      error.value = 'Registration failed. Please try a different username.';
     }
   }
 

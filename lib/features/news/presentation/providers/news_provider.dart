@@ -1,5 +1,6 @@
 import 'package:signals/signals.dart';
 
+import '../../../../core/utils/error_sanitizer.dart';
 import '../../../../shared/models/news_article.dart';
 import '../../data/news_repository.dart';
 
@@ -23,7 +24,7 @@ class NewsProvider {
     if (result.isSuccess) {
       articles.value = result.data!;
     } else {
-      error.value = result.error.toString();
+      error.value = ErrorSanitizer.message(result.error);
     }
 
     isLoading.value = false;

@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:signals/signals.dart';
 
+import '../../../../core/utils/error_sanitizer.dart';
 import '../../../../shared/models/price_data.dart';
 import '../../data/portfolio_repository.dart';
 import '../../domain/portfolio_entity.dart';
@@ -44,7 +44,7 @@ class PortfolioProvider {
       await loadPrices();
       startAutoRefresh();
     } else {
-      error.value = result.error.toString();
+      error.value = ErrorSanitizer.message(result.error);
     }
 
     isLoading.value = false;
@@ -88,8 +88,8 @@ class PortfolioProvider {
       if (result.isSuccess) {
         await loadHoldings();
       } else {
-        debugPrint('[PortfolioProvider] addHolding failed: ${result.error}');
-        error.value = result.error.toString();
+        ErrorSanitizer.debugLog('PortfolioProvider', 'addHolding failed: ${result.error}');
+        error.value = ErrorSanitizer.message(result.error);
       }
     } finally {
       _isMutating = false;
@@ -114,8 +114,8 @@ class PortfolioProvider {
       if (result.isSuccess) {
         await loadHoldings();
       } else {
-        debugPrint('[PortfolioProvider] updateHolding failed: ${result.error}');
-        error.value = result.error.toString();
+        ErrorSanitizer.debugLog('PortfolioProvider', 'updateHolding failed: ${result.error}');
+        error.value = ErrorSanitizer.message(result.error);
       }
     } finally {
       _isMutating = false;
@@ -131,8 +131,8 @@ class PortfolioProvider {
       if (result.isSuccess) {
         await loadHoldings();
       } else {
-        debugPrint('[PortfolioProvider] removeHolding failed: ${result.error}');
-        error.value = result.error.toString();
+        ErrorSanitizer.debugLog('PortfolioProvider', 'removeHolding failed: ${result.error}');
+        error.value = ErrorSanitizer.message(result.error);
       }
     } finally {
       _isMutating = false;

@@ -57,6 +57,13 @@ abstract final class AppTypography {
     color: Color(AppColors.textTertiary),
   );
 
+  /// 10px — Badge labels, small tags
+  static const TextStyle microBadge = TextStyle(
+    fontFamily: sans,
+    fontSize: 10,
+    fontWeight: FontWeight.w600,
+  );
+
   // ── Mono Scale ──
 
   /// 14px — Main price display

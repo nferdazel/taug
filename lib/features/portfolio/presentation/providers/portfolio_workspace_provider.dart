@@ -1,6 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:signals/signals.dart';
 
+import '../../../../core/utils/error_sanitizer.dart';
 import '../../data/portfolio_models.dart';
 import '../../data/portfolio_workspace_repository.dart';
 
@@ -41,7 +41,7 @@ class PortfolioWorkspaceProvider {
     if (result.isSuccess) {
       positions.value = result.data!;
     } else {
-      error.value = result.error.toString();
+      error.value = ErrorSanitizer.message(result.error);
     }
 
     isLoading.value = false;
@@ -89,8 +89,8 @@ class PortfolioWorkspaceProvider {
       if (result.isSuccess) {
         positions.value = [result.data!, ...positions];
       } else {
-        debugPrint('[PortfolioWorkspaceProvider] addPosition failed: ${result.error}');
-        error.value = result.error.toString();
+        ErrorSanitizer.debugLog('PortfolioWorkspaceProvider', 'addPosition failed: ${result.error}');
+        error.value = ErrorSanitizer.message(result.error);
       }
     } finally {
       _isMutating = false;
@@ -118,8 +118,8 @@ class PortfolioWorkspaceProvider {
       if (result.isSuccess) {
         await loadPositions();
       } else {
-        debugPrint('[PortfolioWorkspaceProvider] updatePosition failed: ${result.error}');
-        error.value = result.error.toString();
+        ErrorSanitizer.debugLog('PortfolioWorkspaceProvider', 'updatePosition failed: ${result.error}');
+        error.value = ErrorSanitizer.message(result.error);
       }
     } finally {
       _isMutating = false;
@@ -147,8 +147,8 @@ class PortfolioWorkspaceProvider {
       if (result.isSuccess) {
         await loadPositions();
       } else {
-        debugPrint('[PortfolioWorkspaceProvider] closePosition failed: ${result.error}');
-        error.value = result.error.toString();
+        ErrorSanitizer.debugLog('PortfolioWorkspaceProvider', 'closePosition failed: ${result.error}');
+        error.value = ErrorSanitizer.message(result.error);
       }
     } finally {
       _isMutating = false;
@@ -190,8 +190,8 @@ class PortfolioWorkspaceProvider {
           ];
         }
       } else {
-        debugPrint('[PortfolioWorkspaceProvider] markReviewNeeded failed: ${result.error}');
-        error.value = result.error.toString();
+        ErrorSanitizer.debugLog('PortfolioWorkspaceProvider', 'markReviewNeeded failed: ${result.error}');
+        error.value = ErrorSanitizer.message(result.error);
       }
     } finally {
       _isMutating = false;

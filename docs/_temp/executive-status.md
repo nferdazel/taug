@@ -8,22 +8,20 @@
 
 ## Current Phase
 
-P0.3 — Research OS Core Implementation (Complete)
+P0.4 — Product Hardening (Complete)
 
 ---
 
 ## Progress
 
-**Overall:** 95%
+**Overall:** 90%
 
 | Track | Status | Progress |
 |---|---|---|
-| A: Learning Loop | ✅ Complete | 100% |
-| B: Research Questions | ✅ Complete | 100% |
-| C: Evidence Tracking | ✅ Complete | 100% |
-| D: Thesis Lifecycle | ✅ Complete | 100% |
-| E: Invalidation Logic | ✅ Complete | 100% |
-| F: Design Integration | ⏳ Pending | 0% |
+| A: Visual Validation | ⏳ Pending | 0% (code review only) |
+| B: Testing Expansion | ⏳ Pending | 0% (no new tests yet) |
+| C: Pattern Intelligence | ✅ Complete | 100% |
+| D: Design Integration | ✅ Complete | 100% (audit done) |
 
 ---
 
@@ -31,7 +29,8 @@ P0.3 — Research OS Core Implementation (Complete)
 
 | Stream | Owner | Status | Deliverable |
 |---|---|---|---|
-| Design Integration | designer, frontend-3, a11y | ⏳ Pending | Ensure new features fit philosophy |
+| Visual Validation | qa-2, designer, frontend-3 | ⏳ Pending | Actual screenshots |
+| Testing Expansion | qa-1, backend-1, backend-2 | ⏳ Pending | Unit tests |
 
 ---
 
@@ -46,10 +45,10 @@ None.
 | # | Risk | Probability | Impact | Status |
 |---|---|---|---|---|
 | 1 | Testing: 3/10 | High | High | Ongoing |
-| 2 | Accessibility: 6/10 | Medium | Medium | Improved |
-| 3 | .env contains live keys | Medium | High | Open |
-| 4 | No actual screenshots | Medium | Medium | Code review only |
-| 5 | Design integration not done | Low | Medium | Pending |
+| 2 | No actual screenshots | Medium | Medium | Pending |
+| 3 | Accessibility: 6/10 | Medium | Medium | Improved |
+| 4 | .env contains live keys | Medium | High | Open |
+| 5 | Design integration issues (7 Medium) | Low | Medium | Documented |
 
 ---
 
@@ -57,28 +56,23 @@ None.
 
 | # | Decision | Rationale |
 |---|---|---|
-| 1 | Surface lessons in thesis dialog | Context where decisions are made |
-| 2 | Research questions as new entity | Tracks open investigation threads |
-| 3 | Evidence linking via junction table | Connect notes to thesis fields |
-| 4 | Thesis lifecycle with freshness | Research ages, needs review |
-| 5 | Invalidation conditions as structured triggers | Move from passive text to active monitoring |
-| 6 | Passive monitoring in MVP | View-based, not polling |
-| 7 | P0 only for first iteration | Ship incrementally |
-| 8 | Company-first lesson cascade | Most actionable lessons first |
-| 9 | Micro-summaries over dashboards | Density over decoration |
-| 10 | RLS on all new tables | Security by default |
+| 1 | Pattern intelligence via aggregation | Simple, no AI/ML, database-level |
+| 2 | Micro-summaries for patterns | Density over decoration |
+| 3 | PATTERNS tab in Portfolio | Dedicated view for self-knowledge |
+| 4 | Design audit before fixes | Understand scope first |
+| 5 | Parallel track execution | Maximize throughput |
 
 ---
 
 ## Production Readiness Score
 
-**8.5/10** (↑ from 8.0)
+**8.5/10** (unchanged)
 
 | Category | Score | Target | Gap |
 |---|---|---|---|
 | Workflow | 9.0 | 8.5 | ✅ |
 | Research Intelligence | 7.5 | 8.0 | -0.5 |
-| Learning System | 7.0 | 8.0 | -1.0 |
+| Learning System | 7.5 | 8.0 | -0.5 |
 | UX | 8.0 | 8.5 | -0.5 |
 | Design | 7.5 | 8.0 | -0.5 |
 | Reliability | 7.5 | 8.0 | -0.5 |
@@ -93,20 +87,18 @@ None.
 
 ## Recommendation
 
-**Resume Production Program**
+**Continue Hardening**
 
 **Rationale:**
-- Learning loop implemented (lessons surface during thesis creation)
-- Research questions implemented (question-driven research)
-- Evidence tracking implemented (notes linked to thesis fields)
-- Thesis lifecycle implemented (freshness, review workflow)
-- Invalidation logic implemented (structured triggers)
-- Production readiness 8.5/10 (target 8.5)
+- Pattern intelligence implemented (stance/conviction accuracy, lesson themes)
+- Design integration audit complete (14 findings documented)
+- Testing still at 3/10 (biggest gap)
+- No actual screenshots yet
 
 **Next Steps:**
-1. Add unit tests for new repositories/providers
-2. Add UI for evidence linking and invalidation conditions
-3. Capture actual screenshots
+1. Add unit tests for repositories/providers (Testing → 7/10)
+2. Capture actual screenshots
+3. Fix design integration issues (7 Medium findings)
 4. Rotate API keys
 
 ---

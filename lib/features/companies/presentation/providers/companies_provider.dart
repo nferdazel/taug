@@ -1,6 +1,7 @@
 import 'package:signals/signals.dart';
 
 import '../../../../core/errors/result.dart';
+import '../../../../core/utils/error_sanitizer.dart';
 import '../../data/company_list_models.dart';
 import '../../data/company_list_repository.dart';
 
@@ -44,7 +45,7 @@ class CompaniesProvider {
     if (companiesResult.isSuccess) {
       companies.value = companiesResult.data!.companies;
     } else {
-      error.value = companiesResult.error.toString();
+      error.value = ErrorSanitizer.message(companiesResult.error);
     }
 
     if (qualityResult.isSuccess) {

@@ -181,24 +181,10 @@ class ResearchFreshnessBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Prefer server-provided freshness, fall back to computed from lastReviewedAt
-    final String resolved;
-    if (freshness != null) {
-      resolved = freshness!;
-    } else if (lastReviewedAt != null) {
-      final age = DateTime.now().difference(lastReviewedAt!);
-      if (age.inDays <= 7) {
-        resolved = 'fresh';
-      } else if (age.inDays <= 30) {
-        resolved = 'aging';
-      } else if (age.inDays <= 90) {
-        resolved = 'stale';
-      } else {
-        resolved = 'expired';
-      }
-    } else {
-      resolved = 'expired';
-    }
+    // Always prefer server-provided freshness string.
+    // If not available, default to 'expired' — do NOT compute client-side
+    // from lastReviewedAt to avoid build-time DateTime.now() calls.
+    final String resolved = freshness ?? 'expired';
 
     final level = ResearchFreshness.fromString(resolved);
     return Semantics(
@@ -263,6 +249,40 @@ class StanceBadge extends StatelessWidget {
           fontWeight: FontWeight.w600,
           color: color,
         ),
+      ),
+    );
+  }
+}
+
+/// Priority badge for research questions.
+/// Displays a colored label (LOW / MEDIUM / HIGH / CRITICAL).
+class PriorityBadge extends StatelessWidget {
+  final String priority;
+  final Color color;
+
+  const PriorityBadge({super.key, required this.priority, required this.color});
+
+  /// Resolves the display color for a given priority string.
+  static Color colorForPriority(String priority) {
+    return switch (priority) {
+      'critical' => AppThemeColors.critical,
+      'high' => AppThemeColors.warning,
+      'medium' => AppThemeColors.accent,
+      _ => AppThemeColors.textTertiary,
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(3),
+      ),
+      child: Text(
+        priority.toUpperCase(),
+        style: AppTypography.microBadge.copyWith(color: color),
       ),
     );
   }

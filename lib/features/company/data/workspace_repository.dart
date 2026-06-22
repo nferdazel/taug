@@ -881,7 +881,8 @@ class WorkspaceRepository {
           verificationScore: (row['verification_score'] as num?)?.toDouble(),
           freshnessScore: (row['freshness_score'] as num?)?.toDouble(),
           restatementSupportScore: (row['restatement_support_score'] as num?)?.toDouble(),
-          componentDetails: row['component_details'] as Map<String, dynamic>?,
+          componentDetails: (row['component_details'] as Map<String, dynamic>?)
+              ?.map((k, v) => MapEntry(k, (v as num?)?.toDouble() ?? 0)),
           scoreDate: row['score_date'] != null ? DateTime.parse(row['score_date'] as String) : null,
         ),
       );

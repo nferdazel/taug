@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:signals/signals.dart';
 
+import '../../../../core/utils/error_sanitizer.dart';
 import '../../../../shared/models/price_data.dart';
 import '../../data/market_repository.dart';
 
@@ -42,7 +43,7 @@ class MarketProvider {
       movers.value = result.data!;
       lastUpdated.value = DateTime.now();
     } else {
-      error.value = result.error.toString();
+      error.value = ErrorSanitizer.message(result.error);
     }
 
     isLoading.value = false;

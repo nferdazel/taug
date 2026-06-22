@@ -1,6 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:signals/signals.dart';
 
+import '../../../../core/utils/error_sanitizer.dart';
 import '../../data/settings_repository.dart';
 
 class SettingsProvider {
@@ -45,8 +45,8 @@ class SettingsProvider {
       if (result.isSuccess) {
         timezone.value = tz;
       } else {
-        debugPrint('[SettingsProvider] updateTimezone failed: ${result.error}');
-        error.value = result.error.toString();
+        ErrorSanitizer.debugLog('SettingsProvider', 'updateTimezone failed: ${result.error}');
+        error.value = ErrorSanitizer.message(result.error);
       }
     } finally {
       _isMutating = false;
@@ -62,8 +62,8 @@ class SettingsProvider {
       if (result.isSuccess) {
         densityMode.value = mode;
       } else {
-        debugPrint('[SettingsProvider] updateDensityMode failed: ${result.error}');
-        error.value = result.error.toString();
+        ErrorSanitizer.debugLog('SettingsProvider', 'updateDensityMode failed: ${result.error}');
+        error.value = ErrorSanitizer.message(result.error);
       }
     } finally {
       _isMutating = false;

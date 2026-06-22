@@ -1,5 +1,6 @@
 import 'package:signals/signals.dart';
 
+import '../../../../core/utils/error_sanitizer.dart';
 import '../../data/company_repository.dart';
 
 class CompanyProvider {
@@ -23,7 +24,7 @@ class CompanyProvider {
     if (result.isSuccess) {
       profile.value = result.data!;
     } else {
-      error.value = result.error.toString();
+      error.value = ErrorSanitizer.message(result.error);
     }
 
     isLoading.value = false;

@@ -1,5 +1,6 @@
 import 'package:signals/signals.dart';
 
+import '../../../../core/utils/error_sanitizer.dart';
 import '../../../../shared/models/price_data.dart';
 import '../../data/chart_repository.dart';
 
@@ -28,7 +29,7 @@ class ChartProvider {
     if (result.isSuccess) {
       candles.value = result.data!;
     } else {
-      error.value = result.error.toString();
+      error.value = ErrorSanitizer.message(result.error);
     }
 
     isLoading.value = false;

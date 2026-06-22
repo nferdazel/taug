@@ -527,7 +527,7 @@ class _QuestionCard extends StatelessWidget {
                 ],
               ),
             ),
-            _PriorityBadge(priority: question.priority, color: priorityColor),
+            PriorityBadge(priority: question.priority, color: priorityColor),
           ],
         ),
       ),
@@ -535,28 +535,4 @@ class _QuestionCard extends StatelessWidget {
   }
 }
 
-class _PriorityBadge extends StatelessWidget {
-  final String priority;
-  final Color color;
 
-  const _PriorityBadge({required this.priority, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(3),
-      ),
-      child: Text(
-        priority.toUpperCase(),
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
-    );
-  }
-}

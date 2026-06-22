@@ -1,7 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:signals/signals.dart';
 
 import '../../../../core/errors/result.dart';
+import '../../../../core/utils/error_sanitizer.dart';
 import '../../data/research_models.dart';
 import '../../data/research_repository.dart';
 
@@ -43,8 +43,8 @@ class ResearchProvider {
       if (notesResult.isSuccess) notes.value = notesResult.data!;
       if (questionsResult.isSuccess) questions.value = questionsResult.data!;
     } catch (e) {
-      debugPrint('[ResearchProvider] loadAll error: $e');
-      error.value = e.toString();
+      ErrorSanitizer.debugLog('ResearchProvider', 'loadAll error: $e');
+      error.value = ErrorSanitizer.message(e);
     }
 
     isLoading.value = false;
@@ -81,7 +81,7 @@ class ResearchProvider {
           ...questions,
         ];
       } else {
-        debugPrint('[ResearchProvider] createQuestion failed: ${result.error}');
+        ErrorSanitizer.debugLog('ResearchProvider', 'createQuestion failed: ${result.error}');
       }
     } finally {
       _isMutating = false;
@@ -99,7 +99,7 @@ class ResearchProvider {
       if (result.isSuccess) {
         questions.value = questions.where((q) => q.questionId != questionId).toList();
       } else {
-        debugPrint('[ResearchProvider] answerQuestion failed: ${result.error}');
+        ErrorSanitizer.debugLog('ResearchProvider', 'answerQuestion failed: ${result.error}');
       }
     } finally {
       _isMutating = false;
@@ -114,7 +114,7 @@ class ResearchProvider {
       if (result.isSuccess) {
         questions.value = questions.where((q) => q.questionId != questionId).toList();
       } else {
-        debugPrint('[ResearchProvider] deleteQuestion failed: ${result.error}');
+        ErrorSanitizer.debugLog('ResearchProvider', 'deleteQuestion failed: ${result.error}');
       }
     } finally {
       _isMutating = false;
