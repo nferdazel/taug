@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <!-- Background -->
+  <rect width="512" height="512" rx="64" fill="#09090b"/>
+  
+  <!-- Border -->
+  <rect x="2" y="2" width="508" height="508" rx="62" stroke="#27272a" stroke-width="2" fill="none"/>
+  
+  <!-- T letter - vertical bar -->
+  <rect x="156" y="140" width="48" height="232" rx="4" fill="#fafafa"/>
+  
+  <!-- T letter - horizontal bar -->
+  <rect x="120" y="140" width="120" height="48" rx="4" fill="#fafafa"/>
+  
+  <!-- Chart line (representing research/data) -->
+  <polyline points="240,340 280,280 320,300 360,220 400,240" 
+            stroke="#3b82f6" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  
+  <!-- Data points -->
+  <circle cx="280" cy="280" r="6" fill="#3b82f6"/>
+  <circle cx="320" cy="300" r="6" fill="#3b82f6"/>
+  <circle cx="360" cy="220" r="6" fill="#3b82f6"/>
+  <circle cx="400" cy="240" r="6" fill="#3b82f6"/>
+  
+  <!-- Upward trend arrow -->
+  <path d="M388 228 L400 240 L412 228" stroke="#10b981" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>
