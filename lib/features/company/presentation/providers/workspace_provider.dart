@@ -2,6 +2,7 @@ import 'package:signals/signals.dart';
 
 import '../../../../core/errors/result.dart';
 import '../../../../core/utils/error_sanitizer.dart';
+import '../../../../shared/models/research_progression_state.dart';
 import '../../../portfolio/data/portfolio_models.dart';
 import '../../../portfolio/data/portfolio_workspace_repository.dart';
 import '../../data/workspace_models.dart';
@@ -377,4 +378,21 @@ class WorkspaceProvider {
     if (notes.isNotEmpty) return 'researching';
     return 'not_researched';
   }
+
+  /// Canonical research progression state.
+  /// Single source of truth for all workflow guidance.
+  ResearchProgressionState get progressionState => ResearchProgressionState(
+        companyId: companyId,
+        companyName: profile.value?.displayName ?? '',
+        notesCount: notes.length,
+        openQuestionsCount: questions.where((q) => q.isOpen).length,
+        criticalQuestionsCount: questions.where((q) => q.isCritical).length,
+        thesesCount: theses.length,
+        positionsCount: companyLessons.where((l) => l.isActive).length,
+        lessonsCount: companyLessons.where((l) => l.isClosed).length,
+        thesisStance: theses.isNotEmpty ? theses.first.stance : null,
+        thesisConviction: theses.isNotEmpty ? theses.first.conviction : null,
+        thesisLastUpdated: theses.isNotEmpty ? theses.first.updatedAt : null,
+        researchFreshness: freshnessStatus.value,
+      );
 }

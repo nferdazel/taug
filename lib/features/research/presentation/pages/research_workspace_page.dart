@@ -10,6 +10,60 @@ import '../../../companies/presentation/widgets/research_status_badge.dart';
 import '../../data/research_models.dart';
 import '../providers/research_provider.dart';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Attention Item Model
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _AttentionItem {
+  final IconData icon;
+  final Color color;
+  final String title;
+  final String? subtitle;
+  final String actionLabel;
+  final String? companyId;
+
+  const _AttentionItem({
+    required this.icon,
+    required this.color,
+    required this.title,
+    this.subtitle,
+    required this.actionLabel,
+    this.companyId,
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Activity Item Model (merged timeline)
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum _ActivityType { thesis, note }
+
+class _ActivityItem {
+  final _ActivityType type;
+  final String id;
+  final String title;
+  final String companyName;
+  final String? ticker;
+  final String? subtitle;
+  final DateTime updatedAt;
+  final String companyId;
+
+  const _ActivityItem({
+    required this.type,
+    required this.id,
+    required this.title,
+    required this.companyName,
+    this.ticker,
+    this.subtitle,
+    required this.updatedAt,
+    required this.companyId,
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Main Page
+// ─────────────────────────────────────────────────────────────────────────────
+
 class ResearchWorkspacePage extends StatefulWidget {
   const ResearchWorkspacePage({super.key});
 
@@ -43,6 +97,8 @@ class _ResearchWorkspacePageState extends State<ResearchWorkspacePage> {
       ],
     );
   }
+
+  // ── Header ──────────────────────────────────────────────────────────────
 
   Widget _buildHeader() {
     return SignalBuilder(builder: (_) {
@@ -106,115 +162,240 @@ class _ResearchWorkspacePageState extends State<ResearchWorkspacePage> {
     });
   }
 
+  // ── Content ─────────────────────────────────────────────────────────────
+
   Widget _buildContent() {
     return SignalBuilder(builder: (_) {
       if (_provider.isLoading.value) {
         return const AppLoadingState(message: 'Loading research...');
       }
 
-      final companies = _provider.filteredCompanies;
-      final theses = _provider.filteredTheses;
-      final notes = _provider.filteredNotes;
-      final openQuestions = _provider.filteredQuestions.where((q) => q.isOpen).toList();
-
-      // Prioritize: companies with notes but no thesis need attention
-      final needsThesis = companies.where((c) => c.notesCount > 0 && c.thesesCount == 0).toList();
-      final activeResearch = companies.where((c) => c.thesesCount > 0).toList();
-
       return SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Open Questions — highest priority
-            if (openQuestions.isNotEmpty) ...[
-              _buildSection(
-                title: 'OPEN QUESTIONS',
-                icon: Icons.help_outline,
-                count: openQuestions.length,
-                color: AppThemeColors.warning,
-                child: Column(
-                  children: openQuestions.take(10).map((q) => _QuestionCard(
-                    question: q,
-                    onTap: () {
-                      if (q.companyId != null) {
-                        context.go('/companies/${q.companyId}');
-                      }
-                    },
-                  )).toList(),
-                ),
-              ),
-              const SizedBox(height: 24),
-            ],
-
-            // Needs Thesis — highest priority
-            if (needsThesis.isNotEmpty) ...[
-              _buildSection(
-                title: 'NEEDS THESIS',
-                icon: Icons.warning_amber,
-                count: needsThesis.length,
-                color: AppThemeColors.warning,
-                child: Column(
-                  children: needsThesis.map((c) => _ResearchCompanyCard(
-                    company: c,
-                    onTap: () => context.go('/companies/${c.companyId}'),
-                  )).toList(),
-                ),
-              ),
-              const SizedBox(height: 24),
-            ],
-
-            // Active Research — has thesis
-            _buildSection(
-              title: 'ACTIVE RESEARCH',
-              icon: Icons.science_outlined,
-              count: activeResearch.length,
-              child: activeResearch.isEmpty
-                  ? _buildEmptyResearch()
-                  : Column(
-                      children: activeResearch.map((c) => _ResearchCompanyCard(
-                        company: c,
-                        onTap: () => context.go('/companies/${c.companyId}'),
-                      )).toList(),
-                    ),
-            ),
+            _buildNeedsAttention(),
             const SizedBox(height: 24),
-
-            // Recent Theses
-            _buildSection(
-              title: 'RECENT THESES',
-              icon: Icons.lightbulb_outline,
-              count: theses.length,
-              child: theses.isEmpty
-                  ? _buildEmptyTheses()
-                  : Column(
-                      children: theses.take(5).map((t) => _ThesisCard(
-                        thesis: t,
-                        onTap: () => context.go('/companies/${t.companyId}'),
-                      )).toList(),
-                    ),
-            ),
+            _buildActiveResearch(),
             const SizedBox(height: 24),
-
-            // Recent Notes
-            _buildSection(
-              title: 'RECENT NOTES',
-              icon: Icons.note_outlined,
-              count: notes.length,
-              child: notes.isEmpty
-                  ? _buildEmptyNotes()
-                  : Column(
-                      children: notes.take(5).map((n) => _NoteCard(
-                        note: n,
-                        onTap: () => context.go('/companies/${n.companyId}'),
-                      )).toList(),
-                    ),
-            ),
+            _buildOpenQuestions(),
+            const SizedBox(height: 24),
+            _buildRecentActivity(),
           ],
         ),
       );
     });
   }
+
+  // ── Needs Attention Hero ────────────────────────────────────────────────
+
+  List<_AttentionItem> _computeAttentionItems() {
+    final items = <_AttentionItem>[];
+    final companies = _provider.filteredCompanies;
+    final theses = _provider.filteredTheses;
+    final questions = _provider.filteredQuestions;
+
+    // Companies with notes but no thesis — need a thesis
+    final needsThesis = companies.where((c) => c.notesCount > 0 && c.thesesCount == 0).toList();
+    for (final c in needsThesis) {
+      final tickerSuffix = c.ticker != null ? ' (${c.ticker})' : '';
+      items.add(_AttentionItem(
+        icon: Icons.warning_amber,
+        color: AppThemeColors.warning,
+        title: '${c.displayName}$tickerSuffix has no thesis',
+        subtitle: '${c.notesCount} notes ready to synthesize',
+        actionLabel: 'Write Thesis',
+        companyId: c.companyId,
+      ));
+    }
+
+    // Stale theses (>90 days since update)
+    final now = DateTime.now();
+    final staleThreshold = now.subtract(const Duration(days: 90));
+    final staleTheses = theses.where((t) => t.updatedAt.isBefore(staleThreshold)).toList();
+    for (final t in staleTheses) {
+      final daysOld = now.difference(t.updatedAt).inDays;
+      items.add(_AttentionItem(
+        icon: Icons.schedule,
+        color: AppThemeColors.bearish,
+        title: 'Thesis is $daysOld days old',
+        subtitle: '${t.title} · ${t.companyName}',
+        actionLabel: 'Review',
+        companyId: t.companyId,
+      ));
+    }
+
+    // Critical / High priority open questions
+    final criticalQuestions = questions
+        .where((q) => q.isOpen && q.isHigh)
+        .toList();
+    for (final q in criticalQuestions) {
+      final color = q.isCritical ? AppThemeColors.critical : AppThemeColors.warning;
+      final label = q.isCritical ? 'CRITICAL' : 'HIGH';
+      final companyLabel = q.companyName ?? 'Global';
+      items.add(_AttentionItem(
+        icon: Icons.help_outline,
+        color: color,
+        title: '[$label] ${q.question}',
+        subtitle: '$companyLabel · ${q.daysOpen}d open · ${q.notesCount} notes',
+        actionLabel: 'Investigate',
+        companyId: q.companyId,
+      ));
+    }
+
+    return items;
+  }
+
+  Widget _buildNeedsAttention() {
+    final items = _computeAttentionItems();
+
+    if (items.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppThemeColors.success.withValues(alpha: 0.1),
+          border: const Border(left: BorderSide(color: AppThemeColors.success, width: 3)),
+        ),
+        child: const Row(
+          children: [
+            Icon(Icons.check_circle_outline, size: 16, color: AppThemeColors.success),
+            SizedBox(width: 8),
+            Text('All research is up to date', style: AppTypography.body),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('NEEDS ATTENTION', style: AppTypography.monoSection),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: AppThemeColors.border),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Column(
+            children: [
+              for (int i = 0; i < items.length; i++)
+                _AttentionRow(
+                  item: items[i],
+                  isFirst: i == 0,
+                  isLast: i == items.length - 1,
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Active Research ─────────────────────────────────────────────────────
+
+  Widget _buildActiveResearch() {
+    final companies = _provider.filteredCompanies;
+    final activeResearch = companies.where((c) => c.thesesCount > 0).toList();
+
+    if (activeResearch.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return _buildSection(
+      title: 'ACTIVE RESEARCH',
+      icon: Icons.science_outlined,
+      count: activeResearch.length,
+      child: Column(
+        children: activeResearch.map((c) => _ResearchCompanyCard(
+          company: c,
+          onTap: () => context.go('/companies/${c.companyId}'),
+        )).toList(),
+      ),
+    );
+  }
+
+  // ── Open Questions ──────────────────────────────────────────────────────
+
+  Widget _buildOpenQuestions() {
+    final questions = _provider.filteredQuestions.where((q) => q.isOpen).toList();
+
+    if (questions.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return _buildSection(
+      title: 'OPEN QUESTIONS',
+      icon: Icons.help_outline,
+      count: questions.length,
+      color: AppThemeColors.warning,
+      child: Column(
+        children: questions.take(10).map((q) => _QuestionCard(
+          question: q,
+          onTap: () {
+            if (q.companyId != null) {
+              context.go('/companies/${q.companyId}');
+            }
+          },
+        )).toList(),
+      ),
+    );
+  }
+
+  // ── Recent Activity (merged timeline) ───────────────────────────────────
+
+  Widget _buildRecentActivity() {
+    final theses = _provider.filteredTheses;
+    final notes = _provider.filteredNotes;
+
+    final items = <_ActivityItem>[
+      for (final t in theses)
+        _ActivityItem(
+          type: _ActivityType.thesis,
+          id: t.thesisId,
+          title: t.title,
+          companyName: t.companyName,
+          ticker: t.ticker,
+          subtitle: t.stance,
+          updatedAt: t.updatedAt,
+          companyId: t.companyId,
+        ),
+      for (final n in notes)
+        _ActivityItem(
+          type: _ActivityType.note,
+          id: n.noteId,
+          title: n.title,
+          companyName: n.companyName,
+          ticker: n.ticker,
+          subtitle: n.body.isNotEmpty ? n.body : null,
+          updatedAt: n.updatedAt,
+          companyId: n.companyId,
+        ),
+    ];
+
+    // Sort by updatedAt descending
+    items.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+
+    if (items.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final displayItems = items.take(10).toList();
+
+    return _buildSection(
+      title: 'RECENT ACTIVITY',
+      icon: Icons.update,
+      count: items.length,
+      child: Column(
+        children: displayItems.map((item) => _ActivityRow(
+          item: item,
+          onTap: () => context.go('/companies/${item.companyId}'),
+        )).toList(),
+      ),
+    );
+  }
+
+  // ── Shared Section Builder ──────────────────────────────────────────────
 
   Widget _buildSection({
     required String title,
@@ -253,63 +434,72 @@ class _ResearchWorkspacePageState extends State<ResearchWorkspacePage> {
       ),
     );
   }
+}
 
-  Widget _buildEmptyResearch() {
-    return const Padding(
-      padding: EdgeInsets.all(24),
-      child: Center(
-        child: Column(
-          children: [
-            Icon(Icons.science_outlined, size: 32, color: AppThemeColors.textTertiary),
-            SizedBox(height: 8),
-            Text('No active research', style: AppTypography.subheading),
-            SizedBox(height: 4),
-            Text(
-              'Start by researching companies from the Companies page.\nNotes and theses will appear here.',
-              style: AppTypography.caption,
-              textAlign: TextAlign.center,
-            ),
-          ],
+// ─────────────────────────────────────────────────────────────────────────────
+// Attention Row Widget
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _AttentionRow extends StatelessWidget {
+  final _AttentionItem item;
+  final bool isFirst;
+  final bool isLast;
+
+  const _AttentionRow({
+    required this.item,
+    this.isFirst = false,
+    this.isLast = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: item.companyId != null ? () => context.go('/companies/${item.companyId}') : null,
+      hoverColor: AppThemeColors.surfaceLight.withValues(alpha: 0.5),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          border: isLast
+              ? null
+              : Border(bottom: BorderSide(color: AppThemeColors.border.withValues(alpha: 0.5))),
         ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyTheses() {
-    return const Padding(
-      padding: EdgeInsets.all(24),
-      child: Center(
-        child: Column(
+        child: Row(
           children: [
-            Icon(Icons.lightbulb_outline, size: 32, color: AppThemeColors.textTertiary),
-            SizedBox(height: 8),
-            Text('No theses yet', style: AppTypography.subheading),
-            SizedBox(height: 4),
-            Text(
-              'Create investment theses from company research pages.',
-              style: AppTypography.caption,
-              textAlign: TextAlign.center,
+            Icon(item.icon, size: 16, color: item.color),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.title,
+                    style: AppTypography.body.copyWith(fontWeight: FontWeight.w500),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (item.subtitle != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      item.subtitle!,
+                      style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ],
+              ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyNotes() {
-    return const Padding(
-      padding: EdgeInsets.all(24),
-      child: Center(
-        child: Column(
-          children: [
-            Icon(Icons.note_outlined, size: 32, color: AppThemeColors.textTertiary),
-            SizedBox(height: 8),
-            Text('No notes yet', style: AppTypography.subheading),
-            SizedBox(height: 4),
-            Text(
-              'Create research notes from company research pages.',
-              style: AppTypography.caption,
-              textAlign: TextAlign.center,
+            const SizedBox(width: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: item.color.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                item.actionLabel,
+                style: AppTypography.microBadge.copyWith(color: item.color),
+              ),
             ),
           ],
         ),
@@ -317,6 +507,119 @@ class _ResearchWorkspacePageState extends State<ResearchWorkspacePage> {
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Activity Row Widget (merged timeline entry)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ActivityRow extends StatelessWidget {
+  final _ActivityItem item;
+  final VoidCallback onTap;
+
+  const _ActivityRow({required this.item, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final isThesis = item.type == _ActivityType.thesis;
+    final typeColor = isThesis ? AppThemeColors.warning : AppThemeColors.textSecondary;
+    final typeLabel = isThesis ? 'THESIS' : 'NOTE';
+
+    return InkWell(
+      onTap: onTap,
+      hoverColor: AppThemeColors.surfaceLight.withValues(alpha: 0.5),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: AppThemeColors.border.withValues(alpha: 0.5))),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              alignment: Alignment.center,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: typeColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+                child: Text(
+                  typeLabel,
+                  style: AppTypography.microBadge.copyWith(color: typeColor),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.title,
+                    style: AppTypography.body.copyWith(fontWeight: FontWeight.w500),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Text(
+                        item.companyName,
+                        style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
+                      ),
+                      if (item.ticker != null) ...[
+                        const SizedBox(width: 4),
+                        Text(
+                          item.ticker!,
+                          style: AppTypography.monoLabel.copyWith(color: AppThemeColors.textTertiary, fontSize: 10),
+                        ),
+                      ],
+                      if (item.subtitle != null && !isThesis) ...[
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            item.subtitle!,
+                            style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ] else if (isThesis && item.subtitle != null) ...[
+                        const SizedBox(width: 8),
+                        StanceBadge(stance: item.subtitle!, size: StanceBadgeSize.small),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              _formatTimeAgo(item.updatedAt),
+              style: AppTypography.monoMeta.copyWith(color: AppThemeColors.textTertiary),
+            ),
+            const SizedBox(width: 8),
+            const Icon(Icons.chevron_right, size: 16, color: AppThemeColors.textTertiary),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatTimeAgo(DateTime dateTime) {
+    final diff = DateTime.now().difference(dateTime);
+    if (diff.inMinutes < 1) return 'just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inDays < 30) return '${diff.inDays}d ago';
+    if (diff.inDays < 365) return '${(diff.inDays / 30).floor()}mo ago';
+    return '${(diff.inDays / 365).floor()}y ago';
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Counter Badge
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _CounterBadge extends StatelessWidget {
   final String label;
@@ -336,6 +639,10 @@ class _CounterBadge extends StatelessWidget {
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Research Company Card
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _ResearchCompanyCard extends StatelessWidget {
   final ResearchCompany company;
@@ -386,79 +693,9 @@ class _ResearchCompanyCard extends StatelessWidget {
   }
 }
 
-class _ThesisCard extends StatelessWidget {
-  final ResearchThesisIndex thesis;
-  final VoidCallback onTap;
-
-  const _ThesisCard({required this.thesis, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      hoverColor: AppThemeColors.surfaceLight.withValues(alpha: 0.5),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: AppThemeColors.border.withValues(alpha: 0.5))),
-        ),
-        child: Row(
-          children: [
-            StanceBadge(stance: thesis.stance),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(thesis.title, style: AppTypography.body.copyWith(fontWeight: FontWeight.w500), maxLines: 1, overflow: TextOverflow.ellipsis),
-                  Text('${thesis.companyName}${thesis.ticker != null ? " (${thesis.ticker})" : ""}', style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary)),
-                ],
-              ),
-            ),
-            const Icon(Icons.chevron_right, size: 16, color: AppThemeColors.textTertiary),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _NoteCard extends StatelessWidget {
-  final ResearchNoteIndex note;
-  final VoidCallback onTap;
-
-  const _NoteCard({required this.note, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      hoverColor: AppThemeColors.surfaceLight.withValues(alpha: 0.5),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: AppThemeColors.border.withValues(alpha: 0.5))),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(note.title, style: AppTypography.body.copyWith(fontWeight: FontWeight.w500), maxLines: 1, overflow: TextOverflow.ellipsis),
-                  Text('${note.companyName}${note.ticker != null ? " (${note.ticker})" : ""}', style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary)),
-                  if (note.body.isNotEmpty)
-                    Text(note.body, style: AppTypography.caption, maxLines: 1, overflow: TextOverflow.ellipsis),
-                ],
-              ),
-            ),
-            const Icon(Icons.chevron_right, size: 16, color: AppThemeColors.textTertiary),
-          ],
-        ),
-      ),
-    );
-  }
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// Question Card
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _QuestionCard extends StatelessWidget {
   final ResearchQuestionIndex question;
@@ -534,5 +771,3 @@ class _QuestionCard extends StatelessWidget {
     );
   }
 }
-
-

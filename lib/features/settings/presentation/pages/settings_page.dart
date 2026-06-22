@@ -3,10 +3,22 @@ import 'package:go_router/go_router.dart';
 import 'package:signals/signals_flutter.dart';
 
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/settings_provider.dart';
+
+/// Settings workspace sections.
+enum _SettingsSection {
+  profile('PROFILE', Icons.person_outlined),
+  workspace('WORKSPACE', Icons.desktop_windows_outlined),
+  account('ACCOUNT', Icons.key_outlined);
+
+  const _SettingsSection(this.label, this.icon);
+  final String label;
+  final IconData icon;
+}
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -18,6 +30,7 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   final _settingsProvider = SettingsProvider();
   final _authProvider = AuthProvider();
+  _SettingsSection _activeSection = _SettingsSection.profile;
 
   @override
   void initState() {
@@ -33,86 +46,165 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 480),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Semantics(
-                header: true,
-                child: const Text('SETTINGS', style: AppTypography.monoSection),
-              ),
-              const SizedBox(height: 12),
-              _buildProfileCard(),
-              const SizedBox(height: 8),
-              _buildTimezoneRow(),
-              const SizedBox(height: 8),
-              _buildDensityRow(),
-              const Spacer(),
-              _buildLogoutButton(),
-            ],
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── Left navigation (200px) ──
+        SizedBox(width: 200, child: _buildNavigation()),
+        // ── Divider ──
+        const VerticalDivider(width: 1, thickness: 1, color: AppThemeColors.border),
+        // ── Right content ──
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppSpacing.xxxl),
+            child: _buildSection(_activeSection),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ──────────────────────────────────────────────
+  // Navigation
+  // ──────────────────────────────────────────────
+
+  Widget _buildNavigation() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        vertical: AppSpacing.xxxl,
+        horizontal: AppSpacing.xl,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('SETTINGS', style: AppTypography.monoSection),
+          const SizedBox(height: AppSpacing.xxl),
+          ..._SettingsSection.values.map(_buildNavItem),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNavItem(_SettingsSection section) {
+    final bool isActive = _activeSection == section;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+      child: Semantics(
+        button: true,
+        selected: isActive,
+        label: section.label,
+        child: InkWell(
+          onTap: () => setState(() => _activeSection = section),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusSmall),
+          focusColor: AppThemeColors.accent.withValues(alpha: 0.15),
+          highlightColor: AppThemeColors.accent.withValues(alpha: 0.08),
+          child: Container(
+            height: AppSpacing.tableRowHeight,
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            decoration: BoxDecoration(
+              color: isActive
+                  ? AppThemeColors.accent.withValues(alpha: 0.12)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(AppSpacing.radiusSmall),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  section.icon,
+                  size: AppSpacing.iconSize,
+                  color: isActive
+                      ? AppThemeColors.accent
+                      : AppThemeColors.textSecondary,
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Text(
+                  section.label,
+                  style: AppTypography.monoLabel.copyWith(
+                    color: isActive
+                        ? AppThemeColors.textPrimary
+                        : AppThemeColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
+  // ──────────────────────────────────────────────
+  // Section Router
+  // ──────────────────────────────────────────────
+
+  Widget _buildSection(_SettingsSection section) {
+    switch (section) {
+      case _SettingsSection.profile:
+        return _buildProfileSection();
+      case _SettingsSection.workspace:
+        return _buildWorkspaceSection();
+      case _SettingsSection.account:
+        return _buildAccountSection();
+    }
+  }
+
+  // ──────────────────────────────────────────────
+  // Profile Section
+  // ──────────────────────────────────────────────
+
+  Widget _buildProfileSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('PROFILE', style: AppTypography.monoSection),
+        const SizedBox(height: AppSpacing.xxl),
+        _buildProfileCard(),
+        const SizedBox(height: AppSpacing.sectionGap),
+        _buildTimezoneCard(),
+      ],
+    );
+  }
+
   Widget _buildProfileCard() {
     return SignalBuilder(builder: (_) {
-      return Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: AppThemeColors.surface,
-          border: Border.all(color: AppThemeColors.border),
-          borderRadius: BorderRadius.circular(4),
-        ),
+      return _sectionCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Semantics(
-              header: true,
-              child: const Text('PROFILE', style: AppTypography.monoSection),
-            ),
-            const SizedBox(height: 6),
-            _buildRow('Username', _settingsProvider.username.value),
-            const SizedBox(height: 4),
-            _buildRow('Email', '${_settingsProvider.username.value}@taug.app'),
+            _infoRow('Username', _settingsProvider.username.value),
+            const Divider(height: 1, color: AppThemeColors.border),
+            _infoRow('Email', '${_settingsProvider.username.value}@taug.app'),
           ],
         ),
       );
     });
   }
 
-  Widget _buildTimezoneRow() {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: AppThemeColors.surface,
-        border: Border.all(color: AppThemeColors.border),
-        borderRadius: BorderRadius.circular(4),
-      ),
+  Widget _buildTimezoneCard() {
+    return _sectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Semantics(
-            header: true,
-            child: const Text('TIMEZONE', style: AppTypography.monoSection),
-          ),
-          const SizedBox(height: 6),
-          SignalBuilder(builder: (_) {
-            return Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    _getTimezoneLabel(_settingsProvider.timezone.value),
-                    style: AppTypography.monoData,
-                  ),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Timezone', style: AppTypography.caption),
+                    const SizedBox(height: AppSpacing.xs),
+                    SignalBuilder(builder: (_) {
+                      return Text(
+                        _getTimezoneLabel(_settingsProvider.timezone.value),
+                        style: AppTypography.monoData,
+                      );
+                    }),
+                  ],
                 ),
-                SizedBox(
-                  height: 24,
+              ),
+              SignalBuilder(builder: (_) {
+                return SizedBox(
+                  height: AppSpacing.buttonHeight,
                   child: DropdownButton<String>(
                     value: _settingsProvider.timezone.value,
                     underline: const SizedBox(),
@@ -139,34 +231,42 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                     ],
                     onChanged: (value) {
-                      if (value != null) _settingsProvider.updateTimezone(value);
+                      if (value != null) {
+                        _settingsProvider.updateTimezone(value);
+                      }
                     },
                   ),
-                ),
-              ],
-            );
-          }),
+                );
+              }),
+            ],
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildDensityRow() {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: AppThemeColors.surface,
-        border: Border.all(color: AppThemeColors.border),
-        borderRadius: BorderRadius.circular(4),
-      ),
+  // ──────────────────────────────────────────────
+  // Workspace Section
+  // ──────────────────────────────────────────────
+
+  Widget _buildWorkspaceSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('WORKSPACE', style: AppTypography.monoSection),
+        const SizedBox(height: AppSpacing.xxl),
+        _buildDensityCard(),
+      ],
+    );
+  }
+
+  Widget _buildDensityCard() {
+    return _sectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Semantics(
-            header: true,
-            child: const Text('DENSITY', style: AppTypography.monoSection),
-          ),
-          const SizedBox(height: 6),
+          const Text('Density Mode', style: AppTypography.caption),
+          const SizedBox(height: AppSpacing.md),
           SignalBuilder(builder: (_) {
             return Row(
               children: [
@@ -175,7 +275,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   'compact',
                   _settingsProvider.densityMode.value == 'compact',
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: AppSpacing.md),
                 _buildDensityChip(
                   'Default',
                   'default',
@@ -189,8 +289,7 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  // A11Y: Replace GestureDetector with InkWell for keyboard accessibility.
-  // Add Semantics with button + selected state.
+  // A11Y: InkWell with Semantics for keyboard accessibility.
   Widget _buildDensityChip(String label, String value, bool selected) {
     return Semantics(
       button: true,
@@ -198,7 +297,7 @@ class _SettingsPageState extends State<SettingsPage> {
       label: label,
       child: InkWell(
         onTap: () => _settingsProvider.updateDensityMode(value),
-        borderRadius: BorderRadius.circular(3),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusSmall),
         focusColor: AppThemeColors.accent.withValues(alpha: 0.2),
         highlightColor: AppThemeColors.accent.withValues(alpha: 0.1),
         child: Container(
@@ -208,7 +307,7 @@ class _SettingsPageState extends State<SettingsPage> {
             border: Border.all(
               color: selected ? AppThemeColors.accent : AppThemeColors.border,
             ),
-            borderRadius: BorderRadius.circular(3),
+            borderRadius: BorderRadius.circular(AppSpacing.radiusSmall),
           ),
           child: Text(
             label,
@@ -223,31 +322,107 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildRow(String label, String value) {
-    return Row(
+  // ──────────────────────────────────────────────
+  // Account Section
+  // ──────────────────────────────────────────────
+
+  Widget _buildAccountSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: AppTypography.caption),
-        const SizedBox(width: 12),
-        Text(value, style: AppTypography.monoData),
+        const Text('ACCOUNT', style: AppTypography.monoSection),
+        const SizedBox(height: AppSpacing.xxl),
+        _buildAccountCard(),
       ],
     );
   }
 
-  Widget _buildLogoutButton() {
-    return SizedBox(
-      height: 28,
-      child: OutlinedButton(
-        onPressed: () async {
-          await _authProvider.signOut();
-          if (!mounted) return;
-          context.go('/login');
-        },
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppThemeColors.bearish,
-          side: const BorderSide(color: AppThemeColors.border),
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-        ),
-        child: const Text(AppStrings.logout, style: AppTypography.monoLabel),
+  Widget _buildAccountCard() {
+    return _sectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Sign out ──
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Session', style: AppTypography.caption),
+                    const SizedBox(height: AppSpacing.xs),
+                    SignalBuilder(builder: (_) {
+                      return Text(
+                        _settingsProvider.username.value,
+                        style: AppTypography.monoData,
+                      );
+                    }),
+                  ],
+                ),
+              ),
+              SizedBox(
+                height: AppSpacing.buttonHeight,
+                child: OutlinedButton(
+                  onPressed: () async {
+                    await _authProvider.signOut();
+                    if (!mounted) return;
+                    context.go('/login');
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppThemeColors.bearish,
+                    side: const BorderSide(color: AppThemeColors.border),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.xl,
+                    ),
+                  ),
+                  child: const Text(
+                    AppStrings.logout,
+                    style: AppTypography.monoLabel,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 1, color: AppThemeColors.border),
+          // ── Version ──
+          _infoRow('Version', '1.0.0'),
+          const Divider(height: 1, color: AppThemeColors.border),
+          _infoRow('Build', '1'),
+          const Divider(height: 1, color: AppThemeColors.border),
+          _infoRow('Platform', 'Web (WASM)'),
+        ],
+      ),
+    );
+  }
+
+  // ──────────────────────────────────────────────
+  // Shared helpers
+  // ──────────────────────────────────────────────
+
+  Widget _sectionCard({required Widget child}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      decoration: BoxDecoration(
+        color: AppThemeColors.surface,
+        border: Border.all(color: AppThemeColors.border),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMedium),
+      ),
+      child: child,
+    );
+  }
+
+  Widget _infoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(label, style: AppTypography.caption),
+          ),
+          Expanded(child: Text(value, style: AppTypography.monoData)),
+        ],
       ),
     );
   }

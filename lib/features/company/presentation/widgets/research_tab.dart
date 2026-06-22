@@ -4,6 +4,8 @@ import 'package:signals/signals_flutter.dart';
 
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/models/research_progression_state.dart';
+import '../../../../shared/widgets/research_empty_state.dart';
 import '../../../../shared/widgets/status_badges.dart';
 import '../../../portfolio/data/portfolio_models.dart';
 import '../../data/workspace_models.dart';
@@ -20,11 +22,21 @@ class ResearchTab extends StatelessWidget {
       final theses = provider.theses;
       final notes = provider.notes;
       final openQuestions = provider.questions.where((q) => q.isOpen).toList();
-      final answeredQuestions = provider.questions.where((q) => !q.isOpen).toList();
+      final answeredQuestions =
+          provider.questions.where((q) => !q.isOpen).toList();
+      final progression = provider.progressionState;
 
       return ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // Research Progress Checklist
+          _buildResearchProgress(progression),
+          const SizedBox(height: 8),
+
+          // Suggested Next Step
+          _buildSuggestedNextStep(progression),
+          const SizedBox(height: 16),
+
           // Thesis Section
           Row(
             children: [
@@ -40,15 +52,18 @@ class ResearchTab extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           if (theses.isEmpty)
-            const _EmptyCard(
-              message:
-                  'No thesis yet. Create one to track your investment thesis.',
+            ThesisEmptyState(
+              onCreateThesis: () => _showThesisDialog(context),
             )
           else
             _ThesisCard(
               thesis: theses.first,
               onEdit: () => _showThesisDialog(context, thesis: theses.first),
-              onDelete: () => _confirmDelete(context, 'thesis', () => provider.deleteThesis(theses.first.id)),
+              onDelete: () => _confirmDelete(
+                context,
+                'thesis',
+                () => provider.deleteThesis(theses.first.id),
+              ),
               onCreatePosition: () {
                 final thesis = theses.first;
                 final companyName = provider.profile.value?.displayName ?? '';
@@ -85,15 +100,19 @@ class ResearchTab extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           if (openQuestions.isEmpty && answeredQuestions.isEmpty)
-            const _EmptyCard(
-              message: 'No questions yet. Create one to track research questions.',
+            QuestionsEmptyState(
+              onCreateQuestion: () => _showQuestionDialog(context),
             )
           else ...[
             ...openQuestions.map(
               (q) => _QuestionCard(
                 question: q,
                 onAnswer: () => _showAnswerDialog(context, q),
-                onDelete: () => _confirmDelete(context, 'question', () => provider.deleteQuestion(q.id)),
+                onDelete: () => _confirmDelete(
+                  context,
+                  'question',
+                  () => provider.deleteQuestion(q.id),
+                ),
               ),
             ),
             if (answeredQuestions.isNotEmpty) ...[
@@ -132,15 +151,19 @@ class ResearchTab extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           if (notes.isEmpty)
-            const _EmptyCard(
-              message: 'No notes yet. Create one to record your research.',
+            NotesEmptyState(
+              onCreateNote: () => _showNoteDialog(context),
             )
           else
             ...notes.map(
               (note) => _NoteCard(
                 note: note,
                 onEdit: () => _showNoteDialog(context, note: note),
-                onDelete: () => _confirmDelete(context, 'note', () => provider.deleteNote(note.id)),
+                onDelete: () => _confirmDelete(
+                  context,
+                  'note',
+                  () => provider.deleteNote(note.id),
+                ),
               ),
             ),
         ],
@@ -148,24 +171,127 @@ class ResearchTab extends StatelessWidget {
     });
   }
 
-  void _confirmDelete(BuildContext context, String type, VoidCallback onConfirm) {
+  // ── Research Progress Checklist ──
+
+  Widget _buildResearchProgress(ResearchProgressionState progression) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppThemeColors.surface,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: AppThemeColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text(
+                'RESEARCH PROGRESS',
+                style: AppTypography.monoSection,
+              ),
+              const Spacer(),
+              Text(
+                '${progression.completedCount}/4',
+                style: AppTypography.monoLabel,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          _ProgressStep(
+            label: 'Notes',
+            isComplete: progression.notesCount > 0,
+            summary: '${progression.notesCount} notes',
+          ),
+          _ProgressStep(
+            label: 'Thesis',
+            isComplete: progression.thesesCount > 0,
+            summary: progression.thesisStance ?? 'None',
+          ),
+          _ProgressStep(
+            label: 'Questions',
+            isComplete: progression.openQuestionsCount == 0 &&
+                (progression.notesCount > 0 || progression.thesesCount > 0),
+            summary: '${progression.openQuestionsCount} open',
+          ),
+          _ProgressStep(
+            label: 'Position',
+            isComplete: progression.positionsCount > 0,
+            summary:
+                progression.positionsCount > 0 ? 'Active' : 'None',
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Suggested Next Step ──
+
+  Widget _buildSuggestedNextStep(ResearchProgressionState progression) {
+    final action = progression.nextAction;
+
+    if (action == NextAction.none) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppThemeColors.accent.withValues(alpha: 0.1),
+        border: const Border(
+          left: BorderSide(color: AppThemeColors.accent, width: 3),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  action.label,
+                  style: AppTypography.subheading
+                      .copyWith(color: AppThemeColors.accent),
+                ),
+                Text(action.description, style: AppTypography.caption),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Dialogs ──
+
+  void _confirmDelete(
+    BuildContext context,
+    String type,
+    VoidCallback onConfirm,
+  ) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppThemeColors.surface,
         title: Text('Delete $type', style: AppTypography.heading),
-        content: Text('Are you sure you want to delete this $type? This cannot be undone.', style: AppTypography.body),
+        content: Text(
+          'Are you sure you want to delete this $type? This cannot be undone.',
+          style: AppTypography.body,
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: AppThemeColors.textSecondary)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: AppThemeColors.textSecondary),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
               onConfirm();
             },
-            style: ElevatedButton.styleFrom(backgroundColor: AppThemeColors.critical),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppThemeColors.critical,
+            ),
             child: const Text('Delete'),
           ),
         ],
@@ -359,7 +485,9 @@ class ResearchTab extends StatelessWidget {
                             label: Text(s[0].toUpperCase() + s.substring(1)),
                             selected: stance == s,
                             onSelected: (selected) {
-                              if (selected) setDialogState(() => stance = s);
+                              if (selected) {
+                                setDialogState(() => stance = s);
+                              }
                             },
                           ),
                         ),
@@ -631,18 +759,25 @@ class ResearchTab extends StatelessWidget {
                     const Text('Priority: ', style: AppTypography.body),
                     ...['low', 'medium', 'high', 'critical'].map(
                       (p) {
-                        final chipColor = PriorityBadge.colorForPriority(p);
+                        final chipColor =
+                            PriorityBadge.colorForPriority(p);
                         return Padding(
                           padding: const EdgeInsets.only(left: 4),
                           child: ChoiceChip(
-                            label: Text(p[0].toUpperCase() + p.substring(1)),
+                            label:
+                                Text(p[0].toUpperCase() + p.substring(1)),
                             selected: priority == p,
-                            selectedColor: chipColor.withValues(alpha: 0.25),
+                            selectedColor:
+                                chipColor.withValues(alpha: 0.25),
                             side: priority != p
-                                ? BorderSide(color: chipColor.withValues(alpha: 0.35))
+                                ? BorderSide(
+                                    color: chipColor.withValues(alpha: 0.35),
+                                  )
                                 : null,
                             onSelected: (selected) {
-                              if (selected) setDialogState(() => priority = p);
+                              if (selected) {
+                                setDialogState(() => priority = p);
+                              }
                             },
                           ),
                         );
@@ -683,7 +818,8 @@ class ResearchTab extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppThemeColors.surface,
-        title: const Text('Answer Question', style: AppTypography.heading),
+        title:
+            const Text('Answer Question', style: AppTypography.heading),
         content: SizedBox(
           width: 500,
           child: Column(
@@ -747,24 +883,119 @@ class ResearchTab extends StatelessWidget {
   }
 }
 
-class _EmptyCard extends StatelessWidget {
-  final String message;
+// ── Progress Step Widget ──
 
-  const _EmptyCard({required this.message});
+class _ProgressStep extends StatelessWidget {
+  final String label;
+  final bool isComplete;
+  final String summary;
+
+  const _ProgressStep({
+    required this.label,
+    required this.isComplete,
+    required this.summary,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppThemeColors.surface,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: AppThemeColors.border),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        children: [
+          Icon(
+            isComplete ? Icons.check_circle : Icons.radio_button_unchecked,
+            size: 14,
+            color: isComplete
+                ? AppThemeColors.success
+                : AppThemeColors.textTertiary,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: AppTypography.body.copyWith(
+              color: isComplete
+                  ? AppThemeColors.textPrimary
+                  : AppThemeColors.textSecondary,
+            ),
+          ),
+          const Spacer(),
+          Text(
+            summary,
+            style: AppTypography.monoLabel.copyWith(
+              color: isComplete
+                  ? AppThemeColors.success
+                  : AppThemeColors.textTertiary,
+            ),
+          ),
+        ],
       ),
-      child: Center(child: Text(message, style: AppTypography.caption)),
     );
   }
 }
+
+// ── Collapsible Thesis Section Widget ──
+
+class _CollapsibleThesisSection extends StatefulWidget {
+  final String title;
+  final String content;
+
+  const _CollapsibleThesisSection({
+    required this.title,
+    required this.content,
+  });
+
+  @override
+  State<_CollapsibleThesisSection> createState() =>
+      _CollapsibleThesisSectionState();
+}
+
+class _CollapsibleThesisSectionState
+    extends State<_CollapsibleThesisSection> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        GestureDetector(
+          onTap: () => setState(() => _expanded = !_expanded),
+          behavior: HitTestBehavior.opaque,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(
+              children: [
+                Icon(
+                  _expanded
+                      ? Icons.keyboard_arrow_down
+                      : Icons.keyboard_arrow_right,
+                  size: 16,
+                  color: AppThemeColors.textSecondary,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  widget.title,
+                  style: AppTypography.caption.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (_expanded) ...[
+          const SizedBox(height: 4),
+          Padding(
+            padding: const EdgeInsets.only(left: 20),
+            child: Text(widget.content, style: AppTypography.body),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+// ── Thesis Card ──
 
 class _ThesisCard extends StatelessWidget {
   final CompanyThesis thesis;
@@ -791,10 +1022,12 @@ class _ThesisCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header row
           Row(
             children: [
               Expanded(
-                child: Text(thesis.title, style: AppTypography.subheading),
+                child:
+                    Text(thesis.title, style: AppTypography.subheading),
               ),
               StanceBadge(stance: thesis.stance),
               const SizedBox(width: 8),
@@ -811,87 +1044,88 @@ class _ThesisCard extends StatelessWidget {
                   if (value == 'delete') onDelete();
                 },
                 itemBuilder: (context) => [
-                  const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                  const PopupMenuItem(value: 'delete', child: Text('Delete')),
+                  const PopupMenuItem(
+                    value: 'edit',
+                    child: Text('Edit'),
+                  ),
+                  const PopupMenuItem(
+                    value: 'delete',
+                    child: Text('Delete'),
+                  ),
                 ],
               ),
             ],
           ),
+
+          // Summary (always visible)
           if (thesis.summary != null && thesis.summary!.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(thesis.summary!, style: AppTypography.body),
           ],
+
+          // Collapsible sub-sections
           if (thesis.bullCase != null && thesis.bullCase!.isNotEmpty) ...[
             const SizedBox(height: 8),
-            Text(
-              'Bull Case',
-              style: AppTypography.caption.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+            _CollapsibleThesisSection(
+              title: 'Bull Case',
+              content: thesis.bullCase!,
             ),
-            Text(thesis.bullCase!, style: AppTypography.body),
           ],
           if (thesis.bearCase != null && thesis.bearCase!.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(
-              'Bear Case',
-              style: AppTypography.caption.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+            const SizedBox(height: 4),
+            _CollapsibleThesisSection(
+              title: 'Bear Case',
+              content: thesis.bearCase!,
             ),
-            Text(thesis.bearCase!, style: AppTypography.body),
           ],
-          if (thesis.assumptions != null && thesis.assumptions!.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(
-              'Assumptions',
-              style: AppTypography.caption.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+          if (thesis.assumptions != null &&
+              thesis.assumptions!.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            _CollapsibleThesisSection(
+              title: 'Assumptions',
+              content: thesis.assumptions!,
             ),
-            Text(thesis.assumptions!, style: AppTypography.body),
           ],
-          if (thesis.catalysts != null && thesis.catalysts!.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(
-              'Catalysts',
-              style: AppTypography.caption.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+          if (thesis.catalysts != null &&
+              thesis.catalysts!.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            _CollapsibleThesisSection(
+              title: 'Catalysts',
+              content: thesis.catalysts!,
             ),
-            Text(thesis.catalysts!, style: AppTypography.body),
           ],
           if (thesis.risks != null && thesis.risks!.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(
-              'Risks',
-              style: AppTypography.caption.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+            const SizedBox(height: 4),
+            _CollapsibleThesisSection(
+              title: 'Risks',
+              content: thesis.risks!,
             ),
-            Text(thesis.risks!, style: AppTypography.body),
           ],
-          if (thesis.exitConditions != null && thesis.exitConditions!.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(
-              'Exit Conditions',
-              style: AppTypography.caption.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+          if (thesis.exitConditions != null &&
+              thesis.exitConditions!.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            _CollapsibleThesisSection(
+              title: 'Exit Conditions',
+              content: thesis.exitConditions!,
             ),
-            Text(thesis.exitConditions!, style: AppTypography.body),
           ],
+
+          // Create Position button
           const SizedBox(height: 12),
           SizedBox(
             height: 28,
             child: ElevatedButton.icon(
               onPressed: onCreatePosition,
-              icon: const Icon(Icons.account_balance_wallet_outlined, size: 14),
+              icon: const Icon(
+                Icons.account_balance_wallet_outlined,
+                size: 14,
+              ),
               label: const Text('Create Position'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppThemeColors.accent,
                 foregroundColor: AppThemeColors.textPrimary,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12),
               ),
             ),
           ),
@@ -911,6 +1145,8 @@ class _ThesisCard extends StatelessWidget {
     return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
   }
 }
+
+// ── Note Card ──
 
 class _NoteCard extends StatelessWidget {
   final CompanyNote note;
@@ -939,7 +1175,12 @@ class _NoteCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(note.title, style: AppTypography.subheading, maxLines: 1, overflow: TextOverflow.ellipsis),
+                child: Text(
+                  note.title,
+                  style: AppTypography.subheading,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
               PopupMenuButton<String>(
                 icon: const Icon(
@@ -952,8 +1193,14 @@ class _NoteCard extends StatelessWidget {
                   if (value == 'delete') onDelete();
                 },
                 itemBuilder: (context) => [
-                  const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                  const PopupMenuItem(value: 'delete', child: Text('Delete')),
+                  const PopupMenuItem(
+                    value: 'edit',
+                    child: Text('Edit'),
+                  ),
+                  const PopupMenuItem(
+                    value: 'delete',
+                    child: Text('Delete'),
+                  ),
                 ],
               ),
             ],
@@ -984,6 +1231,8 @@ class _NoteCard extends StatelessWidget {
   }
 }
 
+// ── Lessons Section ──
+
 class _LessonsSection extends StatefulWidget {
   final List<PortfolioPosition> lessons;
   final VoidCallback onNavigateToPortfolio;
@@ -1009,7 +1258,8 @@ class _LessonsSectionState extends State<_LessonsSection> {
   @override
   Widget build(BuildContext context) {
     final lessons = widget.lessons;
-    final visibleLessons = _collapsed ? lessons.take(2).toList() : lessons;
+    final visibleLessons =
+        _collapsed ? lessons.take(2).toList() : lessons;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -1028,7 +1278,9 @@ class _LessonsSectionState extends State<_LessonsSection> {
             child: Row(
               children: [
                 Icon(
-                  _collapsed ? Icons.expand_more : Icons.expand_less,
+                  _collapsed
+                      ? Icons.expand_more
+                      : Icons.expand_less,
                   size: 16,
                   color: AppThemeColors.textSecondary,
                 ),
@@ -1042,7 +1294,9 @@ class _LessonsSectionState extends State<_LessonsSection> {
           ),
           // Lesson items
           const SizedBox(height: 8),
-          ...visibleLessons.map((pos) => _LessonItem(position: pos)),
+          ...visibleLessons.map(
+            (pos) => _LessonItem(position: pos),
+          ),
           // Expand hint if collapsed and more than 2
           if (_collapsed && lessons.length > 2) ...[
             const SizedBox(height: 6),
@@ -1077,6 +1331,8 @@ class _LessonsSectionState extends State<_LessonsSection> {
   }
 }
 
+// ── Lesson Item ──
+
 class _LessonItem extends StatelessWidget {
   final PortfolioPosition position;
 
@@ -1109,25 +1365,35 @@ class _LessonItem extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 5,
+                  vertical: 2,
+                ),
                 decoration: BoxDecoration(
                   color: outcomeColor.withValues(alpha: 0.20),
                   borderRadius: BorderRadius.circular(3),
                 ),
                 child: Text(
                   outcomeLabel,
-                  style: AppTypography.microBadge.copyWith(color: outcomeColor),
+                  style: AppTypography.microBadge
+                      .copyWith(color: outcomeColor),
                 ),
               ),
               const SizedBox(width: 6),
               if (position.thesisStance != null) ...[
-                StanceBadge(stance: position.thesisStance!, size: StanceBadgeSize.small),
+                StanceBadge(
+                  stance: position.thesisStance!,
+                  size: StanceBadgeSize.small,
+                ),
                 const SizedBox(width: 6),
               ],
-              _ConvictionBadgeSmall(conviction: position.conviction),
+              _ConvictionBadgeSmall(
+                conviction: position.conviction,
+              ),
             ],
           ),
-          if (position.lessonsLearned != null && position.lessonsLearned!.isNotEmpty) ...[
+          if (position.lessonsLearned != null &&
+              position.lessonsLearned!.isNotEmpty) ...[
             const SizedBox(height: 4),
             Text(
               position.lessonsLearned!,
@@ -1141,6 +1407,8 @@ class _LessonItem extends StatelessWidget {
     );
   }
 }
+
+// ── Conviction Badge Small ──
 
 class _ConvictionBadgeSmall extends StatelessWidget {
   final String conviction;
@@ -1167,6 +1435,8 @@ class _ConvictionBadgeSmall extends StatelessWidget {
   }
 }
 
+// ── Conviction Badge ──
+
 class _ConvictionBadge extends StatelessWidget {
   final String conviction;
 
@@ -1181,6 +1451,8 @@ class _ConvictionBadge extends StatelessWidget {
     return ConvictionBadge(level: level);
   }
 }
+
+// ── Question Card ──
 
 class _QuestionCard extends StatelessWidget {
   final CompanyQuestion question;
@@ -1223,15 +1495,23 @@ class _QuestionCard extends StatelessWidget {
               if (question.isCritical)
                 Padding(
                   padding: const EdgeInsets.only(right: 6),
-                  child: Icon(Icons.warning_amber, size: 14, color: priorityColor),
+                  child: Icon(
+                    Icons.warning_amber,
+                    size: 14,
+                    color: priorityColor,
+                  ),
                 ),
               Expanded(
                 child: Text(
                   question.question,
-                  style: AppTypography.body.copyWith(fontWeight: FontWeight.w500),
+                  style: AppTypography.body
+                      .copyWith(fontWeight: FontWeight.w500),
                 ),
               ),
-              PriorityBadge(priority: question.priority, color: priorityColor),
+              PriorityBadge(
+                priority: question.priority,
+                color: priorityColor,
+              ),
               PopupMenuButton<String>(
                 icon: const Icon(
                   Icons.more_vert,
@@ -1243,8 +1523,14 @@ class _QuestionCard extends StatelessWidget {
                   if (value == 'delete') onDelete();
                 },
                 itemBuilder: (context) => [
-                  const PopupMenuItem(value: 'answer', child: Text('Answer')),
-                  const PopupMenuItem(value: 'delete', child: Text('Delete')),
+                  const PopupMenuItem(
+                    value: 'answer',
+                    child: Text('Answer'),
+                  ),
+                  const PopupMenuItem(
+                    value: 'delete',
+                    child: Text('Delete'),
+                  ),
                 ],
               ),
             ],
@@ -1252,13 +1538,16 @@ class _QuestionCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             '${question.daysOpen} days open',
-            style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
+            style: AppTypography.caption
+                .copyWith(color: AppThemeColors.textTertiary),
           ),
         ],
       ),
     );
   }
 }
+
+// ── Answered Question Card ──
 
 class _AnsweredQuestionCard extends StatelessWidget {
   final CompanyQuestion question;
@@ -1273,14 +1562,20 @@ class _AnsweredQuestionCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppThemeColors.surfaceMuted,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: AppThemeColors.border.withValues(alpha: 0.5)),
+        border: Border.all(
+          color: AppThemeColors.border.withValues(alpha: 0.5),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.check_circle_outline, size: 14, color: AppThemeColors.success),
+              const Icon(
+                Icons.check_circle_outline,
+                size: 14,
+                color: AppThemeColors.success,
+              ),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -1295,7 +1590,8 @@ class _AnsweredQuestionCard extends StatelessWidget {
               ),
             ],
           ),
-          if (question.answer != null && question.answer!.isNotEmpty) ...[
+          if (question.answer != null &&
+              question.answer!.isNotEmpty) ...[
             const SizedBox(height: 4),
             Text(
               question.answer!,
@@ -1309,5 +1605,3 @@ class _AnsweredQuestionCard extends StatelessWidget {
     );
   }
 }
-
-

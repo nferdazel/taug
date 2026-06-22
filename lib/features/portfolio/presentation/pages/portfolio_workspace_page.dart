@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/models/price_data.dart';
 import '../../../../shared/widgets/app_state_widgets.dart';
 import '../../../../shared/widgets/status_badges.dart';
 import '../../data/portfolio_models.dart';
@@ -183,11 +184,13 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
         itemCount: positions.length,
         itemExtent: 120,
         itemBuilder: (context, index) {
+          final pos = positions[index];
           return _ActivePositionCard(
-            position: positions[index],
-            onClose: () => _showClosePositionDialog(context, positions[index]),
-            onViewCompany: () => context.go('/companies/${positions[index].companyId}'),
-            onMarkReview: () => _provider.markReviewNeeded(positions[index].id),
+            position: pos,
+            currentPrice: _provider.getPriceForTicker(pos.ticker),
+            onClose: () => _showClosePositionDialog(context, pos),
+            onViewCompany: () => context.go('/companies/${pos.companyId}'),
+            onMarkReview: () => _provider.markReviewNeeded(pos.id),
           );
         },
       );
@@ -994,16 +997,30 @@ class _ActivePositionCard extends StatelessWidget {
   final VoidCallback onClose;
   final VoidCallback onViewCompany;
   final VoidCallback onMarkReview;
+  final PriceData? currentPrice;
 
   const _ActivePositionCard({
     required this.position,
     required this.onClose,
     required this.onViewCompany,
     required this.onMarkReview,
+    this.currentPrice,
   });
 
   @override
   Widget build(BuildContext context) {
+    final daysHeld = DateTime.now().difference(position.entryDate).inDays;
+    final double? unrealizedPnl;
+    if (position.entryPrice != null &&
+        position.entryPrice! > 0 &&
+        currentPrice != null) {
+      unrealizedPnl =
+          ((currentPrice!.price - position.entryPrice!) / position.entryPrice!) *
+              100;
+    } else {
+      unrealizedPnl = null;
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
@@ -1032,7 +1049,28 @@ class _ActivePositionCard extends StatelessWidget {
                   ],
                 ),
               ),
-              if (position.isReviewNeeded)
+              if (unrealizedPnl != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: (unrealizedPnl >= 0
+                            ? AppThemeColors.success
+                            : AppThemeColors.critical)
+                        .withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    '${unrealizedPnl >= 0 ? '+' : ''}${unrealizedPnl.toStringAsFixed(1)}%',
+                    style: AppTypography.monoLabel.copyWith(
+                      color: unrealizedPnl >= 0
+                          ? AppThemeColors.success
+                          : AppThemeColors.critical,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              if (position.isReviewNeeded) ...[
+                const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
@@ -1041,6 +1079,7 @@ class _ActivePositionCard extends StatelessWidget {
                   ),
                   child: const Text('Review Needed', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppThemeColors.warning)),
                 ),
+              ],
               const SizedBox(width: 8),
               PopupMenuButton<String>(
                 icon: const Icon(Icons.more_vert, size: 16, color: AppThemeColors.textSecondary),
@@ -1084,18 +1123,33 @@ class _ActivePositionCard extends StatelessWidget {
                 'Entry: ${_formatDate(position.entryDate)}',
                 style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
               ),
+              const SizedBox(width: 12),
+              Text(
+                '${daysHeld}d held',
+                style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
+              ),
               if (position.entryPrice != null) ...[
                 const SizedBox(width: 12),
                 Text(
-                  'Price: \$${position.entryPrice!.toStringAsFixed(2)}',
-                  style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
+                  '@ \$${position.entryPrice!.toStringAsFixed(2)}',
+                  style: AppTypography.monoLabel.copyWith(color: AppThemeColors.textTertiary),
+                ),
+              ],
+              if (currentPrice != null) ...[
+                const SizedBox(width: 12),
+                Text(
+                  'Now: \$${currentPrice!.price.toStringAsFixed(2)}',
+                  style: AppTypography.monoLabel.copyWith(color: AppThemeColors.textPrimary),
                 ),
               ],
             ],
           ),
-          if (position.notes != null && position.notes!.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(position.notes!, style: AppTypography.caption),
+          if (position.isReviewNeeded) ...[
+            const SizedBox(height: 4),
+            Text(
+              'Review needed — position flagged for attention',
+              style: AppTypography.caption.copyWith(color: AppThemeColors.warning),
+            ),
           ],
         ],
       ),

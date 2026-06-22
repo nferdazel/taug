@@ -1,16 +1,21 @@
+import 'package:flutter/foundation.dart';
 import 'package:signals/signals.dart';
 
 import '../../../../core/utils/error_sanitizer.dart';
+import '../../../../shared/models/price_data.dart';
 import '../../data/portfolio_models.dart';
+import '../../data/portfolio_repository.dart' as legacy;
 import '../../data/portfolio_workspace_repository.dart';
 
 class PortfolioWorkspaceProvider {
   final PortfolioRepository _repository;
+  final legacy.PortfolioRepository _priceRepository;
 
   final positions = ListSignal<PortfolioPosition>([]);
   final isLoading = Signal<bool>(false);
   final error = Signal<String?>(null);
   final activeTab = Signal<int>(0);
+  final prices = MapSignal<String, PriceData>({});
   bool _isMutating = false;
 
   // ── Pattern Intelligence Signals ──
@@ -20,8 +25,11 @@ class PortfolioWorkspaceProvider {
   final holdingPeriodStats = Signal<Map<String, double>>({});
   final overallStats = Signal<Map<String, int>>({});
 
-  PortfolioWorkspaceProvider({PortfolioRepository? repository})
-      : _repository = repository ?? PortfolioRepository();
+  PortfolioWorkspaceProvider({
+    PortfolioRepository? repository,
+    legacy.PortfolioRepository? priceRepository,
+  })  : _repository = repository ?? PortfolioRepository(),
+        _priceRepository = priceRepository ?? legacy.PortfolioRepository();
 
   List<PortfolioPosition> get activePositions =>
       positions.where((p) => p.isActive || p.isReviewNeeded).toList();
@@ -40,11 +48,34 @@ class PortfolioWorkspaceProvider {
     final result = await _repository.getPositions();
     if (result.isSuccess) {
       positions.value = result.data!;
+      await _loadPricesForActivePositions();
     } else {
       error.value = ErrorSanitizer.message(result.error);
     }
 
     isLoading.value = false;
+  }
+
+  Future<void> _loadPricesForActivePositions() async {
+    final tickers = activePositions
+        .where((p) => p.ticker != null && p.ticker!.isNotEmpty)
+        .map((p) => p.ticker!)
+        .toSet()
+        .toList();
+    if (tickers.isEmpty) return;
+
+    final result = await _priceRepository.getPrices(tickers);
+    if (result.isSuccess) {
+      prices.value = result.data!;
+    } else {
+      debugPrint('[PortfolioWorkspace] loadPrices error: ${result.error}');
+    }
+  }
+
+  /// Get current price for a position's ticker
+  PriceData? getPriceForTicker(String? ticker) {
+    if (ticker == null || ticker.isEmpty) return null;
+    return prices[ticker];
   }
 
   Future<void> loadPatterns() async {

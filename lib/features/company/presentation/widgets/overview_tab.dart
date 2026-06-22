@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:signals/signals_flutter.dart';
 
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../shared/widgets/status_badges.dart';
+import '../../../../shared/models/research_progression_state.dart';
 import '../../data/workspace_models.dart';
 import '../providers/workspace_provider.dart';
 
@@ -17,8 +18,6 @@ class OverviewTab extends StatelessWidget {
     return SignalBuilder(builder: (_) {
       final profile = provider.profile.value;
       final metrics = provider.metrics;
-      final theses = provider.theses;
-      final notes = provider.notes;
       final qualityDetail = provider.qualityDetail.value;
       final freshness = provider.freshnessStatus.value;
 
@@ -27,12 +26,12 @@ class OverviewTab extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Decision prompt — primary object
-            _buildDecisionPrompt(theses, notes),
+            // Next action — primary decision guidance
+            _buildNextAction(context),
             const SizedBox(height: 24),
 
-            // Research state — secondary
-            _buildResearchState(theses, notes),
+            // Research snapshot — progression overview
+            _buildResearchSnapshot(context),
             const SizedBox(height: 24),
 
             // Data trust summary
@@ -55,154 +54,139 @@ class OverviewTab extends StatelessWidget {
     });
   }
 
-  Widget _buildDecisionPrompt(List<dynamic> theses, List<dynamic> notes) {
-    final status = _getResearchStatus(theses, notes);
+  Widget _buildNextAction(BuildContext context) {
+    final progression = provider.progressionState;
+    final action = progression.nextAction;
+
+    if (action == NextAction.none) return const SizedBox.shrink();
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: status.color.withValues(alpha: 0.08),
-        border: Border.all(color: status.color.withValues(alpha: 0.3)),
-        borderRadius: BorderRadius.circular(6),
+        color: AppThemeColors.accent.withValues(alpha: 0.1),
+        border: const Border(left: BorderSide(color: AppThemeColors.accent, width: 3)),
       ),
       child: Row(
         children: [
-          Icon(status.icon, size: 20, color: status.color),
+          Text(action.icon, style: AppTypography.body),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(status.title, style: AppTypography.subheading.copyWith(color: status.color)),
-                const SizedBox(height: 2),
-                Text(status.description, style: AppTypography.caption),
+                Text(action.label, style: AppTypography.subheading),
+                Text(action.description, style: AppTypography.caption),
               ],
             ),
           ),
-          if (status.actionLabel != null)
-            _ActionChip(
-              label: status.actionLabel!,
-              color: status.color,
-              onTap: () => provider.activeTab.value = 2, // Switch to Research tab
-            ),
+          _buildNextActionButton(context, action),
         ],
       ),
     );
   }
 
-  Widget _buildResearchState(List<dynamic> theses, List<dynamic> notes) {
-    final state = _getResearchState(theses, notes);
+  Widget _buildNextActionButton(BuildContext context, NextAction action) {
+    final VoidCallback? onPressed;
+    final String label;
 
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: AppThemeColors.border),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: const BoxDecoration(
-              color: AppThemeColors.surfaceMuted,
-              border: Border(bottom: BorderSide(color: AppThemeColors.border)),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.science_outlined, size: 14, color: AppThemeColors.textSecondary),
-                const SizedBox(width: 8),
-                const Text('RESEARCH STATE', style: AppTypography.monoSection),
-                const Spacer(),
-                _StateChip(label: state.current, color: state.color),
-                if (state.next != null) ...[
-                  const SizedBox(width: 4),
-                  const Icon(Icons.arrow_forward, size: 12, color: AppThemeColors.textTertiary),
-                  const SizedBox(width: 4),
-                  Text(state.next!, style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary)),
-                ],
-              ],
-            ),
+    switch (action) {
+      case NextAction.createNote:
+      case NextAction.createThesis:
+      case NextAction.answerQuestions:
+        onPressed = () => provider.activeTab.value = 2;
+        label = action.label;
+      case NextAction.createPosition:
+        onPressed = () => context.go('/portfolio-workspace');
+        label = action.label;
+      case NextAction.reviewThesis:
+        onPressed = () => provider.activeTab.value = 2;
+        label = action.label;
+      case NextAction.reviewFiling:
+        onPressed = null;
+        label = action.label;
+      case NextAction.none:
+        return const SizedBox.shrink();
+    }
+
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(4),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppThemeColors.accent.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: AppThemeColors.accent.withValues(alpha: 0.3)),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: AppThemeColors.accent,
           ),
-          // Thesis
-          if (theses.isNotEmpty)
-            _buildThesisRow(theses.first)
-          else
-            _buildEmptyRow(Icons.lightbulb_outline, 'No thesis', 'Create a thesis to formalize your investment thesis'),
-          // Notes
-          if (notes.isNotEmpty)
-            _buildNotesSummary(notes)
-          else
-            _buildEmptyRow(Icons.note_outlined, 'No notes', 'Start documenting your research'),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildThesisRow(dynamic thesis) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppThemeColors.border.withValues(alpha: 0.5))),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              StanceBadge(stance: thesis.stance),
-              const SizedBox(width: 8),
-              _ConvictionChip(conviction: thesis.conviction),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(thesis.title, style: AppTypography.body.copyWith(fontWeight: FontWeight.w500)),
-              ),
-            ],
-          ),
-          if (thesis.summary != null && thesis.summary!.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(thesis.summary!, style: AppTypography.caption, maxLines: 2, overflow: TextOverflow.ellipsis),
+  // ── Research Snapshot ──
+
+  Widget _buildResearchSnapshot(BuildContext context) {
+    final progression = provider.progressionState;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('RESEARCH SNAPSHOT', style: AppTypography.monoSection),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            _SnapshotCell(
+              label: 'THESIS',
+              value: progression.thesesCount > 0
+                  ? '${progression.thesisStance ?? "Unknown"} / ${progression.thesisConviction ?? "Low"}'
+                  : 'None',
+              isEmpty: progression.thesesCount == 0,
+              actionLabel: progression.thesesCount == 0 ? 'Create thesis' : null,
+              onAction: progression.thesesCount == 0
+                  ? () => provider.activeTab.value = 2
+                  : null,
+            ),
+            _SnapshotCell(
+              label: 'NOTES',
+              value: '${progression.notesCount} items',
+              isEmpty: progression.notesCount == 0,
+              actionLabel: progression.notesCount == 0 ? 'Create note' : null,
+              onAction: progression.notesCount == 0
+                  ? () => provider.activeTab.value = 2
+                  : null,
+            ),
+            _SnapshotCell(
+              label: 'QUESTIONS',
+              value: progression.openQuestionsCount > 0
+                  ? '${progression.openQuestionsCount} open'
+                  : 'None',
+              isEmpty: progression.openQuestionsCount == 0,
+              actionLabel: progression.openQuestionsCount == 0 ? 'Add question' : null,
+              onAction: progression.openQuestionsCount == 0
+                  ? () => provider.activeTab.value = 2
+                  : null,
+            ),
+            _SnapshotCell(
+              label: 'POSITION',
+              value: progression.positionsCount > 0 ? 'Active' : 'None',
+              isEmpty: progression.positionsCount == 0,
+              actionLabel: progression.positionsCount == 0 && progression.thesesCount > 0
+                  ? 'Create position'
+                  : null,
+              onAction: progression.positionsCount == 0 && progression.thesesCount > 0
+                  ? () => context.go('/portfolio-workspace')
+                  : null,
+            ),
           ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNotesSummary(List<dynamic> notes) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: Row(
-        children: [
-          const Icon(Icons.note_outlined, size: 14, color: AppThemeColors.textTertiary),
-          const SizedBox(width: 8),
-          Text('${notes.length} research notes', style: AppTypography.caption),
-          const Spacer(),
-          Text(
-            'Latest: ${_formatDate(notes.first.updatedAt)}',
-            style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyRow(IconData icon, String title, String description) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: AppThemeColors.textTertiary),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: AppTypography.body.copyWith(color: AppThemeColors.textTertiary)),
-                Text(description, style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary)),
-              ],
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -375,46 +359,6 @@ class OverviewTab extends StatelessWidget {
     );
   }
 
-  // ── Research Helpers ──
-
-  _ResearchStatus _getResearchStatus(List<dynamic> theses, List<dynamic> notes) {
-    if (theses.isNotEmpty) {
-      return _ResearchStatus(
-        title: 'Thesis Active',
-        description: 'Thesis "${theses.first.title}" is active. Consider updating or creating a position.',
-        icon: Icons.lightbulb,
-        color: AppThemeColors.success,
-        actionLabel: 'Review Thesis',
-      );
-    }
-    if (notes.isNotEmpty) {
-      return _ResearchStatus(
-        title: 'Research in Progress',
-        description: '${notes.length} notes created. Consider formalizing your research into a thesis.',
-        icon: Icons.edit_note,
-        color: AppThemeColors.accent,
-        actionLabel: 'Create Thesis',
-      );
-    }
-    return _ResearchStatus(
-      title: 'Not Yet Researched',
-      description: 'Start by creating research notes about this company.',
-      icon: Icons.science_outlined,
-      color: AppThemeColors.textTertiary,
-      actionLabel: 'Create Note',
-    );
-  }
-
-  _ResearchState _getResearchState(List<dynamic> theses, List<dynamic> notes) {
-    if (theses.isNotEmpty) {
-      return _ResearchState(current: 'Thesis Active', next: 'Create Position', color: AppThemeColors.success);
-    }
-    if (notes.isNotEmpty) {
-      return _ResearchState(current: 'Research In Progress', next: 'Write Thesis', color: AppThemeColors.accent);
-    }
-    return _ResearchState(current: 'Not Researched', next: 'Create Notes', color: AppThemeColors.textTertiary);
-  }
-
   // ── Metric Helpers ──
 
   String _metricLabel(String code) {
@@ -474,30 +418,6 @@ class OverviewTab extends StatelessWidget {
 }
 
 // ── Data Models ──
-
-class _ResearchStatus {
-  final String title;
-  final String description;
-  final IconData icon;
-  final Color color;
-  final String? actionLabel;
-
-  _ResearchStatus({
-    required this.title,
-    required this.description,
-    required this.icon,
-    required this.color,
-    this.actionLabel,
-  });
-}
-
-class _ResearchState {
-  final String current;
-  final String? next;
-  final Color color;
-
-  _ResearchState({required this.current, this.next, required this.color});
-}
 
 class _FreshnessInfo {
   final String label;
@@ -564,47 +484,59 @@ class _TrustBadge extends StatelessWidget {
   }
 }
 
-// ── Existing Shared Widgets ──
+// ── Snapshot Cell Widget ──
 
-class _StateChip extends StatelessWidget {
+class _SnapshotCell extends StatelessWidget {
   final String label;
-  final Color color;
+  final String value;
+  final bool isEmpty;
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
-  const _StateChip({required this.label, required this.color});
+  const _SnapshotCell({
+    required this.label,
+    required this.value,
+    required this.isEmpty,
+    this.actionLabel,
+    this.onAction,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color)),
-    );
-  }
-}
-
-class _ActionChip extends StatelessWidget {
-  final String label;
-  final Color color;
-  final VoidCallback? onTap;
-
-  const _ActionChip({required this.label, required this.color, this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(4),
+    return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.15),
+          border: Border.all(color: AppThemeColors.border),
           borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
         ),
-        child: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color)),
+        margin: const EdgeInsets.only(right: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: AppTypography.monoSection),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: AppTypography.monoData.copyWith(
+                color: isEmpty ? AppThemeColors.textTertiary : AppThemeColors.textPrimary,
+              ),
+            ),
+            if (actionLabel != null && onAction != null) ...[
+              const SizedBox(height: 6),
+              GestureDetector(
+                onTap: onAction,
+                child: Text(
+                  actionLabel!,
+                  style: AppTypography.caption.copyWith(
+                    color: AppThemeColors.accent,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -679,33 +611,6 @@ class _MetricCell extends StatelessWidget {
             ],
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _ConvictionChip extends StatelessWidget {
-  final String conviction;
-
-  const _ConvictionChip({required this.conviction});
-
-  @override
-  Widget build(BuildContext context) {
-    Color color;
-    switch (conviction) {
-      case 'high': color = AppThemeColors.accent;
-      case 'medium': color = AppThemeColors.warning;
-      default: color = AppThemeColors.textTertiary;
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        conviction[0].toUpperCase() + conviction.substring(1),
-        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color),
       ),
     );
   }
