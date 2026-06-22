@@ -8,7 +8,7 @@
         { "key": "X-Frame-Options", "value": "DENY" },
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
         { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), interest-cohort=()" },
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://YOUR_SUPABASE.supabase.co wss://YOUR_SUPABASE.supabase.co https://api.twelvedata.com; img-src 'self' data: https:; frame-ancestors 'none';" }
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://github.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://YOUR_SUPABASE.supabase.co wss://YOUR_SUPABASE.supabase.co https://api.twelvedata.com https://www.gstatic.com https://fonts.gstatic.com; img-src 'self' data: https:; frame-ancestors 'none';" }
       ]
     },
     {
