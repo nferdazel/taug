@@ -2,11 +2,14 @@ import 'package:flutter/foundation.dart';
 import 'package:signals/signals.dart';
 
 import '../../../../core/errors/result.dart';
+import '../../../portfolio/data/portfolio_models.dart';
+import '../../../portfolio/data/portfolio_workspace_repository.dart';
 import '../../data/workspace_models.dart';
 import '../../data/workspace_repository.dart';
 
 class WorkspaceProvider {
   final WorkspaceRepository _repository;
+  final PortfolioRepository _portfolioRepository;
   final String companyId;
 
   final profile = Signal<CompanyProfile?>(null);
@@ -14,16 +17,20 @@ class WorkspaceProvider {
   final statements = ListSignal<StatementRow>([]);
   final notes = ListSignal<CompanyNote>([]);
   final theses = ListSignal<CompanyThesis>([]);
+  final questions = ListSignal<CompanyQuestion>([]);
   final qualityDetail = Signal<QualityScoreDetail?>(null);
   final freshnessStatus = Signal<String?>(null);
   final isLoading = Signal<bool>(false);
   final error = Signal<String?>(null);
   final mutationError = Signal<String?>(null);
   final activeTab = Signal<int>(0);
+  final companyLessons = ListSignal<PortfolioPosition>([]);
+  final isLoadingLessons = Signal<bool>(false);
   bool _isMutating = false;
 
-  WorkspaceProvider({required this.companyId, WorkspaceRepository? repository})
-      : _repository = repository ?? WorkspaceRepository();
+  WorkspaceProvider({required this.companyId, WorkspaceRepository? repository, PortfolioRepository? portfolioRepository})
+      : _repository = repository ?? WorkspaceRepository(),
+        _portfolioRepository = portfolioRepository ?? PortfolioRepository();
 
   Future<void> loadAll() async {
     isLoading.value = true;
@@ -37,6 +44,7 @@ class WorkspaceProvider {
       _repository.getTheses(companyId),
       _repository.getQualityScore(companyId),
       _repository.getFreshnessStatus(companyId),
+      _repository.getQuestions(companyId),
     ]);
 
     final profileResult = results[0] as Result<CompanyProfile>;
@@ -46,6 +54,7 @@ class WorkspaceProvider {
     final thesesResult = results[4] as Result<List<CompanyThesis>>;
     final qualityResult = results[5] as Result<QualityScoreDetail?>;
     final freshnessResult = results[6] as Result<String?>;
+    final questionsResult = results[7] as Result<List<CompanyQuestion>>;
 
     if (profileResult.isSuccess) profile.value = profileResult.data;
     if (metricsResult.isSuccess) metrics.value = metricsResult.data!;
@@ -54,12 +63,24 @@ class WorkspaceProvider {
     if (thesesResult.isSuccess) theses.value = thesesResult.data!;
     if (qualityResult.isSuccess) qualityDetail.value = qualityResult.data;
     if (freshnessResult.isSuccess) freshnessStatus.value = freshnessResult.data;
+    if (questionsResult.isSuccess) questions.value = questionsResult.data!;
 
     if (profileResult.isFailure) {
       error.value = profileResult.error.toString();
     }
 
     isLoading.value = false;
+  }
+
+  Future<void> loadCompanyLessons(String companyId) async {
+    isLoadingLessons.value = true;
+    final result = await _portfolioRepository.getLessonsForCompany(companyId);
+    if (result.isSuccess) {
+      companyLessons.value = result.data!;
+    } else {
+      debugPrint('[WorkspaceProvider] loadCompanyLessons failed: ${result.error}');
+    }
+    isLoadingLessons.value = false;
   }
 
   Future<void> createNote(String title, String body) async {
@@ -167,6 +188,167 @@ class WorkspaceProvider {
         theses.value = theses.where((t) => t.id != thesisId).toList();
       } else {
         debugPrint('[WorkspaceProvider] deleteThesis failed: ${result.error}');
+        mutationError.value = result.error.toString();
+      }
+    } finally {
+      _isMutating = false;
+    }
+  }
+
+  Future<void> markThesisReviewed(String thesisId) async {
+    if (_isMutating) return;
+    _isMutating = true;
+    mutationError.value = null;
+    try {
+      final result = await _repository.markThesisReviewed(thesisId);
+      if (result.isSuccess) {
+        final now = DateTime.now();
+        theses.value = theses.map((t) => t.id == thesisId
+            ? CompanyThesis(
+                id: t.id,
+                companyId: t.companyId,
+                title: t.title,
+                stance: t.stance,
+                summary: t.summary,
+                bullCase: t.bullCase,
+                bearCase: t.bearCase,
+                assumptions: t.assumptions,
+                catalysts: t.catalysts,
+                risks: t.risks,
+                exitConditions: t.exitConditions,
+                conviction: t.conviction,
+                createdAt: t.createdAt,
+                updatedAt: now,
+                lastReviewedAt: now,
+                researchFreshness: t.researchFreshness,
+              )
+            : t).toList();
+      } else {
+        debugPrint('[WorkspaceProvider] markThesisReviewed failed: ${result.error}');
+        mutationError.value = result.error.toString();
+      }
+    } finally {
+      _isMutating = false;
+    }
+  }
+
+  Future<void> createReview({
+    required String thesisId,
+    String? reviewNotes,
+    String? convictionBefore,
+    String? convictionAfter,
+    String? stanceBefore,
+    String? stanceAfter,
+  }) async {
+    if (_isMutating) return;
+    _isMutating = true;
+    mutationError.value = null;
+    try {
+      final result = await _repository.createReview(
+        thesisId: thesisId,
+        reviewNotes: reviewNotes,
+        convictionBefore: convictionBefore,
+        convictionAfter: convictionAfter,
+        stanceBefore: stanceBefore,
+        stanceAfter: stanceAfter,
+      );
+      if (result.isSuccess) {
+        // Provider already bumps lastReviewedAt via repository
+        final now = DateTime.now();
+        theses.value = theses.map((t) => t.id == thesisId
+            ? CompanyThesis(
+                id: t.id,
+                companyId: t.companyId,
+                title: t.title,
+                stance: t.stance,
+                summary: t.summary,
+                bullCase: t.bullCase,
+                bearCase: t.bearCase,
+                assumptions: t.assumptions,
+                catalysts: t.catalysts,
+                risks: t.risks,
+                exitConditions: t.exitConditions,
+                conviction: t.conviction,
+                createdAt: t.createdAt,
+                updatedAt: now,
+                lastReviewedAt: now,
+                researchFreshness: t.researchFreshness,
+              )
+            : t).toList();
+      } else {
+        debugPrint('[WorkspaceProvider] createReview failed: ${result.error}');
+        mutationError.value = result.error.toString();
+      }
+    } finally {
+      _isMutating = false;
+    }
+  }
+
+  Future<void> createQuestion(String question, {String priority = 'medium'}) async {
+    if (_isMutating) return;
+    _isMutating = true;
+    mutationError.value = null;
+    try {
+      final result = await _repository.createQuestion(
+        companyId: companyId,
+        question: question,
+        priority: priority,
+      );
+      if (result.isSuccess) {
+        questions.value = [result.data!, ...questions];
+      } else {
+        debugPrint('[WorkspaceProvider] createQuestion failed: ${result.error}');
+        mutationError.value = result.error.toString();
+      }
+    } finally {
+      _isMutating = false;
+    }
+  }
+
+  Future<void> answerQuestion(String questionId, String answer) async {
+    if (_isMutating) return;
+    _isMutating = true;
+    mutationError.value = null;
+    try {
+      final result = await _repository.answerQuestion(
+        questionId: questionId,
+        answer: answer,
+      );
+      if (result.isSuccess) {
+        final now = DateTime.now();
+        questions.value = questions.map((q) => q.id == questionId
+            ? CompanyQuestion(
+                id: q.id,
+                companyId: q.companyId,
+                thesisId: q.thesisId,
+                question: q.question,
+                priority: q.priority,
+                status: 'answered',
+                answer: answer,
+                answeredAt: now,
+                createdAt: q.createdAt,
+                updatedAt: now,
+              )
+            : q).toList();
+      } else {
+        debugPrint('[WorkspaceProvider] answerQuestion failed: ${result.error}');
+        mutationError.value = result.error.toString();
+      }
+    } finally {
+      _isMutating = false;
+    }
+  }
+
+  Future<void> deleteQuestion(String questionId) async {
+    if (_isMutating) return;
+    _isMutating = true;
+    mutationError.value = null;
+    try {
+      final result = await _repository.deleteQuestion(questionId);
+      if (result.isSuccess) {
+        questions.value = questions.where((q) => q.id != questionId).toList();
+      } else {
+        debugPrint('[WorkspaceProvider] deleteQuestion failed: ${result.error}');
         mutationError.value = result.error.toString();
       }
     } finally {

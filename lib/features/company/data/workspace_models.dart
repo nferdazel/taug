@@ -109,6 +109,8 @@ class CompanyThesis extends Equatable {
   final String conviction;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final DateTime? lastReviewedAt;
+  final String? researchFreshness;
 
   const CompanyThesis({
     required this.id,
@@ -125,10 +127,180 @@ class CompanyThesis extends Equatable {
     this.conviction = 'low',
     required this.createdAt,
     required this.updatedAt,
+    this.lastReviewedAt,
+    this.researchFreshness,
+  });
+
+  /// Computed freshness based on lastReviewedAt or createdAt fallback.
+  String get freshnessStatus {
+    final reference = lastReviewedAt ?? createdAt;
+    final age = DateTime.now().difference(reference);
+    if (age.inDays <= 7) return 'fresh';
+    if (age.inDays <= 30) return 'aging';
+    if (age.inDays <= 90) return 'stale';
+    return 'expired';
+  }
+
+  @override
+  List<Object?> get props => [id];
+}
+
+class ResearchReview extends Equatable {
+  final String id;
+  final String userId;
+  final String thesisId;
+  final DateTime reviewedAt;
+  final String? reviewNotes;
+  final String? convictionBefore;
+  final String? convictionAfter;
+  final String? stanceBefore;
+  final String? stanceAfter;
+  final DateTime createdAt;
+
+  const ResearchReview({
+    required this.id,
+    required this.userId,
+    required this.thesisId,
+    required this.reviewedAt,
+    this.reviewNotes,
+    this.convictionBefore,
+    this.convictionAfter,
+    this.stanceBefore,
+    this.stanceAfter,
+    required this.createdAt,
   });
 
   @override
   List<Object?> get props => [id];
+}
+
+class NoteThesisLink extends Equatable {
+  final String id;
+  final String noteId;
+  final String thesisId;
+  final String relationship;
+  final String? thesisField;
+  final DateTime createdAt;
+
+  const NoteThesisLink({
+    required this.id,
+    required this.noteId,
+    required this.thesisId,
+    this.relationship = 'supports',
+    this.thesisField,
+    required this.createdAt,
+  });
+
+  @override
+  List<Object?> get props => [id];
+}
+
+class InvalidationCondition extends Equatable {
+  final String id;
+  final String thesisId;
+  final String description;
+  final String? metricCode;
+  final String operator;
+  final double? thresholdLow;
+  final double? thresholdHigh;
+  final String severity;
+  final String status;
+  final DateTime? triggeredAt;
+  final double? triggeredValue;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
+  const InvalidationCondition({
+    required this.id,
+    required this.thesisId,
+    required this.description,
+    this.metricCode,
+    required this.operator,
+    this.thresholdLow,
+    this.thresholdHigh,
+    this.severity = 'warning',
+    this.status = 'active',
+    this.triggeredAt,
+    this.triggeredValue,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+
+  bool get isTriggered => status == 'triggered';
+  bool get isActive => status == 'active';
+
+  @override
+  List<Object?> get props => [id, status, triggeredAt];
+}
+
+class ThesisAssumption extends Equatable {
+  final String id;
+  final String thesisId;
+  final String description;
+  final String? metricCode;
+  final String? operator;
+  final double? thresholdLow;
+  final double? thresholdHigh;
+  final String status;
+  final DateTime? lastCheckedAt;
+  final double? lastCheckedValue;
+  final DateTime? breachDetectedAt;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
+  const ThesisAssumption({
+    required this.id,
+    required this.thesisId,
+    required this.description,
+    this.metricCode,
+    this.operator,
+    this.thresholdLow,
+    this.thresholdHigh,
+    this.status = 'active',
+    this.lastCheckedAt,
+    this.lastCheckedValue,
+    this.breachDetectedAt,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+
+  bool get isBreached => status == 'breached';
+  bool get isActive => status == 'active';
+  bool get hasQuantitativeBound => metricCode != null && operator != null;
+
+  @override
+  List<Object?> get props => [id, status, breachDetectedAt];
+}
+
+class AssumptionCheckResult extends Equatable {
+  final String assumptionId;
+  final String thesisId;
+  final String description;
+  final String? metricCode;
+  final String? operator;
+  final double? thresholdLow;
+  final double? thresholdHigh;
+  final String assumptionStatus;
+  final double? currentValue;
+  final String? computationStatus;
+  final bool? isBreached;
+
+  const AssumptionCheckResult({
+    required this.assumptionId,
+    required this.thesisId,
+    required this.description,
+    this.metricCode,
+    this.operator,
+    this.thresholdLow,
+    this.thresholdHigh,
+    required this.assumptionStatus,
+    this.currentValue,
+    this.computationStatus,
+    this.isBreached,
+  });
+
+  @override
+  List<Object?> get props => [assumptionId, isBreached, currentValue];
 }
 
 class QualityScoreDetail extends Equatable {
@@ -156,4 +328,38 @@ class QualityScoreDetail extends Equatable {
 
   @override
   List<Object?> get props => [overallScore, scoreDate];
+}
+
+class CompanyQuestion extends Equatable {
+  final String id;
+  final String? companyId;
+  final String? thesisId;
+  final String question;
+  final String priority;
+  final String status;
+  final String? answer;
+  final DateTime? answeredAt;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
+  const CompanyQuestion({
+    required this.id,
+    this.companyId,
+    this.thesisId,
+    required this.question,
+    this.priority = 'medium',
+    this.status = 'open',
+    this.answer,
+    this.answeredAt,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+
+  bool get isOpen => status == 'open';
+  bool get isCritical => priority == 'critical';
+  bool get isHigh => priority == 'high' || priority == 'critical';
+  int get daysOpen => DateTime.now().difference(createdAt).inDays;
+
+  @override
+  List<Object?> get props => [id];
 }

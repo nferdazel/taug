@@ -11,10 +11,12 @@ class ResearchProvider {
   final companies = ListSignal<ResearchCompany>([]);
   final theses = ListSignal<ResearchThesisIndex>([]);
   final notes = ListSignal<ResearchNoteIndex>([]);
+  final questions = ListSignal<ResearchQuestionIndex>([]);
   final isLoading = Signal<bool>(false);
   final error = Signal<String?>(null);
   final searchQuery = Signal<String>('');
   final activeTab = Signal<int>(0);
+  bool _isMutating = false;
 
   ResearchProvider({ResearchRepository? repository})
       : _repository = repository ?? ResearchRepository();
@@ -28,21 +30,95 @@ class ResearchProvider {
         _repository.getResearchCompanies(),
         _repository.getAllTheses(),
         _repository.getAllNotes(),
+        _repository.getOpenQuestions(),
       ]);
 
       final companiesResult = results[0] as Result<List<ResearchCompany>>;
       final thesesResult = results[1] as Result<List<ResearchThesisIndex>>;
       final notesResult = results[2] as Result<List<ResearchNoteIndex>>;
+      final questionsResult = results[3] as Result<List<ResearchQuestionIndex>>;
 
       if (companiesResult.isSuccess) companies.value = companiesResult.data!;
       if (thesesResult.isSuccess) theses.value = thesesResult.data!;
       if (notesResult.isSuccess) notes.value = notesResult.data!;
+      if (questionsResult.isSuccess) questions.value = questionsResult.data!;
     } catch (e) {
       debugPrint('[ResearchProvider] loadAll error: $e');
       error.value = e.toString();
     }
 
     isLoading.value = false;
+  }
+
+  Future<void> createQuestion({
+    String? companyId,
+    String? thesisId,
+    required String question,
+    String priority = 'medium',
+  }) async {
+    if (_isMutating) return;
+    _isMutating = true;
+    try {
+      final result = await _repository.createQuestion(
+        companyId: companyId,
+        thesisId: thesisId,
+        question: question,
+        priority: priority,
+      );
+      if (result.isSuccess) {
+        final q = result.data!;
+        questions.value = [
+          ResearchQuestionIndex(
+            questionId: q.id,
+            companyId: q.companyId,
+            thesisId: q.thesisId,
+            question: q.question,
+            priority: q.priority,
+            status: q.status,
+            createdAt: q.createdAt,
+            updatedAt: q.updatedAt,
+          ),
+          ...questions,
+        ];
+      } else {
+        debugPrint('[ResearchProvider] createQuestion failed: ${result.error}');
+      }
+    } finally {
+      _isMutating = false;
+    }
+  }
+
+  Future<void> answerQuestion(String questionId, String answer) async {
+    if (_isMutating) return;
+    _isMutating = true;
+    try {
+      final result = await _repository.answerQuestion(
+        questionId: questionId,
+        answer: answer,
+      );
+      if (result.isSuccess) {
+        questions.value = questions.where((q) => q.questionId != questionId).toList();
+      } else {
+        debugPrint('[ResearchProvider] answerQuestion failed: ${result.error}');
+      }
+    } finally {
+      _isMutating = false;
+    }
+  }
+
+  Future<void> deleteQuestion(String questionId) async {
+    if (_isMutating) return;
+    _isMutating = true;
+    try {
+      final result = await _repository.deleteQuestion(questionId);
+      if (result.isSuccess) {
+        questions.value = questions.where((q) => q.questionId != questionId).toList();
+      } else {
+        debugPrint('[ResearchProvider] deleteQuestion failed: ${result.error}');
+      }
+    } finally {
+      _isMutating = false;
+    }
   }
 
   List<ResearchCompany> get researchCompanies =>
@@ -75,6 +151,16 @@ class ResearchProvider {
           n.companyName.toLowerCase().contains(query) ||
           n.body.toLowerCase().contains(query) ||
           (n.ticker ?? '').toLowerCase().contains(query);
+    }).toList();
+  }
+
+  List<ResearchQuestionIndex> get filteredQuestions {
+    final query = searchQuery.value.toLowerCase().trim();
+    if (query.isEmpty) return questions;
+    return questions.where((q) {
+      return q.question.toLowerCase().contains(query) ||
+          (q.companyName ?? '').toLowerCase().contains(query) ||
+          (q.ticker ?? '').toLowerCase().contains(query);
     }).toList();
   }
 

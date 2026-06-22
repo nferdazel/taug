@@ -27,4 +27,11 @@ abstract final class AppSchema {
   static const String savedScreeners = 'saved_screeners';
   static const String researchNotes = 'research_notes';
   static const String investmentTheses = 'investment_theses';
+  static const String researchReviews = 'research_reviews';
+  static const String researchQuestions = 'research_questions';
+  static const String thesisHealth = 'thesis_health_v';
+  static const String noteThesisLinks = 'note_thesis_links';
+  static const String invalidationConditions = 'invalidation_conditions';
+  static const String thesisAssumptions = 'thesis_assumptions';
+  static const String assumptionCheckV = 'assumption_check_v';
 }

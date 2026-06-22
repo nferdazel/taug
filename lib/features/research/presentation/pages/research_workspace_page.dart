@@ -49,6 +49,7 @@ class _ResearchWorkspacePageState extends State<ResearchWorkspacePage> {
       final totalResearch = _provider.researchCompanies.length;
       final totalTheses = _provider.theses.length;
       final totalNotes = _provider.notes.length;
+      final totalQuestions = _provider.questions.length;
 
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -64,6 +65,10 @@ class _ResearchWorkspacePageState extends State<ResearchWorkspacePage> {
             _CounterBadge(label: '$totalTheses theses', color: AppThemeColors.warning),
             const SizedBox(width: 6),
             _CounterBadge(label: '$totalNotes notes', color: AppThemeColors.textSecondary),
+            if (totalQuestions > 0) ...[
+              const SizedBox(width: 6),
+              _CounterBadge(label: '$totalQuestions questions', color: AppThemeColors.bearish),
+            ],
             const Spacer(),
             SizedBox(
               width: 240,
@@ -110,6 +115,7 @@ class _ResearchWorkspacePageState extends State<ResearchWorkspacePage> {
       final companies = _provider.filteredCompanies;
       final theses = _provider.filteredTheses;
       final notes = _provider.filteredNotes;
+      final openQuestions = _provider.filteredQuestions.where((q) => q.isOpen).toList();
 
       // Prioritize: companies with notes but no thesis need attention
       final needsThesis = companies.where((c) => c.notesCount > 0 && c.thesesCount == 0).toList();
@@ -120,6 +126,27 @@ class _ResearchWorkspacePageState extends State<ResearchWorkspacePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Open Questions — highest priority
+            if (openQuestions.isNotEmpty) ...[
+              _buildSection(
+                title: 'OPEN QUESTIONS',
+                icon: Icons.help_outline,
+                count: openQuestions.length,
+                color: AppThemeColors.warning,
+                child: Column(
+                  children: openQuestions.take(10).map((q) => _QuestionCard(
+                    question: q,
+                    onTap: () {
+                      if (q.companyId != null) {
+                        context.go('/companies/${q.companyId}');
+                      }
+                    },
+                  )).toList(),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+
             // Needs Thesis — highest priority
             if (needsThesis.isNotEmpty) ...[
               _buildSection(
@@ -427,6 +454,107 @@ class _NoteCard extends StatelessWidget {
             ),
             const Icon(Icons.chevron_right, size: 16, color: AppThemeColors.textTertiary),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _QuestionCard extends StatelessWidget {
+  final ResearchQuestionIndex question;
+  final VoidCallback onTap;
+
+  const _QuestionCard({required this.question, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final Color priorityColor;
+    switch (question.priority) {
+      case 'critical':
+        priorityColor = AppThemeColors.critical;
+      case 'high':
+        priorityColor = AppThemeColors.warning;
+      case 'medium':
+        priorityColor = AppThemeColors.accent;
+      default:
+        priorityColor = AppThemeColors.textTertiary;
+    }
+
+    return InkWell(
+      onTap: onTap,
+      hoverColor: AppThemeColors.surfaceLight.withValues(alpha: 0.5),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: AppThemeColors.border.withValues(alpha: 0.5))),
+        ),
+        child: Row(
+          children: [
+            if (question.isCritical)
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Icon(Icons.warning_amber, size: 14, color: priorityColor),
+              ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    question.question,
+                    style: AppTypography.body.copyWith(fontWeight: FontWeight.w500),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      if (question.companyName != null) ...[
+                        Text(
+                          question.companyName!,
+                          style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
+                        ),
+                        Text(
+                          ' · ${question.notesCount} notes · ${question.daysOpen}d open',
+                          style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
+                        ),
+                      ] else
+                        Text(
+                          '${question.notesCount} notes · ${question.daysOpen} days open',
+                          style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            _PriorityBadge(priority: question.priority, color: priorityColor),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PriorityBadge extends StatelessWidget {
+  final String priority;
+  final Color color;
+
+  const _PriorityBadge({required this.priority, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(3),
+      ),
+      child: Text(
+        priority.toUpperCase(),
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+          color: color,
         ),
       ),
     );

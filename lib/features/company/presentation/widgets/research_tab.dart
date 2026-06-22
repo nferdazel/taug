@@ -5,6 +5,7 @@ import 'package:signals/signals_flutter.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/widgets/status_badges.dart';
+import '../../../portfolio/data/portfolio_models.dart';
 import '../../data/workspace_models.dart';
 import '../providers/workspace_provider.dart';
 
@@ -18,6 +19,8 @@ class ResearchTab extends StatelessWidget {
     return SignalBuilder(builder: (_) {
       final theses = provider.theses;
       final notes = provider.notes;
+      final openQuestions = provider.questions.where((q) => q.isOpen).toList();
+      final answeredQuestions = provider.questions.where((q) => !q.isOpen).toList();
 
       return ListView(
         padding: const EdgeInsets.all(16),
@@ -62,6 +65,53 @@ class ResearchTab extends StatelessWidget {
                 context.go(uri.toString());
               },
             ),
+          const SizedBox(height: 24),
+
+          // Questions Section
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'QUESTIONS (${openQuestions.length})',
+                  style: AppTypography.monoSection,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.add, size: 18),
+                onPressed: () => _showQuestionDialog(context),
+                tooltip: 'Create Question',
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (openQuestions.isEmpty && answeredQuestions.isEmpty)
+            const _EmptyCard(
+              message: 'No questions yet. Create one to track research questions.',
+            )
+          else ...[
+            ...openQuestions.map(
+              (q) => _QuestionCard(
+                question: q,
+                onAnswer: () => _showAnswerDialog(context, q),
+                onDelete: () => _confirmDelete(context, 'question', () => provider.deleteQuestion(q.id)),
+              ),
+            ),
+            if (answeredQuestions.isNotEmpty) ...[
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  'ANSWERED (${answeredQuestions.length})',
+                  style: AppTypography.monoSection.copyWith(
+                    color: AppThemeColors.textTertiary,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              ...answeredQuestions.take(3).map(
+                (q) => _AnsweredQuestionCard(question: q),
+              ),
+            ],
+          ],
           const SizedBox(height: 24),
 
           // Notes Section
@@ -237,6 +287,9 @@ class ResearchTab extends StatelessWidget {
     String stance = thesis?.stance ?? 'neutral';
     String conviction = thesis?.conviction ?? 'low';
 
+    // Load prior lessons for this company when dialog opens
+    provider.loadCompanyLessons(provider.companyId);
+
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -253,6 +306,29 @@ class ResearchTab extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Prior Lessons Section
+                  SignalBuilder(builder: (_) {
+                    final lessons = provider.companyLessons;
+                    final loading = provider.isLoadingLessons.value;
+                    if (loading) {
+                      return const Padding(
+                        padding: EdgeInsets.only(bottom: 12),
+                        child: SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      );
+                    }
+                    if (lessons.isEmpty) return const SizedBox.shrink();
+                    return _LessonsSection(
+                      lessons: lessons,
+                      onNavigateToPortfolio: () {
+                        Navigator.pop(context);
+                        context.go('/portfolio-workspace');
+                      },
+                    );
+                  }),
                   TextField(
                     controller: titleController,
                     style: AppTypography.body,
@@ -511,6 +587,157 @@ class ResearchTab extends StatelessWidget {
       ),
     );
   }
+
+  void _showQuestionDialog(BuildContext context) {
+    final questionController = TextEditingController();
+    String priority = 'medium';
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: AppThemeColors.surface,
+          title: const Text('New Question', style: AppTypography.heading),
+          content: SizedBox(
+            width: 500,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: questionController,
+                  style: AppTypography.body,
+                  maxLines: 3,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    hintText: 'What do you need to find out?',
+                    hintStyle: AppTypography.caption,
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide(color: AppThemeColors.border),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: AppThemeColors.border),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: AppThemeColors.accent),
+                    ),
+                    filled: true,
+                    fillColor: AppThemeColors.surfaceMuted,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    const Text('Priority: ', style: AppTypography.body),
+                    ...['low', 'medium', 'high', 'critical'].map(
+                      (p) => Padding(
+                        padding: const EdgeInsets.only(left: 4),
+                        child: ChoiceChip(
+                          label: Text(p[0].toUpperCase() + p.substring(1)),
+                          selected: priority == p,
+                          onSelected: (selected) {
+                            if (selected) setDialogState(() => priority = p);
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: AppThemeColors.textSecondary),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final question = questionController.text.trim();
+                if (question.isEmpty) return;
+                provider.createQuestion(question, priority: priority);
+                Navigator.pop(context);
+              },
+              child: const Text('Create'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showAnswerDialog(BuildContext context, CompanyQuestion question) {
+    final answerController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppThemeColors.surface,
+        title: const Text('Answer Question', style: AppTypography.heading),
+        content: SizedBox(
+          width: 500,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppThemeColors.surfaceMuted,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: AppThemeColors.border),
+                ),
+                child: Text(question.question, style: AppTypography.body),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: answerController,
+                style: AppTypography.body,
+                maxLines: 5,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  hintText: 'Your answer or findings...',
+                  hintStyle: AppTypography.caption,
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide(color: AppThemeColors.border),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: AppThemeColors.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: AppThemeColors.accent),
+                  ),
+                  filled: true,
+                  fillColor: AppThemeColors.surfaceMuted,
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: AppThemeColors.textSecondary),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final answer = answerController.text.trim();
+              if (answer.isEmpty) return;
+              provider.answerQuestion(question.id, answer);
+              Navigator.pop(context);
+            },
+            child: const Text('Mark Answered'),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _EmptyCard extends StatelessWidget {
@@ -750,6 +977,197 @@ class _NoteCard extends StatelessWidget {
   }
 }
 
+class _LessonsSection extends StatefulWidget {
+  final List<PortfolioPosition> lessons;
+  final VoidCallback onNavigateToPortfolio;
+
+  const _LessonsSection({
+    required this.lessons,
+    required this.onNavigateToPortfolio,
+  });
+
+  @override
+  State<_LessonsSection> createState() => _LessonsSectionState();
+}
+
+class _LessonsSectionState extends State<_LessonsSection> {
+  late bool _collapsed;
+
+  @override
+  void initState() {
+    super.initState();
+    _collapsed = widget.lessons.length > 2;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final lessons = widget.lessons;
+    final visibleLessons = _collapsed ? lessons.take(2).toList() : lessons;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: AppThemeColors.surfaceMuted,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: AppThemeColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          GestureDetector(
+            onTap: () => setState(() => _collapsed = !_collapsed),
+            child: Row(
+              children: [
+                Icon(
+                  _collapsed ? Icons.expand_more : Icons.expand_less,
+                  size: 16,
+                  color: AppThemeColors.textSecondary,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  'PRIOR LESSONS (${lessons.length})',
+                  style: AppTypography.monoSection,
+                ),
+              ],
+            ),
+          ),
+          // Lesson items
+          const SizedBox(height: 8),
+          ...visibleLessons.map((pos) => _LessonItem(position: pos)),
+          // Expand hint if collapsed and more than 2
+          if (_collapsed && lessons.length > 2) ...[
+            const SizedBox(height: 6),
+            GestureDetector(
+              onTap: () => setState(() => _collapsed = false),
+              child: Text(
+                'Show ${lessons.length - 2} more...',
+                style: AppTypography.caption.copyWith(
+                  color: AppThemeColors.accent,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+          // Link to portfolio if more than 3
+          if (lessons.length > 3) ...[
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: widget.onNavigateToPortfolio,
+              child: Text(
+                'View all in Portfolio →',
+                style: AppTypography.caption.copyWith(
+                  color: AppThemeColors.accent,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _LessonItem extends StatelessWidget {
+  final PortfolioPosition position;
+
+  const _LessonItem({required this.position});
+
+  @override
+  Widget build(BuildContext context) {
+    final Color outcomeColor;
+    final String outcomeLabel;
+    switch (position.outcome) {
+      case PositionOutcome.correct:
+        outcomeColor = AppThemeColors.success;
+        outcomeLabel = 'Win';
+      case PositionOutcome.incorrect:
+        outcomeColor = AppThemeColors.critical;
+        outcomeLabel = 'Loss';
+      case PositionOutcome.partial:
+        outcomeColor = AppThemeColors.warning;
+        outcomeLabel = 'Partial';
+      default:
+        outcomeColor = AppThemeColors.textTertiary;
+        outcomeLabel = '—';
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                decoration: BoxDecoration(
+                  color: outcomeColor.withValues(alpha: 0.20),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+                child: Text(
+                  outcomeLabel,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: outcomeColor,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              if (position.thesisStance != null) ...[
+                StanceBadge(stance: position.thesisStance!, size: StanceBadgeSize.small),
+                const SizedBox(width: 6),
+              ],
+              _ConvictionBadgeSmall(conviction: position.conviction),
+            ],
+          ),
+          if (position.lessonsLearned != null && position.lessonsLearned!.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              position.lessonsLearned!,
+              style: AppTypography.body,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ConvictionBadgeSmall extends StatelessWidget {
+  final String conviction;
+
+  const _ConvictionBadgeSmall({required this.conviction});
+
+  @override
+  Widget build(BuildContext context) {
+    final level = ConvictionLevel.values.firstWhere(
+      (l) => l.name == conviction,
+      orElse: () => ConvictionLevel.low,
+    );
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      decoration: BoxDecoration(
+        color: level.color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(3),
+      ),
+      child: Text(
+        level.label,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+          color: level.color,
+        ),
+      ),
+    );
+  }
+}
+
 class _ConvictionBadge extends StatelessWidget {
   final String conviction;
 
@@ -762,5 +1180,160 @@ class _ConvictionBadge extends StatelessWidget {
       orElse: () => ConvictionLevel.low,
     );
     return ConvictionBadge(level: level);
+  }
+}
+
+class _QuestionCard extends StatelessWidget {
+  final CompanyQuestion question;
+  final VoidCallback onAnswer;
+  final VoidCallback onDelete;
+
+  const _QuestionCard({
+    required this.question,
+    required this.onAnswer,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final Color priorityColor;
+    switch (question.priority) {
+      case 'critical':
+        priorityColor = AppThemeColors.critical;
+      case 'high':
+        priorityColor = AppThemeColors.warning;
+      case 'medium':
+        priorityColor = AppThemeColors.accent;
+      default:
+        priorityColor = AppThemeColors.textTertiary;
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppThemeColors.surface,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: AppThemeColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              if (question.isCritical)
+                Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: Icon(Icons.warning_amber, size: 14, color: priorityColor),
+                ),
+              Expanded(
+                child: Text(
+                  question.question,
+                  style: AppTypography.body.copyWith(fontWeight: FontWeight.w500),
+                ),
+              ),
+              _PriorityBadge(priority: question.priority, color: priorityColor),
+              PopupMenuButton<String>(
+                icon: const Icon(
+                  Icons.more_vert,
+                  size: 16,
+                  color: AppThemeColors.textSecondary,
+                ),
+                onSelected: (value) {
+                  if (value == 'answer') onAnswer();
+                  if (value == 'delete') onDelete();
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(value: 'answer', child: Text('Answer')),
+                  const PopupMenuItem(value: 'delete', child: Text('Delete')),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${question.daysOpen} days open',
+            style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AnsweredQuestionCard extends StatelessWidget {
+  final CompanyQuestion question;
+
+  const _AnsweredQuestionCard({required this.question});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppThemeColors.surfaceMuted,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: AppThemeColors.border.withValues(alpha: 0.5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.check_circle_outline, size: 14, color: AppThemeColors.success),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  question.question,
+                  style: AppTypography.body.copyWith(
+                    decoration: TextDecoration.lineThrough,
+                    color: AppThemeColors.textSecondary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          if (question.answer != null && question.answer!.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              question.answer!,
+              style: AppTypography.caption,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _PriorityBadge extends StatelessWidget {
+  final String priority;
+  final Color color;
+
+  const _PriorityBadge({required this.priority, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(right: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(3),
+      ),
+      child: Text(
+        priority.toUpperCase(),
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
+      ),
+    );
   }
 }

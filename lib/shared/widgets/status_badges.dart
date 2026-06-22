@@ -144,6 +144,84 @@ class ConvictionBadge extends StatelessWidget {
 
 enum StanceBadgeSize { regular, small }
 
+/// Thesis research freshness levels (7/30/90 day thresholds).
+enum ResearchFreshness {
+  fresh(label: 'Fresh', colorValue: 0xFF10B981, tooltip: 'Reviewed within the last 7 days'),
+  aging(label: 'Aging', colorValue: 0xFFF59E0B, tooltip: 'Last review was 7-30 days ago. Consider reviewing.'),
+  stale(label: 'Stale', colorValue: 0xFFF43F5E, tooltip: 'Last review was 30-90 days ago. Research may be outdated.'),
+  expired(label: 'Expired', colorValue: 0xFF8E8E96, tooltip: 'Research is over 90 days old. Likely outdated.');
+
+  final String label;
+  final int colorValue;
+  final String tooltip;
+  const ResearchFreshness({required this.label, required this.colorValue, required this.tooltip});
+  Color get color => Color(colorValue);
+
+  /// Parse from a freshness string ('fresh', 'aging', 'stale', 'expired').
+  static ResearchFreshness fromString(String? value) {
+    return switch (value) {
+      'fresh' => ResearchFreshness.fresh,
+      'aging' => ResearchFreshness.aging,
+      'stale' => ResearchFreshness.stale,
+      'expired' => ResearchFreshness.expired,
+      _ => ResearchFreshness.expired,
+    };
+  }
+}
+
+class ResearchFreshnessBadge extends StatelessWidget {
+  final String? freshness;
+  final DateTime? lastReviewedAt;
+
+  const ResearchFreshnessBadge({
+    super.key,
+    this.freshness,
+    this.lastReviewedAt,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Prefer server-provided freshness, fall back to computed from lastReviewedAt
+    final String resolved;
+    if (freshness != null) {
+      resolved = freshness!;
+    } else if (lastReviewedAt != null) {
+      final age = DateTime.now().difference(lastReviewedAt!);
+      if (age.inDays <= 7) {
+        resolved = 'fresh';
+      } else if (age.inDays <= 30) {
+        resolved = 'aging';
+      } else if (age.inDays <= 90) {
+        resolved = 'stale';
+      } else {
+        resolved = 'expired';
+      }
+    } else {
+      resolved = 'expired';
+    }
+
+    final level = ResearchFreshness.fromString(resolved);
+    return Semantics(
+      label: 'Research freshness: ${level.label}',
+      child: Tooltip(
+        message: level.tooltip,
+        preferBelow: true,
+        decoration: BoxDecoration(
+          color: AppThemeColors.surfaceLight,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: AppThemeColors.border),
+        ),
+        textStyle: AppTypography.caption.copyWith(color: AppThemeColors.textPrimary),
+        child: AppBadge(
+          label: level.label,
+          color: level.color,
+          icon: Icons.circle,
+        ),
+      ),
+    );
+  }
+}
+
 class StanceBadge extends StatelessWidget {
   final String stance;
   final StanceBadgeSize size;

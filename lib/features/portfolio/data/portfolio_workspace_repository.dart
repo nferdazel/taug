@@ -141,6 +141,32 @@ class PortfolioRepository {
     }
   }
 
+  Future<Result<List<PortfolioPosition>>> getLessonsForCompany(String companyId) async {
+    try {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) {
+        debugPrint('[PortfolioRepo] getLessonsForCompany: Not authenticated');
+        return Result.failure(Exception('Not authenticated'));
+      }
+
+      final response = await _client
+          .from('portfolio_positions')
+          .select('*, companies!inner(display_name)')
+          .eq('user_id', userId)
+          .eq('company_id', companyId)
+          .eq('status', 'closed')
+          .not('lessons_learned', 'is', null)
+          .order('exit_date', ascending: false)
+          .limit(10);
+
+      final positions = (response as List).map((p) => _mapPosition(p)).toList();
+      return Result.success(positions);
+    } catch (e) {
+      debugPrint('[PortfolioRepo] getLessonsForCompany: $e');
+      return Result.failure(Exception(e.toString()));
+    }
+  }
+
   Future<Result<void>> markReviewNeeded(String positionId) async {
     try {
       final userId = _client.auth.currentUser?.id;
