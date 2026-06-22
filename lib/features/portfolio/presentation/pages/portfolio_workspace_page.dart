@@ -25,6 +25,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
     super.initState();
     _provider = PortfolioWorkspaceProvider();
     _provider.loadPositions();
+    _provider.loadPatterns();
 
     // Auto-open Add Position dialog if pre-population params are present
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -132,6 +133,11 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
               selected: _provider.activeTab.value == 2,
               onTap: () => _provider.activeTab.value = 2,
             ),
+            _TabButton(
+              label: 'Patterns',
+              selected: _provider.activeTab.value == 3,
+              onTap: () => _provider.activeTab.value = 3,
+            ),
           ],
         ),
       );
@@ -151,6 +157,8 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
           return _buildClosedView();
         case 2:
           return _buildLessonsView();
+        case 3:
+          return _buildPatternsView();
         default:
           return _buildActiveView();
       }
@@ -304,6 +312,231 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
         ],
       );
     });
+  }
+
+  // ── PATTERNS TAB ──
+
+  Widget _buildPatternsView() {
+    return SignalBuilder(builder: (_) {
+      final stats = _provider.overallStats.value;
+
+      if (stats.isEmpty || stats['total'] == 0) {
+        return const AppEmptyState(
+          icon: Icons.insights_outlined,
+          title: 'No patterns yet',
+          description: 'Close positions with outcomes to build your pattern intelligence.',
+        );
+      }
+
+      return ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          _buildPatternsPanel(),
+        ],
+      );
+    });
+  }
+
+  Widget _buildPatternsPanel() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppThemeColors.surface,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: AppThemeColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('YOUR PATTERNS', style: AppTypography.monoSection),
+          const SizedBox(height: 12),
+          _buildStanceAccuracy(),
+          const SizedBox(height: 12),
+          _buildConvictionAccuracy(),
+          const SizedBox(height: 12),
+          _buildCommonThemes(),
+          const SizedBox(height: 12),
+          _buildHoldingPeriods(),
+          const SizedBox(height: 12),
+          _buildOverallStats(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStanceAccuracy() {
+    final stance = _provider.stanceAccuracy.value;
+    if (stance.isEmpty) return const SizedBox.shrink();
+
+    final stances = ['bullish', 'bearish', 'neutral'];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final s in stances) ...[
+          if (stance.containsKey('${s}_correct') ||
+              stance.containsKey('${s}_incorrect') ||
+              stance.containsKey('${s}_partial'))
+            _buildAccuracyRow(
+              label: '${s[0].toUpperCase()}${s.substring(1)} Theses',
+              correct: stance['${s}_correct'] ?? 0,
+              incorrect: stance['${s}_incorrect'] ?? 0,
+              partial: stance['${s}_partial'] ?? 0,
+            ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildConvictionAccuracy() {
+    final conviction = _provider.convictionAccuracy.value;
+    if (conviction.isEmpty) return const SizedBox.shrink();
+
+    final levels = ['high', 'medium', 'low'];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final c in levels) ...[
+          if (conviction.containsKey('${c}_correct') ||
+              conviction.containsKey('${c}_incorrect') ||
+              conviction.containsKey('${c}_partial'))
+            _buildAccuracyRow(
+              label: '${c[0].toUpperCase()}${c.substring(1)} Conviction',
+              correct: conviction['${c}_correct'] ?? 0,
+              incorrect: conviction['${c}_incorrect'] ?? 0,
+              partial: conviction['${c}_partial'] ?? 0,
+            ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildAccuracyRow({
+    required String label,
+    required int correct,
+    required int incorrect,
+    required int partial,
+  }) {
+    final total = correct + incorrect + partial;
+    if (total == 0) return const SizedBox.shrink();
+    final pct = ((correct / total) * 100).round();
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(label, style: AppTypography.body),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: _accuracyColor(pct).withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              '$pct% correct ($correct/$total)',
+              style: AppTypography.monoData.copyWith(color: _accuracyColor(pct)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _accuracyColor(int pct) {
+    if (pct >= 70) return AppThemeColors.success;
+    if (pct >= 50) return AppThemeColors.warning;
+    return AppThemeColors.critical;
+  }
+
+  Widget _buildCommonThemes() {
+    final themes = _provider.commonThemes.value;
+    if (themes.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('COMMON LESSONS', style: AppTypography.monoSection),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 6,
+          runSpacing: 4,
+          children: themes.map((t) => Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: AppThemeColors.accent.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: AppThemeColors.accent.withValues(alpha: 0.3)),
+            ),
+            child: Text(t, style: AppTypography.monoLabel.copyWith(color: AppThemeColors.accent)),
+          )).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHoldingPeriods() {
+    final holding = _provider.holdingPeriodStats.value;
+    if (holding.isEmpty) return const SizedBox.shrink();
+
+    final correctDays = holding['correct_avg'] ?? 0;
+    final incorrectDays = holding['incorrect_avg'] ?? 0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('HOLDING PERIODS', style: AppTypography.monoSection),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            const Text('Avg Holding (Correct): ', style: AppTypography.caption),
+            Text(
+              '${correctDays.round()} days',
+              style: AppTypography.monoData.copyWith(color: AppThemeColors.success),
+            ),
+            const SizedBox(width: 16),
+            const Text('Avg Holding (Incorrect): ', style: AppTypography.caption),
+            Text(
+              '${incorrectDays.round()} days',
+              style: AppTypography.monoData.copyWith(color: AppThemeColors.critical),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOverallStats() {
+    final stats = _provider.overallStats.value;
+    if (stats.isEmpty) return const SizedBox.shrink();
+
+    final total = stats['total'] ?? 0;
+    final correct = stats['correct'] ?? 0;
+    final partial = stats['partial'] ?? 0;
+    final pct = total > 0 ? ((correct / total) * 100).round() : 0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('OVERALL', style: AppTypography.monoSection),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            const Text('Win Rate: ', style: AppTypography.caption),
+            Text(
+              '$pct% ($correct/$total)',
+              style: AppTypography.monoData.copyWith(color: _accuracyColor(pct)),
+            ),
+            const SizedBox(width: 16),
+            const Text('Partial: ', style: AppTypography.caption),
+            Text(
+              '$partial',
+              style: AppTypography.monoData.copyWith(color: AppThemeColors.warning),
+            ),
+          ],
+        ),
+      ],
+    );
   }
 
   void _showAddPositionDialog({

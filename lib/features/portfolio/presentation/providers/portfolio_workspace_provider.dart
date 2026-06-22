@@ -13,6 +13,13 @@ class PortfolioWorkspaceProvider {
   final activeTab = Signal<int>(0);
   bool _isMutating = false;
 
+  // ── Pattern Intelligence Signals ──
+  final stanceAccuracy = Signal<Map<String, int>>({});
+  final convictionAccuracy = Signal<Map<String, int>>({});
+  final commonThemes = Signal<List<String>>([]);
+  final holdingPeriodStats = Signal<Map<String, double>>({});
+  final overallStats = Signal<Map<String, int>>({});
+
   PortfolioWorkspaceProvider({PortfolioRepository? repository})
       : _repository = repository ?? PortfolioRepository();
 
@@ -38,6 +45,25 @@ class PortfolioWorkspaceProvider {
     }
 
     isLoading.value = false;
+  }
+
+  Future<void> loadPatterns() async {
+    final userId = _repository.clientId;
+    if (userId == null) return;
+
+    final results = await Future.wait([
+      _repository.getStanceAccuracy(userId),
+      _repository.getConvictionAccuracy(userId),
+      _repository.getCommonLessonThemes(userId),
+      _repository.getHoldingPeriodStats(userId),
+      _repository.getOverallStats(userId),
+    ]);
+
+    if (results[0].isSuccess) stanceAccuracy.value = results[0].data! as Map<String, int>;
+    if (results[1].isSuccess) convictionAccuracy.value = results[1].data! as Map<String, int>;
+    if (results[2].isSuccess) commonThemes.value = results[2].data! as List<String>;
+    if (results[3].isSuccess) holdingPeriodStats.value = results[3].data! as Map<String, double>;
+    if (results[4].isSuccess) overallStats.value = results[4].data! as Map<String, int>;
   }
 
   Future<void> addPosition({
