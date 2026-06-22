@@ -31,6 +31,19 @@ class PortfolioWorkspaceProvider {
   })  : _repository = repository ?? PortfolioRepository(),
         _priceRepository = priceRepository ?? legacy.PortfolioRepository();
 
+  void dispose() {
+    positions.dispose();
+    isLoading.dispose();
+    error.dispose();
+    activeTab.dispose();
+    prices.dispose();
+    stanceAccuracy.dispose();
+    convictionAccuracy.dispose();
+    commonThemes.dispose();
+    holdingPeriodStats.dispose();
+    overallStats.dispose();
+  }
+
   List<PortfolioPosition> get activePositions =>
       positions.where((p) => p.isActive || p.isReviewNeeded).toList();
 
@@ -82,19 +95,17 @@ class PortfolioWorkspaceProvider {
     final userId = _repository.clientId;
     if (userId == null) return;
 
-    final results = await Future.wait([
-      _repository.getStanceAccuracy(userId),
-      _repository.getConvictionAccuracy(userId),
-      _repository.getCommonLessonThemes(userId),
-      _repository.getHoldingPeriodStats(userId),
-      _repository.getOverallStats(userId),
-    ]);
-
-    if (results[0].isSuccess) stanceAccuracy.value = results[0].data! as Map<String, int>;
-    if (results[1].isSuccess) convictionAccuracy.value = results[1].data! as Map<String, int>;
-    if (results[2].isSuccess) commonThemes.value = results[2].data! as List<String>;
-    if (results[3].isSuccess) holdingPeriodStats.value = results[3].data! as Map<String, double>;
-    if (results[4].isSuccess) overallStats.value = results[4].data! as Map<String, int>;
+    final result = await _repository.getAllPatternData(userId);
+    if (result.isSuccess) {
+      final data = result.data!;
+      stanceAccuracy.value = data['stanceAccuracy'] as Map<String, int>;
+      convictionAccuracy.value = data['convictionAccuracy'] as Map<String, int>;
+      commonThemes.value = data['commonThemes'] as List<String>;
+      holdingPeriodStats.value = data['holdingPeriodStats'] as Map<String, double>;
+      overallStats.value = data['overallStats'] as Map<String, int>;
+    } else {
+      debugPrint('[PortfolioWorkspace] loadPatterns error: ${result.error}');
+    }
   }
 
   Future<void> addPosition({

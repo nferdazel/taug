@@ -238,75 +238,27 @@ void main() {
       });
     });
 
-    group('getStanceAccuracy', () {
-      test('returns correct/incorrect counts per stance', () async {
+    group('getAllPatternData', () {
+      test('returns all pattern data in single query', () async {
         setupSelectFilterQuery([
-          buildPositionJson(id: 'pos-1', status: 'closed', outcome: 'correct', stance: 'bullish'),
-          buildPositionJson(id: 'pos-2', status: 'closed', outcome: 'incorrect', stance: 'bullish'),
-          buildPositionJson(id: 'pos-3', status: 'closed', outcome: 'correct', stance: 'bearish'),
+          buildPositionJson(id: 'pos-1', status: 'closed', outcome: 'correct', stance: 'bullish', conviction: 'high'),
+          buildPositionJson(id: 'pos-2', status: 'closed', outcome: 'incorrect', stance: 'bullish', conviction: 'low'),
+          buildPositionJson(id: 'pos-3', status: 'closed', outcome: 'correct', stance: 'bearish', conviction: 'high'),
         ]);
-        final result = await repository.getStanceAccuracy(testUserId);
+        final result = await repository.getAllPatternData(testUserId);
         expect(result.isSuccess, isTrue);
-        expect(result.data!['bullish_correct'], 1);
-        expect(result.data!['bullish_incorrect'], 1);
-        expect(result.data!['bearish_correct'], 1);
-      });
-
-      test('defaults null stance to neutral', () async {
-        setupSelectFilterQuery([
-          buildPositionJson(id: 'pos-1', status: 'closed', outcome: 'correct', stance: null),
-        ]);
-        final result = await repository.getStanceAccuracy(testUserId);
-        expect(result.isSuccess, isTrue);
-        expect(result.data!['neutral_correct'], 1);
-      });
-
-      test('handles partial outcomes', () async {
-        setupSelectFilterQuery([
-          buildPositionJson(id: 'pos-1', status: 'closed', outcome: 'partial', stance: 'bullish'),
-        ]);
-        final result = await repository.getStanceAccuracy(testUserId);
-        expect(result.isSuccess, isTrue);
-        expect(result.data!['bullish_partial'], 1);
-      });
-
-      test('skips positions with null outcome', () async {
-        setupSelectFilterQuery([
-          buildPositionJson(id: 'pos-1', status: 'closed', outcome: null, stance: 'bullish'),
-        ]);
-        final result = await repository.getStanceAccuracy(testUserId);
-        expect(result.isSuccess, isTrue);
-        expect(result.data, isEmpty);
+        final data = result.data!;
+        expect(data['stanceAccuracy'], isA<Map<String, int>>());
+        expect(data['convictionAccuracy'], isA<Map<String, int>>());
+        expect(data['commonThemes'], isA<List<String>>());
+        expect(data['holdingPeriodStats'], isA<Map<String, dynamic>>());
+        expect(data['overallStats'], isA<Map<String, int>>());
       });
 
       test('returns failure when upstream query fails', () async {
         when(() => mockClient.from(any())).thenThrow(Exception('db down'));
-        final result = await repository.getStanceAccuracy(testUserId);
+        final result = await repository.getAllPatternData(testUserId);
         expect(result.isFailure, isTrue);
-      });
-    });
-
-    group('getConvictionAccuracy', () {
-      test('returns correct/incorrect counts per conviction', () async {
-        setupSelectFilterQuery([
-          buildPositionJson(id: 'pos-1', status: 'closed', outcome: 'correct', conviction: 'high'),
-          buildPositionJson(id: 'pos-2', status: 'closed', outcome: 'incorrect', conviction: 'high'),
-          buildPositionJson(id: 'pos-3', status: 'closed', outcome: 'correct', conviction: 'low'),
-        ]);
-        final result = await repository.getConvictionAccuracy(testUserId);
-        expect(result.isSuccess, isTrue);
-        expect(result.data!['high_correct'], 1);
-        expect(result.data!['high_incorrect'], 1);
-        expect(result.data!['low_correct'], 1);
-      });
-
-      test('skips positions with null outcome', () async {
-        setupSelectFilterQuery([
-          buildPositionJson(id: 'pos-1', status: 'closed', outcome: null, conviction: 'medium'),
-        ]);
-        final result = await repository.getConvictionAccuracy(testUserId);
-        expect(result.isSuccess, isTrue);
-        expect(result.data, isEmpty);
       });
     });
 

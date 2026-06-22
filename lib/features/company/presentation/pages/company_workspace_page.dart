@@ -206,25 +206,32 @@ class _TabButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: selected ? AppThemeColors.accent : Colors.transparent,
-              width: 2,
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: '$label tab',
+      child: InkWell(
+        onTap: onTap,
+        focusColor: AppThemeColors.accent.withValues(alpha: 0.2),
+        highlightColor: AppThemeColors.accent.withValues(alpha: 0.1),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: selected ? AppThemeColors.accent : Colors.transparent,
+                width: 2,
+              ),
             ),
           ),
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-              color: selected ? AppThemeColors.textPrimary : AppThemeColors.textSecondary,
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                color: selected ? AppThemeColors.textPrimary : AppThemeColors.textSecondary,
+              ),
             ),
           ),
         ),

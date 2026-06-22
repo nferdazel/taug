@@ -217,147 +217,99 @@ class PortfolioRepository {
     }
   }
 
-  Future<Result<Map<String, int>>> getStanceAccuracy(String userId) async {
+  /// Fetch all pattern intelligence data in a single query.
+  /// Returns a map with keys: stanceAccuracy, convictionAccuracy, commonThemes, holdingPeriodStats, overallStats
+  Future<Result<Map<String, dynamic>>> getAllPatternData(String userId) async {
     try {
       final closedResult = await _fetchClosedWithStance(userId);
       if (closedResult.isFailure) return Result.failure(closedResult.error);
 
-      final Map<String, int> counts = {};
-      for (final entry in closedResult.data!) {
-        final stance = entry.stance ?? 'neutral';
-        final outcome = entry.position.outcome;
-        if (outcome == null) continue;
-
-        switch (outcome) {
-          case PositionOutcome.correct:
-            counts['${stance}_correct'] = (counts['${stance}_correct'] ?? 0) + 1;
-          case PositionOutcome.incorrect:
-            counts['${stance}_incorrect'] = (counts['${stance}_incorrect'] ?? 0) + 1;
-          case PositionOutcome.partial:
-            counts['${stance}_partial'] = (counts['${stance}_partial'] ?? 0) + 1;
-        }
-      }
-      return Result.success(counts);
-    } catch (e) {
-      debugPrint('[PortfolioRepo] getStanceAccuracy: $e');
-      return Result.failure(Exception(e.toString()));
-    }
-  }
-
-  Future<Result<Map<String, int>>> getConvictionAccuracy(String userId) async {
-    try {
-      final closedResult = await _fetchClosedWithStance(userId);
-      if (closedResult.isFailure) return Result.failure(closedResult.error);
-
-      final Map<String, int> counts = {};
-      for (final entry in closedResult.data!) {
-        final conviction = entry.position.conviction;
-        final outcome = entry.position.outcome;
-        if (outcome == null) continue;
-
-        switch (outcome) {
-          case PositionOutcome.correct:
-            counts['${conviction}_correct'] = (counts['${conviction}_correct'] ?? 0) + 1;
-          case PositionOutcome.incorrect:
-            counts['${conviction}_incorrect'] = (counts['${conviction}_incorrect'] ?? 0) + 1;
-          case PositionOutcome.partial:
-            counts['${conviction}_partial'] = (counts['${conviction}_partial'] ?? 0) + 1;
-        }
-      }
-      return Result.success(counts);
-    } catch (e) {
-      debugPrint('[PortfolioRepo] getConvictionAccuracy: $e');
-      return Result.failure(Exception(e.toString()));
-    }
-  }
-
-  Future<Result<List<String>>> getCommonLessonThemes(String userId) async {
-    try {
-      final closedResult = await _fetchClosedWithStance(userId);
-      if (closedResult.isFailure) return Result.failure(closedResult.error);
-
+      final closed = closedResult.data!;
+      
+      // Stance accuracy
+      final Map<String, int> stanceCounts = {};
+      // Conviction accuracy
+      final Map<String, int> convictionCounts = {};
+      // Lesson themes
       final wordCounts = <String, int>{};
-      for (final entry in closedResult.data!) {
-        final lesson = entry.position.lessonsLearned;
-        if (lesson == null || lesson.isEmpty) continue;
-        final words = _extractSignificantWords(lesson);
-        for (final word in words) {
-          wordCounts[word] = (wordCounts[word] ?? 0) + 1;
-        }
-      }
-
-      final sorted = wordCounts.entries.toList()
-        ..sort((a, b) => b.value.compareTo(a.value));
-      return Result.success(sorted.take(5).map((e) => e.key).toList());
-    } catch (e) {
-      debugPrint('[PortfolioRepo] getCommonLessonThemes: $e');
-      return Result.failure(Exception(e.toString()));
-    }
-  }
-
-  Future<Result<Map<String, double>>> getHoldingPeriodStats(String userId) async {
-    try {
-      final closedResult = await _fetchClosedWithStance(userId);
-      if (closedResult.isFailure) return Result.failure(closedResult.error);
-
+      // Holding periods
       double correctTotal = 0;
       int correctCount = 0;
       double incorrectTotal = 0;
       int incorrectCount = 0;
-
-      for (final entry in closedResult.data!) {
-        final pos = entry.position;
-        if (pos.exitDate == null) continue;
-        final days = pos.exitDate!.difference(pos.entryDate).inDays.toDouble();
-
-        if (pos.outcome == PositionOutcome.correct) {
-          correctTotal += days;
-          correctCount++;
-        } else if (pos.outcome == PositionOutcome.incorrect) {
-          incorrectTotal += days;
-          incorrectCount++;
-        }
-      }
-
-      return Result.success({
-        'correct_avg': correctCount > 0 ? correctTotal / correctCount : 0,
-        'incorrect_avg': incorrectCount > 0 ? incorrectTotal / incorrectCount : 0,
-      });
-    } catch (e) {
-      debugPrint('[PortfolioRepo] getHoldingPeriodStats: $e');
-      return Result.failure(Exception(e.toString()));
-    }
-  }
-
-  Future<Result<Map<String, int>>> getOverallStats(String userId) async {
-    try {
-      final closedResult = await _fetchClosedWithStance(userId);
-      if (closedResult.isFailure) return Result.failure(closedResult.error);
-
+      // Overall stats
       int correct = 0;
       int incorrect = 0;
       int partial = 0;
-      for (final entry in closedResult.data!) {
-        switch (entry.position.outcome) {
-          case PositionOutcome.correct:
-            correct++;
-          case PositionOutcome.incorrect:
-            incorrect++;
-          case PositionOutcome.partial:
-            partial++;
-          case null:
-            break;
+
+      for (final entry in closed) {
+        final pos = entry.position;
+        final stance = entry.stance ?? 'neutral';
+        final conviction = pos.conviction;
+        final outcome = pos.outcome;
+
+        // Stance accuracy
+        if (outcome != null) {
+          switch (outcome) {
+            case PositionOutcome.correct:
+              stanceCounts['${stance}_correct'] = (stanceCounts['${stance}_correct'] ?? 0) + 1;
+              convictionCounts['${conviction}_correct'] = (convictionCounts['${conviction}_correct'] ?? 0) + 1;
+              correct++;
+            case PositionOutcome.incorrect:
+              stanceCounts['${stance}_incorrect'] = (stanceCounts['${stance}_incorrect'] ?? 0) + 1;
+              convictionCounts['${conviction}_incorrect'] = (convictionCounts['${conviction}_incorrect'] ?? 0) + 1;
+              incorrect++;
+            case PositionOutcome.partial:
+              stanceCounts['${stance}_partial'] = (stanceCounts['${stance}_partial'] ?? 0) + 1;
+              convictionCounts['${conviction}_partial'] = (convictionCounts['${conviction}_partial'] ?? 0) + 1;
+              partial++;
+          }
+        }
+
+        // Lesson themes
+        final lesson = pos.lessonsLearned;
+        if (lesson != null && lesson.isNotEmpty) {
+          final words = _extractSignificantWords(lesson);
+          for (final word in words) {
+            wordCounts[word] = (wordCounts[word] ?? 0) + 1;
+          }
+        }
+
+        // Holding periods
+        if (pos.exitDate != null) {
+          final days = pos.exitDate!.difference(pos.entryDate).inDays.toDouble();
+          if (pos.outcome == PositionOutcome.correct) {
+            correctTotal += days;
+            correctCount++;
+          } else if (pos.outcome == PositionOutcome.incorrect) {
+            incorrectTotal += days;
+            incorrectCount++;
+          }
         }
       }
 
+      // Common themes (top 5)
+      final sortedThemes = wordCounts.entries.toList()
+        ..sort((a, b) => b.value.compareTo(a.value));
+      final commonThemes = sortedThemes.take(5).map((e) => e.key).toList();
+
       return Result.success({
-        'total': closedResult.data!.length,
-        'correct': correct,
-        'incorrect': incorrect,
-        'partial': partial,
+        'stanceAccuracy': stanceCounts,
+        'convictionAccuracy': convictionCounts,
+        'commonThemes': commonThemes,
+        'holdingPeriodStats': {
+          'correct_avg': correctCount > 0 ? correctTotal / correctCount : 0,
+          'incorrect_avg': incorrectCount > 0 ? incorrectTotal / incorrectCount : 0,
+        },
+        'overallStats': {
+          'total': closed.length,
+          'correct': correct,
+          'incorrect': incorrect,
+          'partial': partial,
+        },
       });
     } catch (e) {
-      debugPrint('[PortfolioRepo] getOverallStats: $e');
+      debugPrint('[PortfolioRepo] getAllPatternData: $e');
       return Result.failure(Exception(e.toString()));
     }
   }

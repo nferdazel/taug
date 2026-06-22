@@ -42,9 +42,7 @@ class ResearchProgressionState extends Equatable {
   ResearchStage get stage {
     if (notesCount == 0 && thesesCount == 0) return ResearchStage.noResearch;
     if (notesCount > 0 && thesesCount == 0) return ResearchStage.notesOnly;
-    if (thesesCount > 0 &&
-        openQuestionsCount > 0 &&
-        criticalQuestionsCount > 0) {
+    if (thesesCount > 0 && openQuestionsCount > 0) {
       return ResearchStage.questionsOutstanding;
     }
     if (thesesCount > 0 && positionsCount == 0) {
@@ -89,11 +87,17 @@ class ResearchProgressionState extends Equatable {
   @override
   List<Object?> get props => [
         companyId,
+        companyName,
         notesCount,
-        thesesCount,
         openQuestionsCount,
+        criticalQuestionsCount,
+        thesesCount,
         positionsCount,
         lessonsCount,
+        thesisStance,
+        thesisConviction,
+        thesisLastUpdated,
+        researchFreshness,
       ];
 }
 
@@ -101,7 +105,6 @@ class ResearchProgressionState extends Equatable {
 enum ResearchStage {
   noResearch,
   notesOnly,
-  thesisMissing,
   questionsOutstanding,
   positionReady,
   activePosition,

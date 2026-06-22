@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../../core/schema/app_schema.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/models/price_data.dart';
@@ -41,6 +42,12 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
         );
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _provider.dispose();
+    super.dispose();
   }
 
   @override
@@ -565,7 +572,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
       try {
         final client = Supabase.instance.client;
         final response = await client
-            .from('theses')
+            .from(AppSchema.investmentTheses)
             .select('id, title, stance, conviction')
             .eq('company_id', preCompanyId)
             .eq('status', 'active')
@@ -582,7 +589,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
       try {
         final client = Supabase.instance.client;
         final response = await client
-            .from('theses')
+            .from(AppSchema.investmentTheses)
             .select('id, title, stance, conviction')
             .eq('company_id', companyId)
             .eq('status', 'active')
@@ -965,25 +972,32 @@ class _TabButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: selected ? AppThemeColors.accent : Colors.transparent,
-              width: 2,
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: '$label tab',
+      child: InkWell(
+        onTap: onTap,
+        focusColor: AppThemeColors.accent.withValues(alpha: 0.2),
+        highlightColor: AppThemeColors.accent.withValues(alpha: 0.1),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: selected ? AppThemeColors.accent : Colors.transparent,
+                width: 2,
+              ),
             ),
           ),
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-              color: selected ? AppThemeColors.textPrimary : AppThemeColors.textSecondary,
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                color: selected ? AppThemeColors.textPrimary : AppThemeColors.textSecondary,
+              ),
             ),
           ),
         ),
