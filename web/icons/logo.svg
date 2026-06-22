@@ -5,22 +5,13 @@
   <!-- Border -->
   <rect x="2" y="2" width="508" height="508" rx="62" stroke="#27272a" stroke-width="2" fill="none"/>
   
-  <!-- T letter - vertical bar -->
-  <rect x="156" y="140" width="48" height="232" rx="4" fill="#fafafa"/>
-  
   <!-- T letter - horizontal bar -->
-  <rect x="120" y="140" width="120" height="48" rx="4" fill="#fafafa"/>
+  <rect x="140" y="120" width="232" height="48" rx="8" fill="#fafafa"/>
   
-  <!-- Chart line (representing research/data) -->
-  <polyline points="240,340 280,280 320,300 360,220 400,240" 
-            stroke="#3b82f6" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- T letter - vertical bar -->
+  <rect x="248" y="120" width="48" height="272" rx="8" fill="#fafafa"/>
   
-  <!-- Data points -->
-  <circle cx="280" cy="280" r="6" fill="#3b82f6"/>
-  <circle cx="320" cy="300" r="6" fill="#3b82f6"/>
-  <circle cx="360" cy="220" r="6" fill="#3b82f6"/>
-  <circle cx="400" cy="240" r="6" fill="#3b82f6"/>
-  
-  <!-- Upward trend arrow -->
-  <path d="M388 228 L400 240 L412 228" stroke="#10b981" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Mini chart line -->
+  <polyline points="270,360 320,280 370,310 420,220" 
+            stroke="#3b82f6" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
 </svg>

@@ -2,10 +2,12 @@
   <!-- Background -->
   <rect width="32" height="32" rx="6" fill="#09090b"/>
   
-  <!-- T letter -->
-  <rect x="8" y="7" width="16" height="4" rx="1" fill="#fafafa"/>
-  <rect x="13" y="7" width="4" height="18" rx="1" fill="#fafafa"/>
+  <!-- T letter - horizontal bar -->
+  <rect x="6" y="6" width="20" height="4" rx="1" fill="#fafafa"/>
   
-  <!-- Mini chart -->
-  <polyline points="17,22 20,16 23,18 26,12" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- T letter - vertical bar -->
+  <rect x="14" y="6" width="4" height="20" rx="1" fill="#fafafa"/>
+  
+  <!-- Mini chart line -->
+  <polyline points="15,24 20,16 25,19 30,10" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
 </svg>
