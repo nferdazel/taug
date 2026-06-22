@@ -36,6 +36,14 @@ class SettingsProvider {
     isLoading.value = false;
   }
 
+  void dispose() {
+    username.dispose();
+    timezone.dispose();
+    densityMode.dispose();
+    isLoading.dispose();
+    error.dispose();
+  }
+
   Future<void> updateTimezone(String tz) async {
     if (_isMutating) return;
     _isMutating = true;

@@ -4,6 +4,7 @@ import 'package:signals/signals_flutter.dart';
 
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/extensions.dart';
 import '../../../../shared/models/research_progression_state.dart';
 import '../../../../shared/widgets/research_empty_state.dart';
 import '../../../../shared/widgets/status_badges.dart';
@@ -1131,7 +1132,7 @@ class _ThesisCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Updated: ${_formatDate(thesis.updatedAt)}',
+            'Updated: ${thesis.updatedAt.toYyyyMmDd()}',
             style: AppTypography.caption.copyWith(
               color: AppThemeColors.textTertiary,
             ),
@@ -1139,10 +1140,6 @@ class _ThesisCard extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  String _formatDate(DateTime dt) {
-    return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
   }
 }
 
@@ -1216,7 +1213,7 @@ class _NoteCard extends StatelessWidget {
           ],
           const SizedBox(height: 4),
           Text(
-            _formatDate(note.updatedAt),
+            note.updatedAt.toYyyyMmDd(),
             style: AppTypography.caption.copyWith(
               color: AppThemeColors.textTertiary,
             ),
@@ -1224,10 +1221,6 @@ class _NoteCard extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  String _formatDate(DateTime dt) {
-    return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
   }
 }
 

@@ -177,7 +177,6 @@ void main() {
     testWidgets('renders attention items when companies need thesis',
         (tester) async {
       _setWideSurface(tester);
-      final now = DateTime(2026, 6, 22);
       _stubLoadAll(
         mockRepo: mockRepo,
         companies: [

@@ -18,6 +18,15 @@ class CompaniesProvider {
   CompaniesProvider({CompanyListRepository? repository})
       : _repository = repository ?? CompanyListRepository();
 
+  void dispose() {
+    companies.dispose();
+    qualityScores.dispose();
+    freshnessStatuses.dispose();
+    isLoading.dispose();
+    searchQuery.dispose();
+    error.dispose();
+  }
+
   List<CompanyListItem> get filteredCompanies {
     final query = searchQuery.value.toLowerCase().trim();
     if (query.isEmpty) return companies;

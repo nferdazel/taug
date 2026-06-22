@@ -19,6 +19,13 @@ class SymbolSearchProvider {
   }) : _symbolRepository = symbolRepository ?? SymbolRepository(),
        _watchlistRepository = watchlistRepository ?? WatchlistRepository();
 
+  void dispose() {
+    searchResults.dispose();
+    isSearching.dispose();
+    searchError.dispose();
+    isAdding.dispose();
+  }
+
   Future<void> search(String query) async {
     if (query.isEmpty) {
       searchResults.value = [];

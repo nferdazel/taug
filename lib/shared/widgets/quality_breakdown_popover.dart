@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme_colors.dart';
 import '../../core/theme/app_typography.dart';
+import '../../core/utils/extensions.dart';
 import '../../features/company/data/workspace_models.dart';
 
 /// Shows a popover with quality score component breakdown.
@@ -42,7 +43,7 @@ class QualityBreakdownPopover extends StatelessWidget {
               const Spacer(),
               if (quality.scoreDate != null)
                 Text(
-                  'Scored: ${_formatDate(quality.scoreDate!)}',
+                  'Scored: ${quality.scoreDate!.toMmDdYyyy()}',
                   style: AppTypography.monoMeta.copyWith(
                     color: AppThemeColors.textTertiary,
                   ),
@@ -177,10 +178,6 @@ class QualityBreakdownPopover extends StatelessWidget {
     if (score >= 0.8) return AppThemeColors.success;
     if (score >= 0.6) return AppThemeColors.warning;
     return AppThemeColors.critical;
-  }
-
-  String _formatDate(DateTime dt) {
-    return '${dt.month}/${dt.day}/${dt.year}';
   }
 
   String _formatDetailKey(String key) {

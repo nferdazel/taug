@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../theme/app_theme_colors.dart';
 import '../utils/error_sanitizer.dart';
 
 import '../../features/auth/presentation/pages/login_page.dart';
@@ -63,7 +64,7 @@ final router = GoRouter(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, size: 48, color: Color(0xFFF43F5E)),
+            const Icon(Icons.error_outline, size: 48, color: AppThemeColors.bearish),
             const SizedBox(height: 16),
             const Text('Page not found', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),

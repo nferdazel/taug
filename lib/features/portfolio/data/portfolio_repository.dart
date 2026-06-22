@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/errors/failures.dart';
 import '../../../core/errors/result.dart';
 import '../../../core/schema/app_schema.dart';
+import '../../../core/utils/extensions.dart';
 import '../../../shared/models/price_data.dart';
 import '../domain/portfolio_entity.dart';
 
@@ -149,7 +150,7 @@ class PortfolioRepository {
       for (final row in response) {
         final Map<String, dynamic> symbolRow = Map<String, dynamic>.from(row);
         final String? ticker = symbolRow['ticker'] as String?;
-        final Map<String, dynamic>? snapshot = _extractSnapshot(symbolRow);
+        final Map<String, dynamic>? snapshot = extractRelationRow(symbolRow, AppSchema.quoteSnapshots);
 
         if (ticker != null && snapshot != null) {
           priceMap[ticker] = PriceData.fromJson({
@@ -166,14 +167,4 @@ class PortfolioRepository {
     }
   }
 
-  Map<String, dynamic>? _extractSnapshot(Map<String, dynamic> row) {
-    final Object? relation = row[AppSchema.quoteSnapshots];
-    if (relation is Map<String, dynamic>) {
-      return relation;
-    }
-    if (relation is List && relation.isNotEmpty && relation.first is Map) {
-      return Map<String, dynamic>.from(relation.first as Map);
-    }
-    return null;
-  }
 }

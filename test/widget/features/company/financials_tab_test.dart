@@ -52,8 +52,8 @@ void main() {
 
     // Stub all loadAll calls so the provider can be populated manually.
     when(() => mockRepo.getCompanyProfile(testCompanyId)).thenAnswer(
-      (_) async => Result.success(
-        const CompanyProfile(
+      (_) async => const Result.success(
+        CompanyProfile(
           id: testCompanyId,
           displayName: 'Apple Inc.',
           ticker: 'AAPL',

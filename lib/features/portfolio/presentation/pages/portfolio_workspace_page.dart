@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals/signals_flutter.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../../core/schema/app_schema.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/extensions.dart';
 import '../../../../shared/models/price_data.dart';
 import '../../../../shared/widgets/app_state_widgets.dart';
 import '../../../../shared/widgets/status_badges.dart';
@@ -64,9 +64,9 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
   Widget _buildHeader() {
     return SignalBuilder(builder: (_) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxxl, vertical: AppSpacing.xl),
         decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: Color(0xFF27272A))),
+          border: Border(bottom: BorderSide(color: AppThemeColors.border)),
         ),
         child: Row(
           children: [
@@ -122,7 +122,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
       return Container(
         height: 36,
         decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: Color(0xFF27272A))),
+          border: Border(bottom: BorderSide(color: AppThemeColors.border)),
         ),
         child: Row(
           children: [
@@ -187,7 +187,7 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
       }
 
       return ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.xxl),
         itemCount: positions.length,
         itemExtent: 120,
         itemBuilder: (context, index) {
@@ -569,36 +569,12 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
 
     // Pre-fetch theses if company is pre-selected so dialog opens with data
     if (preCompanyId != null && preCompanyId.isNotEmpty) {
-      try {
-        final client = Supabase.instance.client;
-        final response = await client
-            .from(AppSchema.investmentTheses)
-            .select('id, title, stance, conviction')
-            .eq('company_id', preCompanyId)
-            .eq('status', 'active')
-            .order('created_at', ascending: false);
-        availableTheses = List<Map<String, dynamic>>.from(response as List);
-      } catch (e) {
-        debugPrint('[Portfolio] Pre-fetch theses error: $e');
-        availableTheses = [];
-      }
+      availableTheses = await _provider.getActiveThesesForCompany(preCompanyId);
     }
 
     // Fetch theses for selected company
     Future<void> fetchTheses(String companyId) async {
-      try {
-        final client = Supabase.instance.client;
-        final response = await client
-            .from(AppSchema.investmentTheses)
-            .select('id, title, stance, conviction')
-            .eq('company_id', companyId)
-            .eq('status', 'active')
-            .order('created_at', ascending: false);
-        availableTheses = List<Map<String, dynamic>>.from(response as List);
-      } catch (e) {
-        debugPrint('[Portfolio] Fetch theses error: $e');
-        availableTheses = [];
-      }
+      availableTheses = await _provider.getActiveThesesForCompany(companyId);
     }
 
     if (!mounted) return;
@@ -663,20 +639,10 @@ class _PortfolioWorkspacePageState extends State<PortfolioWorkspacePage> {
                               setDialogState(() => searchResults = []);
                               return;
                             }
-                            try {
-                              final client = Supabase.instance.client;
-                              final response = await client
-                                  .from('companies')
-                                  .select('id, display_name')
-                                  .ilike('display_name', '%$query%')
-                                  .limit(5);
-                              setDialogState(() {
-                                searchResults = List<Map<String, dynamic>>.from(response as List);
-                              });
-                            } catch (e) {
-                              debugPrint('[Portfolio] Company search error: $e');
-                              setDialogState(() => searchResults = []);
-                            }
+                            final results = await _provider.searchCompanies(query);
+                            setDialogState(() {
+                              searchResults = results;
+                            });
                           },
                         ),
                         if (searchResults.isNotEmpty)
@@ -1134,7 +1100,7 @@ class _ActivePositionCard extends StatelessWidget {
           Row(
             children: [
               Text(
-                'Entry: ${_formatDate(position.entryDate)}',
+                'Entry: ${position.entryDate.toYyyyMmDd()}',
                 style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
               ),
               const SizedBox(width: 12),
@@ -1168,10 +1134,6 @@ class _ActivePositionCard extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  String _formatDate(DateTime dt) {
-    return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
   }
 }
 
@@ -1226,13 +1188,13 @@ class _ClosedPositionCard extends StatelessWidget {
           Row(
             children: [
               Text(
-                'Entry: ${_formatDate(position.entryDate)}',
+                'Entry: ${position.entryDate.toYyyyMmDd()}',
                 style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
               ),
               if (position.exitDate != null) ...[
                 const SizedBox(width: 12),
                 Text(
-                  'Exit: ${_formatDate(position.exitDate!)}',
+                  'Exit: ${position.exitDate!.toYyyyMmDd()}',
                   style: AppTypography.caption.copyWith(color: AppThemeColors.textTertiary),
                 ),
               ],
@@ -1246,10 +1208,6 @@ class _ClosedPositionCard extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  String _formatDate(DateTime dt) {
-    return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
   }
 }
 

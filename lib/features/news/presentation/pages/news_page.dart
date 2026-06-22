@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/extensions.dart';
 import '../../../../shared/models/data_origin.dart';
 import '../../../../shared/models/news_article.dart';
 import '../../../../shared/models/terminal_headline.dart';
@@ -221,7 +221,7 @@ class _NewsPageState extends State<NewsPage> {
                                       const SizedBox(width: 4),
                                     ],
                                     Text(
-                                      _formatTime(headline.publishedAt),
+                                      headline.publishedAt.timeAgo(),
                                       style: AppTypography.monoTiny.copyWith(
                                         color: AppThemeColors.textTertiary,
                                       ),
@@ -264,7 +264,7 @@ class _NewsPageState extends State<NewsPage> {
             Padding(
               padding: const EdgeInsets.only(right: AppSpacing.lg),
               child: Text(
-                'Updated ${_formatTime(_lastUpdated.value!)}',
+                'Updated ${_lastUpdated.value!.timeAgo()}',
                 style: AppTypography.monoTiny.copyWith(
                   color: AppThemeColors.textTertiary,
                 ),
@@ -521,7 +521,7 @@ class _NewsPageState extends State<NewsPage> {
                     ),
                     const Spacer(),
                     Text(
-                      _formatTime(article.publishedAt),
+                      article.publishedAt.timeAgo(),
                       style: AppTypography.monoTiny.copyWith(
                         color: AppThemeColors.textTertiary,
                       ),
@@ -585,15 +585,6 @@ class _NewsPageState extends State<NewsPage> {
       2 => AppThemeColors.warning,
       _ => AppThemeColors.accent,
     };
-  }
-
-  String _formatTime(DateTime time) {
-    final diff = DateTime.now().difference(time);
-    if (diff.inMinutes < 1) return 'just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    if (diff.inDays < 7) return '${diff.inDays}d ago';
-    return DateFormat('MMM d').format(time);
   }
 
   Future<void> _launchUrl(String url) async {

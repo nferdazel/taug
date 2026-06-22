@@ -33,6 +33,12 @@ class _CompanyWorkspacePageState extends State<CompanyWorkspacePage> {
   }
 
   @override
+  void dispose() {
+    _provider.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return SignalBuilder(builder: (_) {
       if (_provider.isLoading.value) {

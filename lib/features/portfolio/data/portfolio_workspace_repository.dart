@@ -193,6 +193,37 @@ class PortfolioRepository {
     }
   }
 
+  // ── Company & Thesis Lookups ──
+
+  Future<Result<List<Map<String, dynamic>>>> searchCompanies(String query) async {
+    try {
+      final response = await _client
+          .from('companies')
+          .select('id, display_name')
+          .ilike('display_name', '%$query%')
+          .limit(5);
+      return Result.success(List<Map<String, dynamic>>.from(response as List));
+    } catch (e) {
+      debugPrint('[PortfolioRepo] searchCompanies: $e');
+      return Result.failure(Exception(e.toString()));
+    }
+  }
+
+  Future<Result<List<Map<String, dynamic>>>> getActiveThesesForCompany(String companyId) async {
+    try {
+      final response = await _client
+          .from('investment_theses')
+          .select('id, title, stance, conviction')
+          .eq('company_id', companyId)
+          .eq('status', 'active')
+          .order('created_at', ascending: false);
+      return Result.success(List<Map<String, dynamic>>.from(response as List));
+    } catch (e) {
+      debugPrint('[PortfolioRepo] getActiveThesesForCompany: $e');
+      return Result.failure(Exception(e.toString()));
+    }
+  }
+
   // ── Pattern Intelligence Methods ──
 
   Future<Result<List<_ClosedPositionWithStance>>> _fetchClosedWithStance(String userId) async {

@@ -108,6 +108,24 @@ class PortfolioWorkspaceProvider {
     }
   }
 
+  Future<List<Map<String, dynamic>>> searchCompanies(String query) async {
+    final result = await _repository.searchCompanies(query);
+    if (result.isSuccess) {
+      return result.data!;
+    }
+    ErrorSanitizer.debugLog('PortfolioWorkspaceProvider', 'searchCompanies failed: ${result.error}');
+    return [];
+  }
+
+  Future<List<Map<String, dynamic>>> getActiveThesesForCompany(String companyId) async {
+    final result = await _repository.getActiveThesesForCompany(companyId);
+    if (result.isSuccess) {
+      return result.data!;
+    }
+    ErrorSanitizer.debugLog('PortfolioWorkspaceProvider', 'getActiveThesesForCompany failed: ${result.error}');
+    return [];
+  }
+
   Future<void> addPosition({
     required String companyId,
     String? thesisId,

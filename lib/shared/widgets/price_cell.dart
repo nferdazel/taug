@@ -27,9 +27,7 @@ class PriceCell extends StatelessWidget {
         label: 'Price: $value, $direction',
         child: Text(
           value,
-          style: AppThemeColors.changeStyle(change ?? 0).copyWith(
-            fontSize: 11,
-          ),
+          style: AppThemeColors.changeStyle(change ?? 0),
           textAlign: textAlign,
         ),
       ),

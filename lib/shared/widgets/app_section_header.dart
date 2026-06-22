@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_theme_colors.dart';
 import '../../core/theme/app_typography.dart';
 
 class AppSectionHeader extends StatelessWidget {
@@ -55,7 +56,7 @@ class AppWorkspaceHeader extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: Color(0xFF27272A))),
+          border: Border(bottom: BorderSide(color: AppThemeColors.border)),
         ),
         child: Row(
           children: [

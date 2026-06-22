@@ -3,6 +3,7 @@ import 'package:signals/signals_flutter.dart';
 
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/extensions.dart';
 import '../../../../shared/models/research_progression_state.dart';
 import '../../data/workspace_models.dart';
 import '../providers/workspace_provider.dart';
@@ -115,7 +116,7 @@ class _FinancialsTabState extends State<FinancialsTab> {
           ],
           // Source attribution
           Text(
-            'Source: SEC EDGAR · Last updated: ${_formatDate(DateTime.now())}',
+            'Source: SEC EDGAR · Last updated: ${DateTime.now().toYyyyMmDd()}',
             style: AppTypography.caption.copyWith(
               color: AppThemeColors.textTertiary,
             ),
@@ -565,10 +566,6 @@ class _FinancialsTabState extends State<FinancialsTab> {
     if (v.abs() >= 1e6) return '\$${(v / 1e6).toStringAsFixed(2)}M';
     if (v.abs() >= 1e3) return '\$${(v / 1e3).toStringAsFixed(1)}K';
     return '\$${v.toStringAsFixed(2)}';
-  }
-
-  String _formatDate(DateTime dt) {
-    return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
   }
 
   static const List<String> _incomeStatementKeys = [

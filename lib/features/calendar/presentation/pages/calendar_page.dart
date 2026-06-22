@@ -188,7 +188,7 @@ class _CalendarPageState extends State<CalendarPage> {
           padding: EdgeInsets.zero,
           minimumSize: Size.zero,
         ),
-        child: Text(emoji, style: const TextStyle(fontSize: 12)),
+        child: Text(emoji, style: AppTypography.body),
       ),
     );
   }

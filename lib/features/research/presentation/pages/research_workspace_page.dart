@@ -4,6 +4,7 @@ import 'package:signals/signals_flutter.dart';
 
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/extensions.dart';
 import '../../../../shared/widgets/app_state_widgets.dart';
 import '../../../../shared/widgets/status_badges.dart';
 import '../../../companies/presentation/widgets/research_status_badge.dart';
@@ -86,6 +87,7 @@ class _ResearchWorkspacePageState extends State<ResearchWorkspacePage> {
 
   @override
   void dispose() {
+    _provider.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -597,7 +599,7 @@ class _ActivityRow extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Text(
-              _formatTimeAgo(item.updatedAt),
+              item.updatedAt.timeAgo(),
               style: AppTypography.monoMeta.copyWith(color: AppThemeColors.textTertiary),
             ),
             const SizedBox(width: 8),
@@ -606,16 +608,6 @@ class _ActivityRow extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  String _formatTimeAgo(DateTime dateTime) {
-    final diff = DateTime.now().difference(dateTime);
-    if (diff.inMinutes < 1) return 'just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    if (diff.inDays < 30) return '${diff.inDays}d ago';
-    if (diff.inDays < 365) return '${(diff.inDays / 30).floor()}mo ago';
-    return '${(diff.inDays / 365).floor()}y ago';
   }
 }
 

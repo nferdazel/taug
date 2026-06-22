@@ -4,6 +4,7 @@ import 'package:signals/signals_flutter.dart';
 
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/extensions.dart';
 import '../../../../shared/models/research_progression_state.dart';
 import '../../data/workspace_models.dart';
 import '../providers/workspace_provider.dart';
@@ -246,7 +247,7 @@ class OverviewTab extends StatelessWidget {
                 // As-of date
                 if (quality?.scoreDate != null)
                   Text(
-                    'Scored ${_formatDate(quality!.scoreDate!)}',
+                    'Scored ${quality!.scoreDate!.toMmDdYyyy()}',
                     style: AppTypography.monoMeta.copyWith(color: AppThemeColors.textTertiary),
                   ),
               ],
@@ -402,10 +403,6 @@ class OverviewTab extends StatelessWidget {
     if (n.abs() >= 1e6) return '\$${(n / 1e6).toStringAsFixed(2)}M';
     if (n.abs() >= 1e3) return '\$${(n / 1e3).toStringAsFixed(1)}K';
     return '\$${n.toStringAsFixed(2)}';
-  }
-
-  String _formatDate(DateTime dt) {
-    return '${dt.month.toString().padLeft(2, '0')}/${dt.day.toString().padLeft(2, '0')}/${dt.year}';
   }
 
   String _humanize(String value) {
