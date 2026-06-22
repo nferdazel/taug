@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from workers.taug_worker.jobs.execute_screener import (
+from taug_worker.jobs.execute_screener import (
   _build_query,
   _OPERATOR_MAP,
   _METRIC_COLUMNS,

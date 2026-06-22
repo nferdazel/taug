@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from workers.taug_worker.jobs.compute_company_metrics import (
+from taug_worker.jobs.compute_company_metrics import (
   TTMFigures,
   StatementPeriod,
   MetricComputationResult,

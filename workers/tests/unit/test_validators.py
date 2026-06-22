@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from workers.taug_worker.validators.sec_submissions import (
+from taug_worker.validators.sec_submissions import (
   ValidationFailure,
   validate_sec_submissions_payload,
 )
-from workers.taug_worker.validators.sec_companyfacts import (
+from taug_worker.validators.sec_companyfacts import (
   validate_sec_companyfacts_payload,
 )
-from workers.taug_worker.validators.raw_documents import (
+from taug_worker.validators.raw_documents import (
   DocumentIntegrityFailure,
   validate_raw_document_integrity,
 )
