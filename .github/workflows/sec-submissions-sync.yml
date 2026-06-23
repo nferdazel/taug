@@ -10,12 +10,12 @@ on:
       max_companies:
         description: "Optional cap on number of CIKs to process"
         required: false
-        default: "0"
+        default: "5"
         type: string
       max_filings_per_company:
         description: "Maximum number of recent filings to normalize per company"
         required: false
-        default: "25"
+        default: "5"
         type: string
   schedule:
     - cron: "15 2 * * *"
