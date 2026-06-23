@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-
 import 'package:taug/core/errors/result.dart';
 import 'package:taug/features/company/data/workspace_models.dart';
 import 'package:taug/features/company/data/workspace_repository.dart';
@@ -10,7 +9,8 @@ import 'package:taug/features/portfolio/data/portfolio_workspace_repository.dart
 
 class MockWorkspaceRepository extends Mock implements WorkspaceRepository {}
 
-class MockPortfolioPositionRepository extends Mock implements PortfolioPositionRepository {}
+class MockPortfolioPositionRepository extends Mock
+    implements PortfolioPositionRepository {}
 
 void main() {
   late MockWorkspaceRepository mockRepo;
@@ -51,30 +51,30 @@ void main() {
             ),
       ),
     );
-    when(() => mockRepo.getMetrics(testCompanyId)).thenAnswer(
-      (_) async => Result.success(metrics ?? []),
-    );
-    when(() => mockRepo.getFinancialStatements(testCompanyId)).thenAnswer(
-      (_) async => Result.success(statements ?? []),
-    );
-    when(() => mockRepo.getNotes(testCompanyId)).thenAnswer(
-      (_) async => Result.success(notes ?? []),
-    );
-    when(() => mockRepo.getTheses(testCompanyId)).thenAnswer(
-      (_) async => Result.success(theses ?? []),
-    );
-    when(() => mockRepo.getQualityScore(testCompanyId)).thenAnswer(
-      (_) async => Result.success(quality),
-    );
-    when(() => mockRepo.getFreshnessStatus(testCompanyId)).thenAnswer(
-      (_) async => Result.success(freshness),
-    );
-    when(() => mockRepo.getQuestions(testCompanyId)).thenAnswer(
-      (_) async => Result.success(questions ?? []),
-    );
-    when(() => mockPortfolioRepo.getPositions(status: 'active')).thenAnswer(
-      (_) async => Result.success([]),
-    );
+    when(
+      () => mockRepo.getMetrics(testCompanyId),
+    ).thenAnswer((_) async => Result.success(metrics ?? []));
+    when(
+      () => mockRepo.getFinancialStatements(testCompanyId),
+    ).thenAnswer((_) async => Result.success(statements ?? []));
+    when(
+      () => mockRepo.getNotes(testCompanyId),
+    ).thenAnswer((_) async => Result.success(notes ?? []));
+    when(
+      () => mockRepo.getTheses(testCompanyId),
+    ).thenAnswer((_) async => Result.success(theses ?? []));
+    when(
+      () => mockRepo.getQualityScore(testCompanyId),
+    ).thenAnswer((_) async => Result.success(quality));
+    when(
+      () => mockRepo.getFreshnessStatus(testCompanyId),
+    ).thenAnswer((_) async => Result.success(freshness));
+    when(
+      () => mockRepo.getQuestions(testCompanyId),
+    ).thenAnswer((_) async => Result.success(questions ?? []));
+    when(
+      () => mockPortfolioRepo.getPositions(status: 'active'),
+    ).thenAnswer((_) async => const Result.success([]));
   }
 
   // =========================================================================
@@ -181,25 +181,33 @@ void main() {
       });
 
       test('sets error when profile fetch fails', () async {
-        when(() => mockRepo.getCompanyProfile(testCompanyId)).thenAnswer(
-          (_) async => Result.failure(Exception('not found')),
-        );
-        when(() => mockRepo.getMetrics(testCompanyId))
-            .thenAnswer((_) async => const Result.success([]));
-        when(() => mockRepo.getFinancialStatements(testCompanyId))
-            .thenAnswer((_) async => const Result.success([]));
-        when(() => mockRepo.getNotes(testCompanyId))
-            .thenAnswer((_) async => const Result.success([]));
-        when(() => mockRepo.getTheses(testCompanyId))
-            .thenAnswer((_) async => const Result.success([]));
-        when(() => mockRepo.getQualityScore(testCompanyId))
-            .thenAnswer((_) async => const Result.success(null));
-        when(() => mockRepo.getFreshnessStatus(testCompanyId))
-            .thenAnswer((_) async => const Result.success(null));
-        when(() => mockRepo.getQuestions(testCompanyId))
-            .thenAnswer((_) async => const Result.success([]));
-        when(() => mockPortfolioRepo.getPositions(status: 'active'))
-            .thenAnswer((_) async => const Result.success([]));
+        when(
+          () => mockRepo.getCompanyProfile(testCompanyId),
+        ).thenAnswer((_) async => Result.failure(Exception('not found')));
+        when(
+          () => mockRepo.getMetrics(testCompanyId),
+        ).thenAnswer((_) async => const Result.success([]));
+        when(
+          () => mockRepo.getFinancialStatements(testCompanyId),
+        ).thenAnswer((_) async => const Result.success([]));
+        when(
+          () => mockRepo.getNotes(testCompanyId),
+        ).thenAnswer((_) async => const Result.success([]));
+        when(
+          () => mockRepo.getTheses(testCompanyId),
+        ).thenAnswer((_) async => const Result.success([]));
+        when(
+          () => mockRepo.getQualityScore(testCompanyId),
+        ).thenAnswer((_) async => const Result.success(null));
+        when(
+          () => mockRepo.getFreshnessStatus(testCompanyId),
+        ).thenAnswer((_) async => const Result.success(null));
+        when(
+          () => mockRepo.getQuestions(testCompanyId),
+        ).thenAnswer((_) async => const Result.success([]));
+        when(
+          () => mockPortfolioRepo.getPositions(status: 'active'),
+        ).thenAnswer((_) async => const Result.success([]));
 
         await provider.loadAll();
 
@@ -208,9 +216,9 @@ void main() {
       });
 
       test('still populates other signals when profile fails', () async {
-        when(() => mockRepo.getCompanyProfile(testCompanyId)).thenAnswer(
-          (_) async => Result.failure(Exception('not found')),
-        );
+        when(
+          () => mockRepo.getCompanyProfile(testCompanyId),
+        ).thenAnswer((_) async => Result.failure(Exception('not found')));
         when(() => mockRepo.getMetrics(testCompanyId)).thenAnswer(
           (_) async => const Result.success([
             MetricSnapshot(
@@ -222,20 +230,27 @@ void main() {
             ),
           ]),
         );
-        when(() => mockRepo.getFinancialStatements(testCompanyId))
-            .thenAnswer((_) async => const Result.success([]));
-        when(() => mockRepo.getNotes(testCompanyId))
-            .thenAnswer((_) async => const Result.success([]));
-        when(() => mockRepo.getTheses(testCompanyId))
-            .thenAnswer((_) async => const Result.success([]));
-        when(() => mockRepo.getQualityScore(testCompanyId))
-            .thenAnswer((_) async => const Result.success(null));
-        when(() => mockRepo.getFreshnessStatus(testCompanyId))
-            .thenAnswer((_) async => const Result.success(null));
-        when(() => mockRepo.getQuestions(testCompanyId))
-            .thenAnswer((_) async => const Result.success([]));
-        when(() => mockPortfolioRepo.getPositions(status: 'active'))
-            .thenAnswer((_) async => const Result.success([]));
+        when(
+          () => mockRepo.getFinancialStatements(testCompanyId),
+        ).thenAnswer((_) async => const Result.success([]));
+        when(
+          () => mockRepo.getNotes(testCompanyId),
+        ).thenAnswer((_) async => const Result.success([]));
+        when(
+          () => mockRepo.getTheses(testCompanyId),
+        ).thenAnswer((_) async => const Result.success([]));
+        when(
+          () => mockRepo.getQualityScore(testCompanyId),
+        ).thenAnswer((_) async => const Result.success(null));
+        when(
+          () => mockRepo.getFreshnessStatus(testCompanyId),
+        ).thenAnswer((_) async => const Result.success(null));
+        when(
+          () => mockRepo.getQuestions(testCompanyId),
+        ).thenAnswer((_) async => const Result.success([]));
+        when(
+          () => mockPortfolioRepo.getPositions(status: 'active'),
+        ).thenAnswer((_) async => const Result.success([]));
 
         await provider.loadAll();
 
@@ -266,20 +281,24 @@ void main() {
           ),
         ];
 
-        when(() => mockPortfolioRepo.getLessonsForCompany(testCompanyId))
-            .thenAnswer((_) async => Result.success(lessons));
+        when(
+          () => mockPortfolioRepo.getLessonsForCompany(testCompanyId),
+        ).thenAnswer((_) async => Result.success(lessons));
 
         await provider.loadCompanyLessons(testCompanyId);
 
         expect(provider.companyLessons.value, hasLength(1));
-        expect(provider.companyLessons.value.first.lessonsLearned,
-            'Follow momentum');
+        expect(
+          provider.companyLessons.value.first.lessonsLearned,
+          'Follow momentum',
+        );
         expect(provider.isLoadingLessons.value, isFalse);
       });
 
       test('clears isLoadingLessons after failure', () async {
-        when(() => mockPortfolioRepo.getLessonsForCompany(testCompanyId))
-            .thenAnswer((_) async => Result.failure(Exception('db error')));
+        when(
+          () => mockPortfolioRepo.getLessonsForCompany(testCompanyId),
+        ).thenAnswer((_) async => Result.failure(Exception('db error')));
 
         await provider.loadCompanyLessons(testCompanyId);
 
@@ -311,11 +330,13 @@ void main() {
           createdAt: now,
           updatedAt: now,
         );
-        when(() => mockRepo.createNote(
-              companyId: testCompanyId,
-              title: 'New Note',
-              body: 'New body',
-            )).thenAnswer((_) async => Result.success(newNote));
+        when(
+          () => mockRepo.createNote(
+            companyId: testCompanyId,
+            title: 'New Note',
+            body: 'New body',
+          ),
+        ).thenAnswer((_) async => Result.success(newNote));
 
         await provider.createNote('New Note', 'New body');
 
@@ -326,11 +347,13 @@ void main() {
       });
 
       test('sets mutationError on failure', () async {
-        when(() => mockRepo.createNote(
-              companyId: testCompanyId,
-              title: 'Fail',
-              body: 'Fail body',
-            )).thenAnswer((_) async => Result.failure(Exception('db error')));
+        when(
+          () => mockRepo.createNote(
+            companyId: testCompanyId,
+            title: 'Fail',
+            body: 'Fail body',
+          ),
+        ).thenAnswer((_) async => Result.failure(Exception('db error')));
 
         await provider.createNote('Fail', 'Fail body');
 
@@ -340,20 +363,24 @@ void main() {
 
       test('prevents concurrent mutations', () async {
         // Simulate a slow repo call
-        when(() => mockRepo.createNote(
-              companyId: testCompanyId,
-              title: any(named: 'title'),
-              body: any(named: 'body'),
-            )).thenAnswer((_) async {
-          await Future<void>.delayed(const Duration(milliseconds: 100));
-          return Result.success(CompanyNote(
-            id: 'note-1',
+        when(
+          () => mockRepo.createNote(
             companyId: testCompanyId,
-            title: 't',
-            body: 'b',
-            createdAt: DateTime.now(),
-            updatedAt: DateTime.now(),
-          ));
+            title: any(named: 'title'),
+            body: any(named: 'body'),
+          ),
+        ).thenAnswer((_) async {
+          await Future<void>.delayed(const Duration(milliseconds: 100));
+          return Result.success(
+            CompanyNote(
+              id: 'note-1',
+              companyId: testCompanyId,
+              title: 't',
+              body: 'b',
+              createdAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            ),
+          );
         });
 
         // Start first mutation (don't await)
@@ -363,11 +390,13 @@ void main() {
         await first;
 
         // Only one note should be created
-        verify(() => mockRepo.createNote(
-              companyId: testCompanyId,
-              title: 't',
-              body: 'b',
-            )).called(1);
+        verify(
+          () => mockRepo.createNote(
+            companyId: testCompanyId,
+            title: 't',
+            body: 'b',
+          ),
+        ).called(1);
       });
     });
 
@@ -386,22 +415,27 @@ void main() {
           updatedAt: now,
         );
 
-        when(() => mockRepo.createThesis(
-              companyId: testCompanyId,
-              title: 'Growth thesis',
-              stance: 'bullish',
-              summary: any(named: 'summary'),
-              bullCase: any(named: 'bullCase'),
-              bearCase: any(named: 'bearCase'),
-              assumptions: any(named: 'assumptions'),
-              catalysts: any(named: 'catalysts'),
-              risks: any(named: 'risks'),
-              exitConditions: any(named: 'exitConditions'),
-              conviction: any(named: 'conviction'),
-            )).thenAnswer((_) async => Result.success(newThesis));
+        when(
+          () => mockRepo.createThesis(
+            companyId: testCompanyId,
+            title: 'Growth thesis',
+            stance: 'bullish',
+            summary: any(named: 'summary'),
+            bullCase: any(named: 'bullCase'),
+            bearCase: any(named: 'bearCase'),
+            assumptions: any(named: 'assumptions'),
+            catalysts: any(named: 'catalysts'),
+            risks: any(named: 'risks'),
+            exitConditions: any(named: 'exitConditions'),
+            conviction: any(named: 'conviction'),
+          ),
+        ).thenAnswer((_) async => Result.success(newThesis));
 
-        await provider.createThesis('Growth thesis', 'bullish',
-            conviction: 'high');
+        await provider.createThesis(
+          'Growth thesis',
+          'bullish',
+          conviction: 'high',
+        );
 
         expect(provider.theses.value, hasLength(1));
         expect(provider.theses.value.first.title, 'Growth thesis');
@@ -410,13 +444,16 @@ void main() {
       });
 
       test('sets mutationError on failure', () async {
-        when(() => mockRepo.createThesis(
-              companyId: testCompanyId,
-              title: any(named: 'title'),
-              stance: any(named: 'stance'),
-              conviction: any(named: 'conviction'),
-            )).thenAnswer(
-            (_) async => Result.failure(Exception('constraint violation')));
+        when(
+          () => mockRepo.createThesis(
+            companyId: testCompanyId,
+            title: any(named: 'title'),
+            stance: any(named: 'stance'),
+            conviction: any(named: 'conviction'),
+          ),
+        ).thenAnswer(
+          (_) async => Result.failure(Exception('constraint violation')),
+        );
 
         await provider.createThesis('Fail', 'bullish');
 
@@ -440,8 +477,9 @@ void main() {
         );
         provider.theses.value = [thesis];
 
-        when(() => mockRepo.markThesisReviewed('thesis-1'))
-            .thenAnswer((_) async => const Result.success(null));
+        when(
+          () => mockRepo.markThesisReviewed('thesis-1'),
+        ).thenAnswer((_) async => const Result.success(null));
 
         await provider.markThesisReviewed('thesis-1');
 
@@ -467,7 +505,8 @@ void main() {
         ];
 
         when(() => mockRepo.markThesisReviewed('thesis-1')).thenAnswer(
-            (_) async => Result.failure(Exception('permission denied')));
+          (_) async => Result.failure(Exception('permission denied')),
+        );
 
         await provider.markThesisReviewed('thesis-1');
 
@@ -539,8 +578,9 @@ void main() {
           ),
         ];
 
-        when(() => mockRepo.deleteNote('note-1'))
-            .thenAnswer((_) async => const Result.success(null));
+        when(
+          () => mockRepo.deleteNote('note-1'),
+        ).thenAnswer((_) async => const Result.success(null));
 
         await provider.deleteNote('note-1');
 
@@ -561,8 +601,9 @@ void main() {
           ),
         ];
 
-        when(() => mockRepo.deleteNote('note-1')).thenAnswer(
-            (_) async => Result.failure(Exception('foreign key')));
+        when(
+          () => mockRepo.deleteNote('note-1'),
+        ).thenAnswer((_) async => Result.failure(Exception('foreign key')));
 
         await provider.deleteNote('note-1');
 
