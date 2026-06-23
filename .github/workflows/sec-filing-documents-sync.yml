@@ -34,4 +34,4 @@ jobs:
           SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
           RAW_DOCUMENTS_BUCKET: ${{ vars.RAW_DOCUMENTS_BUCKET != '' && vars.RAW_DOCUMENTS_BUCKET || 'raw-documents' }}
         run: |
-          python -m workers.taug_worker.cli fetch-sec-filing-documents --limit "${{ github.event.inputs.limit || '10' }}"
+          python -m workers.taug_worker.cli fetch-sec-filing-documents --limit "${{ github.event.inputs.limit || '5' }}"
