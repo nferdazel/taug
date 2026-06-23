@@ -72,6 +72,9 @@ void main() {
     when(() => mockRepo.getQuestions(testCompanyId)).thenAnswer(
       (_) async => Result.success(questions ?? []),
     );
+    when(() => mockPortfolioRepo.getPositions(status: 'active')).thenAnswer(
+      (_) async => Result.success([]),
+    );
   }
 
   // =========================================================================
@@ -195,6 +198,8 @@ void main() {
             .thenAnswer((_) async => const Result.success(null));
         when(() => mockRepo.getQuestions(testCompanyId))
             .thenAnswer((_) async => const Result.success([]));
+        when(() => mockPortfolioRepo.getPositions(status: 'active'))
+            .thenAnswer((_) async => const Result.success([]));
 
         await provider.loadAll();
 
@@ -228,6 +233,8 @@ void main() {
         when(() => mockRepo.getFreshnessStatus(testCompanyId))
             .thenAnswer((_) async => const Result.success(null));
         when(() => mockRepo.getQuestions(testCompanyId))
+            .thenAnswer((_) async => const Result.success([]));
+        when(() => mockPortfolioRepo.getPositions(status: 'active'))
             .thenAnswer((_) async => const Result.success([]));
 
         await provider.loadAll();

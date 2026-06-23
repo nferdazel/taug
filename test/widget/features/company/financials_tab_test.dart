@@ -135,8 +135,8 @@ void main() {
         expect(find.text('INCOME STATEMENT'), findsOneWidget);
 
         // Financial values should render.
-        expect(find.text('\$100.00M'), findsOneWidget);
-        expect(find.text('\$25.00M'), findsOneWidget);
+        expect(find.text('\$100.0M'), findsOneWidget);
+        expect(find.text('\$25.0M'), findsOneWidget);
       });
 
       testWidgets('shows VerticalDivider between panes at wide viewport',
