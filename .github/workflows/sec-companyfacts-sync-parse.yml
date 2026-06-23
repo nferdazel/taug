@@ -1,9 +1,6 @@
-name: SEC Companyfacts Sync and Parse (Rotating Batch)
+name: SEC Companyfacts Sync and Parse
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
     inputs:
       target_ciks:
@@ -16,8 +13,6 @@ on:
         default: "0"
         type: string
   schedule:
-    # Run daily at 2:30 AM UTC
-    # Each run processes a different batch of companies based on day of week
     - cron: "30 2 * * *"
 
 jobs:
@@ -36,35 +31,23 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Determine batch
-        id: batch
-        run: |
-          # Get day of week (0=Sun, 1=Mon, ..., 6=Sat)
-          DOW=$(date -u +%w)
-          # Map to batch index (0-6)
-          BATCH_INDEX=$DOW
-          echo "batch_index=$BATCH_INDEX" >> $GITHUB_OUTPUT
-          echo "Processing batch $BATCH_INDEX (day of week: $DOW)"
-
-      - name: Sync companyfacts (batch)
+      - name: Sync companyfacts
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
           SEC_TARGET_CIKS: ${{ github.event.inputs.target_ciks != '' && github.event.inputs.target_ciks || vars.SEC_TARGET_CIKS }}
-          MAX_COMPANIES: ${{ github.event.inputs.max_companies != '' && github.event.inputs.max_companies || '5' }}
-          BATCH_INDEX: ${{ steps.batch.outputs.batch_index }}
+          MAX_COMPANIES: ${{ github.event.inputs.max_companies != '' && github.event.inputs.max_companies || '0' }}
         run: |
           python -m workers.taug_worker.cli sync-sec-companyfacts --max-companies "$MAX_COMPANIES"
 
-      - name: Parse companyfacts (batch)
+      - name: Parse companyfacts
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
           SEC_TARGET_CIKS: ${{ github.event.inputs.target_ciks != '' && github.event.inputs.target_ciks || vars.SEC_TARGET_CIKS }}
-          MAX_COMPANIES: ${{ github.event.inputs.max_companies != '' && github.event.inputs.max_companies || '5' }}
-          BATCH_INDEX: ${{ steps.batch.outputs.batch_index }}
+          MAX_COMPANIES: ${{ github.event.inputs.max_companies != '' && github.event.inputs.max_companies || '0' }}
         run: |
           python -m workers.taug_worker.cli parse-sec-companyfacts --max-companies "$MAX_COMPANIES"
 
