@@ -10,7 +10,7 @@ on:
       max_companies:
         description: "Optional cap on number of CIKs to process"
         required: false
-        default: "0"
+        default: "3"
         type: string
   schedule:
     - cron: "30 2 * * *"
