@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass
 from hashlib import sha256
 from typing import Any, Iterable
@@ -65,8 +66,12 @@ def run_sync_sec_companyfacts(
   failed_cik_ids: list[str] = []
 
   try:
-    for cik in normalized_ciks:
+    for i, cik in enumerate(normalized_ciks):
       try:
+        # Add delay between companies to avoid overwhelming Supabase free tier
+        if i > 0 and i % 5 == 0:
+          time.sleep(2)  # 2 second pause every 5 companies
+
         payload: dict[str, object] = sec_client.fetch_companyfacts(cik)
         canonical_bytes: bytes = sec_client.canonical_payload_bytes(payload)
         payload_hash: str = sha256(canonical_bytes).hexdigest()
