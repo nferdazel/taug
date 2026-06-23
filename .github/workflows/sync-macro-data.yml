@@ -1,6 +1,9 @@
 name: Sync Macro Data (FRED + BPS)
 
 on:
+  push:
+    branches:
+      - main
   schedule:
     - cron: "0 6 * * 1"  # 6 AM UTC every Monday
   workflow_dispatch:
